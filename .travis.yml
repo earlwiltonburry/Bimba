@@ -14,7 +14,10 @@ android:
     - extra-android-m2repository
 
 install:
-  - yes | $ANDROID_HOME/tools/bin/sdkmanager "tools"
-  - yes | $ANDROID_HOME/tools/bin/sdkmanager "platform-tools"
+    - yes | $ANDROID_HOME/tools/bin/sdkmanager "tools"
+    - yes | $ANDROID_HOME/tools/bin/sdkmanager "platform-tools"
+
+licenses:
+    - 'android-sdk-license-.+'
 
 script: ./gradlew build || (cat /home/travis/build/apiote/Bimba/app/build/reports/lint-results.html; false)
