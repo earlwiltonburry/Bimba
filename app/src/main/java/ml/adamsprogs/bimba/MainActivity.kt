@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.os.Parcel
 import android.os.Parcelable
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.app.AppCompatDelegate
 import android.text.Html
 import android.widget.Toast
 import com.arlib.floatingsearchview.FloatingSearchView
@@ -17,6 +18,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO)
+
         val context = this as Context
 
         val stops = listOf(Suggestion("Kołłątaja\n610 -> Dębiec"), Suggestion("Dębiecka\n610 -> Górczyn")) //todo get from db
