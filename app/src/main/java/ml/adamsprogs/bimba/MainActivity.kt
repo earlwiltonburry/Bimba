@@ -1,10 +1,10 @@
 package ml.adamsprogs.bimba
 
 import android.content.Context
-import android.os.Build
-import android.os.Bundle
-import android.os.Parcel
-import android.os.Parcelable
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.*
+import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.app.AppCompatDelegate
 import android.text.Html
@@ -12,8 +12,9 @@ import android.widget.Toast
 import com.arlib.floatingsearchview.FloatingSearchView
 import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
 
-
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener {
+    lateinit var listener: MessageReceiver.OnTimetableDownloadListener
+    lateinit var receiver: MessageReceiver
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,6 +22,14 @@ class MainActivity : AppCompatActivity() {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO)
 
         val context = this as Context
+        listener = this
+
+        val filter = IntentFilter("ml.adamsprogs.bimba.timetableDownloaded")
+        filter.addCategory(Intent.CATEGORY_DEFAULT)
+        receiver = MessageReceiver()
+        registerReceiver(receiver, filter)
+        receiver.addOnTimetableDownloadListener(listener)
+        startService(Intent(context, TimetableDownloader::class.java))
 
         val stops = listOf(Suggestion("Kołłątaja\n610 -> Dębiec"), Suggestion("Dębiecka\n610 -> Górczyn")) //todo get from db
         val searchView = findViewById(R.id.search_view) as FloatingSearchView
@@ -53,6 +62,12 @@ class MainActivity : AppCompatActivity() {
         //todo searchView.attachNavigationDrawerToMenuButton(mDrawerLayout)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        receiver.removeOnTimetableDownloadListener(listener)
+        unregisterReceiver(receiver)
+    }
+
     fun deAccent(str: String): String {
         var result = str.replace('ę', 'e')
         result = result.replace('ó', 'o')
@@ -64,6 +79,11 @@ class MainActivity : AppCompatActivity() {
         result = result.replace('ć', 'ć')
         result = result.replace('ń', 'n')
         return result
+    }
+
+    override fun onTimetableDownload() {
+        val layout = findViewById(R.id.main_layout)
+        Snackbar.make(layout, "New timetable downloaded", Snackbar.LENGTH_LONG).show()
     }
 
     class Suggestion(text: String) : SearchSuggestion {

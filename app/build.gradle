@@ -34,6 +34,7 @@ dependencies {
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
     implementation 'com.github.arimorty:floatingsearchview:2.1.1'
+    implementation 'org.tukaani:xz:1.6'
 }
 repositories {
     maven {
@@ -41,3 +42,5 @@ repositories {
     }
     mavenCentral()
 }
+
+apply plugin: 'kotlin-android-extensions'
