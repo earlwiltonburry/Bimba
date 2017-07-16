@@ -1,10 +1,10 @@
 #!/bin/python
 """
-js interface: http://ztm.poznan.pl/themes/ztm/dist/js/app.js
-nodes: http://ztm.poznan.pl/goeuropa-api/all-nodes
-stops in node: http://ztm.poznan.pl/goeuropa-api/node_stops/{node:symbol}
-stops: http://ztm.poznan.pl/goeuropa-api/stops-nodes
-bike stations: http://ztm.poznan.pl/goeuropa-api/bike-stations
+js interface: http://www.ztm.poznan.pl/themes/ztm/dist/js/app.js
+nodes: http://www.ztm.poznan.pl/goeuropa-api/all-nodes
+stops in node: http://www.ztm.poznan.pl/goeuropa-api/node_stops/{node:symbol}
+stops: http://www.ztm.poznan.pl/goeuropa-api/stops-nodes
+bike stations: http://www.ztm.poznan.pl/goeuropa-api/bike-stations
 
 """
 import json
@@ -22,7 +22,7 @@ def get_nodes():
     """
     session = requests.session()
 
-    index = session.get('http://ztm.poznan.pl/goeuropa-api/all-nodes')
+    index = session.get('https://www.ztm.poznan.pl/goeuropa-api/all-nodes', verify='bundle.pem')
     return [(stop['symbol'], stop['name']) for stop in json.loads(index.text)]
 
 
@@ -32,7 +32,7 @@ def get_stops(node):
     """
     session = requests.session()
 
-    index = session.get('http://ztm.poznan.pl/goeuropa-api/node_stops/{}'.format(node))
+    index = session.get('https://www.ztm.poznan.pl/goeuropa-api/node_stops/{}'.format(node), verify='bundle.pem')
     stops = []
     for stop in json.loads(index.text):
         stop_id = stop['stop']['id']
@@ -51,7 +51,7 @@ def get_lines():
     """
     session = requests.session()
 
-    index = session.get('http://ztm.poznan.pl/goeuropa-api/index')
+    index = session.get('https://www.ztm.poznan.pl/goeuropa-api/index', verify='bundle.pem')
     soup = BeautifulSoup(index.text, 'html.parser')
 
     lines = {line['data-lineid']: line.text for line in
@@ -66,7 +66,7 @@ def get_route(line_id):
     """
     session = requests.session()
 
-    index = session.get('http://ztm.poznan.pl/goeuropa-api/line-info/{}'.format(line_id))
+    index = session.get('https://www.ztm.poznan.pl/goeuropa-api/line-info/{}'.format(line_id), verify='bundle.pem')
     soup = BeautifulSoup(index.text, 'html.parser')
     directions = soup.findAll(attrs={'class': re.compile(r'.*\baccordion-item\b.*')})
     routes = {}
@@ -85,8 +85,8 @@ def get_stop_times(stop_id, line_id, direction_id):
     """
     session = requests.session()
 
-    index = session.post('http://ztm.poznan.pl/goeuropa-api/stop-info/{}/{}'.
-                         format(stop_id, line_id), data={'directionId': direction_id})
+    index = session.post('https://www.ztm.poznan.pl/goeuropa-api/stop-info/{}/{}'.
+                         format(stop_id, line_id), data={'directionId': direction_id}, verify='caert.pem')
     soup = BeautifulSoup(index.text, 'html.parser')
     legends = {}
     for row in soup.find(attrs={'class': re.compile(r'.*\blegend-box\b.*')}).findAll('li'):
