@@ -12,6 +12,8 @@ import android.view.View
 import android.widget.Toast
 import com.arlib.floatingsearchview.FloatingSearchView
 import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
+import ml.adamsprogs.bimba.models.Suggestion
+import ml.adamsprogs.bimba.models.Timetable
 import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener {
@@ -19,7 +21,7 @@ class MainActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     lateinit var receiver: MessageReceiver
     lateinit var layout: View
     lateinit var timetable: Timetable
-    var stops: ArrayList<Timetable.Suggestion>? = null
+    var stops: ArrayList<Suggestion>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,7 +29,7 @@ class MainActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO)
 
         layout = findViewById(R.id.main_layout)
-        val context = this as Context
+        val context = this
         listener = this
 
         val filter = IntentFilter("ml.adamsprogs.bimba.timetableDownloaded")
@@ -56,15 +58,17 @@ class MainActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         searchView.setOnSearchListener(object : FloatingSearchView.OnSearchListener {
             override fun onSuggestionClicked(searchSuggestion: SearchSuggestion) {
-                Toast.makeText(context, "clicked "+ (searchSuggestion as Timetable.Suggestion).id, Toast.LENGTH_SHORT).show()
-                //todo to next screen
+                Toast.makeText(context, "clicked "+ (searchSuggestion as Suggestion).id, Toast.LENGTH_SHORT).show()
+                intent = Intent(context, StopActivity::class.java)
+                intent.putExtra("stop", searchSuggestion.id)
+                startActivity(intent)
             }
             override fun onSearchAction(query: String) {
             }
         })
 
         searchView.setOnBindSuggestionCallback { _, _, textView, item, _ ->
-            val suggestion = item as Timetable.Suggestion
+            val suggestion = item as Suggestion
             val text = suggestion.body.split("\n")
             val t = "<small><font color=\"#a0a0a0\">" + text[1] + "</font></small>"
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
