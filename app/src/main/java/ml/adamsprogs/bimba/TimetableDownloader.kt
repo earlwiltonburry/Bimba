@@ -83,7 +83,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 hex += Integer.toString((digest[i] and 0xff.toByte()) + 0x100, 16).padStart(3, '0').substring(1)
             }
             Log.i("Downloader", "checksum is $checksum, and hex is $hex")
-            return checksum == hex //todo verify signature
+            return checksum == hex
         }
     }
 

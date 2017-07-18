@@ -4,7 +4,7 @@ import android.os.Parcel
 import android.os.Parcelable
 import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
 
-class Suggestion(text: String, val id: String) : SearchSuggestion {
+class StopSuggestion(text: String, val id: String) : SearchSuggestion {
     private val body: String = text
 
     constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString())
@@ -22,12 +22,12 @@ class Suggestion(text: String, val id: String) : SearchSuggestion {
         return body
     }
 
-    companion object CREATOR : Parcelable.Creator<Suggestion> {
-        override fun createFromParcel(parcel: Parcel): Suggestion {
-            return Suggestion(parcel)
+    companion object CREATOR : Parcelable.Creator<StopSuggestion> {
+        override fun createFromParcel(parcel: Parcel): StopSuggestion {
+            return StopSuggestion(parcel)
         }
 
-        override fun newArray(size: Int): Array<Suggestion?> {
+        override fun newArray(size: Int): Array<StopSuggestion?> {
             return arrayOfNulls(size)
         }
     }

@@ -11,20 +11,29 @@ import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentPagerAdapter
 import android.support.v4.view.ViewPager
 import android.os.Bundle
+import android.support.v4.content.res.ResourcesCompat
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 
-import android.widget.TextView
 import ml.adamsprogs.bimba.models.Departure
 import ml.adamsprogs.bimba.models.Timetable
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
+import ml.adamsprogs.bimba.models.DeparturesAdapter
+import ml.adamsprogs.bimba.models.fromString
+import android.support.v7.widget.DividerItemDecoration
+import android.util.Log
+import java.util.*
+
 
 class StopActivity : AppCompatActivity() {
 
     private lateinit var stopId: String
     private var departures: HashMap<String, ArrayList<Departure>>? = null
+    private var timetableType = "timetable"
 
     /**
      * The [android.support.v4.view.PagerAdapter] that will provide
@@ -46,10 +55,13 @@ class StopActivity : AppCompatActivity() {
         setContentView(R.layout.activity_stop)
         stopId = intent.getStringExtra("stop")
 
-        //todo hiding on scroll
         val toolbar = findViewById(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
 
+        /*todo when Internet connection
+        exists -> download vm
+        else -> timetable
+         */
         val timetable = Timetable(this)
         supportActionBar?.title = timetable.getStopName(stopId) ?: "Stop"
         departures = timetable.getStopDepartures(stopId)
@@ -65,11 +77,11 @@ class StopActivity : AppCompatActivity() {
         viewPager!!.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tabLayout))
         tabLayout.addOnTabSelectedListener(TabLayout.ViewPagerOnTabSelectedListener(viewPager))
 
-        //todo move to view
         val fab = findViewById(R.id.fab) as FloatingActionButton
         fab.setOnClickListener { view ->
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show()
+            //todo favourites
         }
 
     }
@@ -84,7 +96,16 @@ class StopActivity : AppCompatActivity() {
         val id = item.itemId
 
 
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_change_type) {
+            if(timetableType == "timetable") {
+                timetableType = "vm"
+                item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_vm, null))
+            }
+            else {
+                timetableType = "timetable"
+                item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_timetable, null))
+            }
+            //todo change type
             return true
         }
 
@@ -96,18 +117,40 @@ class StopActivity : AppCompatActivity() {
      */
     class PlaceholderFragment : Fragment() {
 
-        //todo add list
         override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
                                   savedInstanceState: Bundle?): View? {
             val rootView = inflater!!.inflate(R.layout.fragment_stop, container, false)
-            val textView = rootView.findViewById(R.id.section_label) as TextView
-            var ttString: String = ""
-            for (row in arguments.getStringArrayList("departures")) {
-                ttString += row + "\n"
-            }
-            textView.text = getString(R.string.section_format, arguments.getInt(ARG_SECTION_NUMBER),
-                    arguments.getString("stop")) + "\n===\n" + ttString
+
+            val layoutManager = LinearLayoutManager(activity)
+            val departuresList: RecyclerView = rootView.findViewById(R.id.departuresList) as RecyclerView
+            val dividerItemDecoration = DividerItemDecoration(departuresList.context, layoutManager.orientation)
+            departuresList.addItemDecoration(dividerItemDecoration)
+            val adapter = DeparturesAdapter(activity,
+                    filterDepartures(arguments.getStringArrayList("departures").map { fromString(it) }))
+            departuresList.adapter = adapter
+            departuresList.layoutManager = layoutManager
             return rootView
+        }
+
+        fun filterDepartures(departures: List<Departure>): List<Departure> { //todo and tomorrow
+            val filtered = ArrayList<Departure>()
+            val lines = HashMap<String, Int>()
+            val now = Calendar.getInstance()
+            for (departure in departures) {
+                val time = Calendar.getInstance()
+                time.set(Calendar.HOUR_OF_DAY, Integer.parseInt(departure.time.split(":")[0]))
+                time.set(Calendar.MINUTE, Integer.parseInt(departure.time.split(":")[1]))
+                var lineExistedTimes = lines[departure.line]
+                Log.i("Filter", "line: ${departure.line} existed $lineExistedTimes times")
+                if (now.before(time) && lineExistedTimes ?: 0 < 3) {
+                    Log.i("Filter", "less than 3 so adding")
+                    lineExistedTimes = (lineExistedTimes ?: 0) + 1
+                    lines[departure.line] = lineExistedTimes
+                    Log.i("Filter", "and increment so now existed ${lines[departure.line]} times")
+                    filtered.add(departure)
+                }
+            }
+            return filtered
         }
 
         companion object {
@@ -151,8 +194,6 @@ class StopActivity : AppCompatActivity() {
             return PlaceholderFragment.newInstance(position + 1, stopId, departures?.get(mode))
         }
 
-        override fun getCount(): Int {
-            return 3
-        }
+        override fun getCount() = 3
     }
 }

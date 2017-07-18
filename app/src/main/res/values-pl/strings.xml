@@ -1,2 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <string name="no_timetable">Nie znaleziono rozkładu</string>
+    <string name="timetable_downloaded">Pobrano nowy rozkład</string>
+    <string name="tab_workday_text">Dni robocze</string>
+    <string name="tab_saturday_text">Soboty</string>
+    <string name="tab_sunday_text">Niedziele</string>
+    <string name="action_change_type">Typ</string>
+    <string name="departure_in">Za %1$s minut</string>
+    <string name="departure_at">O %1$s</string>
+    <string name="departure_to">→ %1$s</string>
+</resources>

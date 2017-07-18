@@ -23,14 +23,14 @@ class Timetable(var context: Context) {
         }
     }
 
-    fun getStops(): ArrayList<Suggestion>? {
+    fun getStops(): ArrayList<StopSuggestion>? {
         if (db == null)
             return null
         val cursor = db!!.rawQuery("select name ||char(10)|| headsigns as suggestion, id from stops" +
                 " join nodes on(stops.symbol = nodes.symbol) order by name, id;", null)
-        val stops = ArrayList<Suggestion>()
+        val stops = ArrayList<StopSuggestion>()
         while (cursor.moveToNext())
-            stops.add(Suggestion(cursor.getString(0), cursor.getString(1)))
+            stops.add(StopSuggestion(cursor.getString(0), cursor.getString(1)))
         cursor.close()
         return stops
     }
@@ -50,14 +50,14 @@ class Timetable(var context: Context) {
     fun getStopDepartures(stopId: String): HashMap<String, ArrayList<Departure>>? {
         if (db == null)
             return null
-        val cursor = db!!.rawQuery("select lines.number, mode, hour || ':' || minute as time, lowFloor, " +
-                "modification, headsign from departures join timetables on(timetable_id = timetables.id) " +
-                "join lines on(line_id = lines.id) where stop_id = ?;", listOf(stopId).toTypedArray())
+        val cursor = db!!.rawQuery("select lines.number, mode, substr('0'||hour, -2) || ':' || " +
+            "substr('0'||minute, -2) as time, lowFloor, modification, headsign from departures join "+
+            "timetables on(timetable_id = timetables.id) join lines on(line_id = lines.id) where "+
+            "stop_id = ? order by mode, time;", listOf(stopId).toTypedArray())
         val departures = HashMap<String, ArrayList<Departure>>()
         departures.put("workdays", ArrayList())
         departures.put("saturdays", ArrayList())
         departures.put("sundays", ArrayList())
-        //todo only 10(?) after than now
         while (cursor.moveToNext()) {
             departures[cursor.getString(1)]?.add(Departure(cursor.getString(0),
                     cursor.getString(1), cursor.getString(2), cursor.getInt(3) == 1,
