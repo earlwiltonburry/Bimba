@@ -9,6 +9,7 @@ bike stations: http://www.ztm.poznan.pl/goeuropa-api/bike-stations
 """
 import json
 import hashlib
+import os
 import re
 import sqlite3
 import sys
@@ -86,7 +87,7 @@ def get_stop_times(stop_id, line_id, direction_id):
     session = requests.session()
 
     index = session.post('https://www.ztm.poznan.pl/goeuropa-api/stop-info/{}/{}'.
-                         format(stop_id, line_id), data={'directionId': direction_id}, verify='caert.pem')
+                         format(stop_id, line_id), data={'directionId': direction_id}, verify='bundle.pem')
     soup = BeautifulSoup(index.text, 'html.parser')
     legends = {}
     for row in soup.find(attrs={'class': re.compile(r'.*\blegend-box\b.*')}).findAll('li'):
@@ -129,6 +130,9 @@ def main():
     """
     main function
     """
+    if os.path.exists('timetable.db'):
+        return
+
     print(time.time())
     with sqlite3.connect('timetable.db') as connection:
         print('creating tables')
