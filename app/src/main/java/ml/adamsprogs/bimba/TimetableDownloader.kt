@@ -89,7 +89,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
         var hex = ""
         try {
             val out = FileOutputStream(file)
-            val buf = ByteArray(1024) //todo bigger?
+            val buf = ByteArray(5 * 1024)
             var lenSum = 0.0f
             var len = 42
             while (len > 0) {

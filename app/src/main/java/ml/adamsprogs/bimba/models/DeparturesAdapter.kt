@@ -23,6 +23,9 @@ class DeparturesAdapter(val context: Context, val departures: List<Departure>) :
         val departureTime = Calendar.getInstance()
         departureTime.set(Calendar.HOUR_OF_DAY, Integer.parseInt(departure.time.split(":")[0]))
         departureTime.set(Calendar.MINUTE, Integer.parseInt(departure.time.split(":")[1]))
+        if (departure.tomorrow)
+            departureTime.add(Calendar.DAY_OF_MONTH, 1)
+
         val departureIn = (departureTime.timeInMillis - now.timeInMillis) / (1000 * 60)
         val departureTimeShown: String
         val timeString: Int
@@ -45,7 +48,7 @@ class DeparturesAdapter(val context: Context, val departures: List<Departure>) :
         if (departure.vm)
             icon?.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_vm, null))
         else
-            icon?.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_timetable, null))
+            icon?.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_timetable, null))
     }
 
     override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolder {

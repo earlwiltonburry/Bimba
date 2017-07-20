@@ -1,53 +1,27 @@
 package ml.adamsprogs.bimba
 
-import android.support.design.widget.TabLayout
-import android.support.design.widget.FloatingActionButton
-import android.support.design.widget.Snackbar
+import android.support.design.widget.*
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.Toolbar
 
-import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentManager
-import android.support.v4.app.FragmentPagerAdapter
+import android.support.v4.app.*
 import android.support.v4.view.ViewPager
 import android.os.Bundle
 import android.support.v4.content.res.ResourcesCompat
-import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 
-import ml.adamsprogs.bimba.models.Departure
-import ml.adamsprogs.bimba.models.Timetable
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
-import ml.adamsprogs.bimba.models.DeparturesAdapter
-import ml.adamsprogs.bimba.models.fromString
-import android.support.v7.widget.DividerItemDecoration
-import android.util.Log
+import ml.adamsprogs.bimba.models.*
+import android.support.v7.widget.*
 import java.util.*
 
 
-class StopActivity : AppCompatActivity() {
+class StopActivity : AppCompatActivity() { //todo refresh
 
     private lateinit var stopId: String
     private var departures: HashMap<String, ArrayList<Departure>>? = null
-    private var timetableType = "timetable"
-
-    /**
-     * The [android.support.v4.view.PagerAdapter] that will provide
-     * fragments for each of the sections. We use a
-     * [FragmentPagerAdapter] derivative, which will keep every
-     * loaded fragment in memory. If this becomes too memory intensive, it
-     * may be best to switch to a
-     * [android.support.v4.app.FragmentStatePagerAdapter].
-     */
+    private var timetableType = "departure"
+    private val rolledDepartures = HashMap<String, ArrayList<Departure>>()
     private var sectionsPagerAdapter: SectionsPagerAdapter? = null
-
-    /**
-     * The [ViewPager] that will host the section contents.
-     */
     private var viewPager: ViewPager? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,7 +39,18 @@ class StopActivity : AppCompatActivity() {
         val timetable = Timetable(this)
         supportActionBar?.title = timetable.getStopName(stopId) ?: "Stop"
         departures = timetable.getStopDepartures(stopId)
-        //todo if departures == null -> …
+
+        val moreDepartures = timetable.getStopDepartures(stopId)
+
+        for ((_, departures) in moreDepartures!!) {
+            departures.forEach{it.tomorrow = true}
+        }
+
+        for ((mode, _) in departures!!) {
+            rolledDepartures[mode] = (departures!![mode] as ArrayList<Departure> +
+                    moreDepartures[mode] as ArrayList<Departure>) as ArrayList<Departure>
+        }
+
 
         sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager)
 
@@ -97,13 +82,12 @@ class StopActivity : AppCompatActivity() {
 
 
         if (id == R.id.action_change_type) {
-            if(timetableType == "timetable") {
-                timetableType = "vm"
-                item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_vm, null))
-            }
-            else {
-                timetableType = "timetable"
-                item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_timetable, null))
+            if (timetableType == "departure") {
+                timetableType = "full"
+                item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_departure_timetable, null))
+            } else {
+                timetableType = "departure"
+                item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_full_timetable, null))
             }
             //todo change type
             return true
@@ -112,9 +96,6 @@ class StopActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    /**
-     * A placeholder fragment containing a simple view.
-     */
     class PlaceholderFragment : Fragment() {
 
         override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
@@ -132,7 +113,7 @@ class StopActivity : AppCompatActivity() {
             return rootView
         }
 
-        fun filterDepartures(departures: List<Departure>): List<Departure> { //todo and tomorrow
+        fun filterDepartures(departures: List<Departure>): List<Departure> {
             val filtered = ArrayList<Departure>()
             val lines = HashMap<String, Int>()
             val now = Calendar.getInstance()
@@ -140,13 +121,14 @@ class StopActivity : AppCompatActivity() {
                 val time = Calendar.getInstance()
                 time.set(Calendar.HOUR_OF_DAY, Integer.parseInt(departure.time.split(":")[0]))
                 time.set(Calendar.MINUTE, Integer.parseInt(departure.time.split(":")[1]))
+                time.set(Calendar.SECOND, 0)
+                time.set(Calendar.MILLISECOND, 0)
+                if (departure.tomorrow)
+                    time.add(Calendar.DAY_OF_MONTH, 1)
                 var lineExistedTimes = lines[departure.line]
-                Log.i("Filter", "line: ${departure.line} existed $lineExistedTimes times")
                 if (now.before(time) && lineExistedTimes ?: 0 < 3) {
-                    Log.i("Filter", "less than 3 so adding")
                     lineExistedTimes = (lineExistedTimes ?: 0) + 1
                     lines[departure.line] = lineExistedTimes
-                    Log.i("Filter", "and increment so now existed ${lines[departure.line]} times")
                     filtered.add(departure)
                 }
             }
@@ -154,16 +136,8 @@ class StopActivity : AppCompatActivity() {
         }
 
         companion object {
-            /**
-             * The fragment argument representing the section number for this
-             * fragment.
-             */
             private val ARG_SECTION_NUMBER = "section_number"
 
-            /**
-             * Returns a new instance of this fragment for the given section
-             * number.
-             */
             fun newInstance(sectionNumber: Int, stopId: String, departures: ArrayList<Departure>?): PlaceholderFragment {
                 val fragment = PlaceholderFragment()
                 val args = Bundle()
@@ -178,10 +152,6 @@ class StopActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * A [FragmentPagerAdapter] that returns a fragment corresponding to
-     * one of the sections/tabs/pages.
-     */
     inner class SectionsPagerAdapter(fm: FragmentManager) : FragmentPagerAdapter(fm) {
 
         override fun getItem(position: Int): Fragment {
@@ -191,7 +161,7 @@ class StopActivity : AppCompatActivity() {
                 1 -> mode = "saturdays"
                 2 -> mode = "sundays"
             }
-            return PlaceholderFragment.newInstance(position + 1, stopId, departures?.get(mode))
+            return PlaceholderFragment.newInstance(position + 1, stopId, rolledDepartures[mode])
         }
 
         override fun getCount() = 3
