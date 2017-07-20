@@ -1,0 +1,44 @@
+package ml.adamsprogs.bimba
+
+import android.net.ConnectivityManager
+import android.content.Intent
+import android.content.BroadcastReceiver
+import android.content.Context
+
+fun isNetworkAvailable(context: Context): Boolean {
+    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    val activeNetworkInfo = connectivityManager.activeNetworkInfo
+    return activeNetworkInfo != null && activeNetworkInfo.isConnected
+}
+
+class NetworkStateReceiver : BroadcastReceiver() {
+
+    val onConnectivityChangeListeners = HashSet<OnConnectivityChangeListener>()
+
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.extras != null) {
+            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val ni = connectivityManager.activeNetworkInfo
+
+            if (ni != null && ni.isConnectedOrConnecting) {
+                for (listener in onConnectivityChangeListeners)
+                    listener.onConnectivityChange(true)
+            } else if (intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, java.lang.Boolean.FALSE)) {
+                for (listener in onConnectivityChangeListeners)
+                    listener.onConnectivityChange(false)
+            }
+        }
+    }
+
+    fun addOnConnectivityChangeListener(listener: OnConnectivityChangeListener) {
+        onConnectivityChangeListeners.add(listener)
+    }
+
+    fun removeOnConnectivityChangeListener(listener: OnConnectivityChangeListener) {
+        onConnectivityChangeListeners.remove(listener)
+    }
+
+    interface OnConnectivityChangeListener {
+        fun onConnectivityChange(connected: Boolean)
+    }
+}

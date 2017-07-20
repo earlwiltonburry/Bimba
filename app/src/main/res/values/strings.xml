@@ -11,4 +11,8 @@
     <string name="departure_in">In %1$s minutes</string>
     <string name="departure_to">→ %1$s</string>
     <string name="departure_at">At %1$s</string>
+    <string name="no_database_background">no database background</string>
+    <string name="no_db_connect">Connect to the Internet to download the timetable</string>
+    <string name="no_db_downloading">Timetable is being downloaded</string>
+    <string name="timetable_downloading">Downloading timetable</string>
 </resources>

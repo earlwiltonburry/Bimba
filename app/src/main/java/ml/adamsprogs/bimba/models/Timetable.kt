@@ -1,13 +1,23 @@
 package ml.adamsprogs.bimba.models
 
 import android.content.Context
+import android.database.Cursor
 import android.database.sqlite.SQLiteCantOpenDatabaseException
 import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteDatabaseCorruptException
 import android.util.Log
 import java.io.File
 
 class Timetable(var context: Context) {
     var db: SQLiteDatabase? = null
+
+    init {
+        readDbFile()
+    }
+
+    fun isDatabaseHealthy(): Boolean {
+        return db != null
+    }
 
     fun refresh() {
         readDbFile()
@@ -18,7 +28,10 @@ class Timetable(var context: Context) {
             db = SQLiteDatabase.openDatabase(File(context.filesDir, "new_timetable.db").path,
                     null, SQLiteDatabase.OPEN_READONLY)
         } catch(e: SQLiteCantOpenDatabaseException) {
-            Log.e("Timetable", "Cannot open db")
+            Log.e("Timetable", "Cannot open database")
+            db = null
+        } catch(e: SQLiteDatabaseCorruptException) {
+            Log.e("Timetable", "Database is corrupted")
             db = null
         }
     }
@@ -26,12 +39,19 @@ class Timetable(var context: Context) {
     fun getStops(): ArrayList<StopSuggestion>? {
         if (db == null)
             return null
-        val cursor = db!!.rawQuery("select name ||char(10)|| headsigns as suggestion, id from stops" +
-                " join nodes on(stops.symbol = nodes.symbol) order by name, id;", null)
         val stops = ArrayList<StopSuggestion>()
-        while (cursor.moveToNext())
-            stops.add(StopSuggestion(cursor.getString(0), cursor.getString(1)))
-        cursor.close()
+        var cursor : Cursor? = null
+        try {
+            cursor = db!!.rawQuery("select name ||char(10)|| headsigns as suggestion, id from stops" +
+                    " join nodes on(stops.symbol = nodes.symbol) order by name, id;", null)
+            while (cursor.moveToNext())
+                stops.add(StopSuggestion(cursor.getString(0), cursor.getString(1)))
+        }catch (e: SQLiteDatabaseCorruptException) {
+            cursor?.close()
+            return null
+        } finally {
+            cursor?.close()
+        }
         return stops
     }
 
@@ -42,7 +62,7 @@ class Timetable(var context: Context) {
                 listOf(stopId).toTypedArray())
         val name: String
         cursor.moveToNext()
-            name = cursor.getString(0)
+        name = cursor.getString(0)
         cursor.close()
         return name
     }
@@ -51,9 +71,9 @@ class Timetable(var context: Context) {
         if (db == null)
             return null
         val cursor = db!!.rawQuery("select lines.number, mode, substr('0'||hour, -2) || ':' || " +
-            "substr('0'||minute, -2) as time, lowFloor, modification, headsign from departures join "+
-            "timetables on(timetable_id = timetables.id) join lines on(line_id = lines.id) where "+
-            "stop_id = ? order by mode, time;", listOf(stopId).toTypedArray())
+                "substr('0'||minute, -2) as time, lowFloor, modification, headsign from departures join " +
+                "timetables on(timetable_id = timetables.id) join lines on(line_id = lines.id) where " +
+                "stop_id = ? order by mode, time;", listOf(stopId).toTypedArray())
         val departures = HashMap<String, ArrayList<Departure>>()
         departures.put("workdays", ArrayList())
         departures.put("saturdays", ArrayList())
@@ -66,9 +86,4 @@ class Timetable(var context: Context) {
         cursor.close()
         return departures
     }
-
-    init {
-        readDbFile()
-    }
-
 }

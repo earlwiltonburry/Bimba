@@ -18,8 +18,8 @@ import android.view.inputmethod.InputMethodManager
 
 
 class MainActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener {
-    lateinit var listener: MessageReceiver.OnTimetableDownloadListener
-    lateinit var receiver: MessageReceiver
+    val listener = this
+    val receiver  = MessageReceiver()
     lateinit var layout: View
     lateinit var timetable: Timetable
     var stops: ArrayList<StopSuggestion>? = null
@@ -31,11 +31,9 @@ class MainActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         layout = findViewById(R.id.main_layout)
         val context = this
-        listener = this
 
         val filter = IntentFilter("ml.adamsprogs.bimba.timetableDownloaded")
         filter.addCategory(Intent.CATEGORY_DEFAULT)
-        receiver = MessageReceiver()
         registerReceiver(receiver, filter)
         receiver.addOnTimetableDownloadListener(listener)
         startService(Intent(context, TimetableDownloader::class.java))
@@ -43,12 +41,6 @@ class MainActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         timetable = Timetable(this)
         stops = timetable.getStops()
         val searchView = findViewById(R.id.search_view) as FloatingSearchView
-
-        if (stops == null) {
-            //todo something more direct and create pull-to-refresh
-            Snackbar.make(layout, getString(R.string.no_timetable), Snackbar.LENGTH_LONG).show()
-            return
-        }
 
         searchView.setOnQueryChangeListener({ _, newQuery ->
             thread {
