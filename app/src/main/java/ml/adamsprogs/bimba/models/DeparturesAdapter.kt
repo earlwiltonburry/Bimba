@@ -27,28 +27,26 @@ class DeparturesAdapter(val context: Context, val departures: List<Departure>) :
             departureTime.add(Calendar.DAY_OF_MONTH, 1)
 
         val departureIn = (departureTime.timeInMillis - now.timeInMillis) / (1000 * 60)
-        val departureTimeShown: String
-        val timeString: Int
+        val timeString: String
 
-        if (departureIn > 60) {
-            timeString = R.string.departure_at
-            departureTimeShown = departure.time
-        } else {
-            timeString = R.string.departure_in
-            departureTimeShown = "$departureIn"
-        }
+        if (departureIn > 60 || departureIn < 0)
+            timeString = context.getString(R.string.departure_at, departure.time)
+        else if (departureIn > 0)
+            timeString = context.getString(R.string.departure_in, departureIn.toString())
+        else
+            timeString = context.getString(R.string.now)
 
         val line = holder?.lineTextView
         line?.text = departure.line
         val time = holder?.timeTextView
-        time?.text = context.getString(timeString, departureTimeShown)
+        time?.text = timeString
         val direction = holder?.directionTextView
         direction?.text = context.getString(R.string.departure_to, departure.direction)
         val icon = holder?.typeIcon
         if (departure.vm)
-            icon?.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_vm, null))
+            icon?.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_vm, context.theme))
         else
-            icon?.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_timetable, null))
+            icon?.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_timetable, context.theme))
     }
 
     override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolder {

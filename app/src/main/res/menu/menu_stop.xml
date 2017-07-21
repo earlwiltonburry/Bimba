@@ -6,6 +6,6 @@
         android:id="@+id/action_change_type"
         android:orderInCategory="100"
         android:title="@string/action_change_type"
-        android:icon="@drawable/ic_full_timetable"
+        android:icon="@drawable/ic_timetable_full"
         app:showAsAction="always" />
 </menu>
