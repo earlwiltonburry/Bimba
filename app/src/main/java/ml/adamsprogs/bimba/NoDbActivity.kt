@@ -11,6 +11,7 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
     val networkStateReceiver = NetworkStateReceiver()
     val timetableDownloadReceiver = MessageReceiver()
     var serviceRunning = false
+    var askedForNetwork = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,6 +23,7 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
         timetableDownloadReceiver.addOnTimetableDownloadListener(this)
 
         if (!isNetworkAvailable(this)) {
+            askedForNetwork = true
             (findViewById(R.id.noDbCaption) as TextView).text = getString(R.string.no_db_connect)
             filter = IntentFilter("android.net.conn.CONNECTIVITY_CHANGE")
             registerReceiver(networkStateReceiver, filter)
@@ -45,16 +47,22 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
             serviceRunning = false*/
     }
 
-    override fun onTimetableDownload() {
-        timetableDownloadReceiver.removeOnTimetableDownloadListener(this)
-        networkStateReceiver.removeOnConnectivityChangeListener(this)
-        startActivity(Intent(this, MainActivity::class.java))
-        finish()
+    override fun onTimetableDownload(result: String?) {
+        when (result) {
+            "downloaded" -> {
+                timetableDownloadReceiver.removeOnTimetableDownloadListener(this)
+                networkStateReceiver.removeOnConnectivityChangeListener(this)
+                startActivity(Intent(this, MainActivity::class.java))
+                finish()
+            }
+            else -> (findViewById(R.id.noDbCaption) as TextView).text = getString(R.string.error_try_later)
+        }
     }
 
     override fun onPause() {
         super.onPause()
         unregisterReceiver(timetableDownloadReceiver)
-        unregisterReceiver(networkStateReceiver)
+        if (askedForNetwork)
+            unregisterReceiver(networkStateReceiver)
     }
 }

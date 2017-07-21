@@ -11,8 +11,13 @@
     <string name="departure_in">In %1$s minutes</string>
     <string name="departure_to">→ %1$s</string>
     <string name="departure_at">At %1$s</string>
-    <string name="no_database_background">no database background</string>
+    <string name="no_database_background" translatable="false">no database background</string>
     <string name="no_db_connect">Connect to the Internet to download the timetable</string>
-    <string name="no_db_downloading">Timetable is being downloaded</string>
+    <string name="no_db_downloading">Timetable is being downloaded…</string>
     <string name="timetable_downloading">Downloading timetable</string>
+    <string name="search_placeholder">Search…</string>
+    <string name="no_connectivity">No connectivity – can’t update timetable</string>
+    <string name="timetable_up_to_date">Timetable is up-to-date</string>
+    <string name="validity_failed">Downloaded timetable is corrupted – can’t update</string>
+    <string name="error_try_later">Error. Try again later</string>
 </resources>

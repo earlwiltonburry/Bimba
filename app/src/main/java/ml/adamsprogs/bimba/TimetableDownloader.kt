@@ -23,8 +23,10 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
         if (intent != null) {
             notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val prefs = this.getSharedPreferences("ml.adamsprogs.bimba.prefs", Context.MODE_PRIVATE)!!
-            if (!isNetworkAvailable(this))
+            if (!isNetworkAvailable(this)) {
+                sendResult("no connectivity")
                 return
+            }
             val metadataUrl = URL("https://adamsprogs.ml/w/_media/programmes/bimba/timetable.db.meta")
             var httpCon = metadataUrl.openConnection() as HttpURLConnection
             if (httpCon.responseCode != HttpURLConnection.HTTP_OK)
@@ -35,8 +37,10 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
             val checksum = reader.readLine()
             size = Integer.parseInt(reader.readLine()) / 1024
             val currentLastModified = prefs.getString("timetableLastModified", "1979-10-12T00:00")
-            if (lastModified <= currentLastModified && !intent.getBooleanExtra("force", false))
+            if (lastModified <= currentLastModified && !intent.getBooleanExtra("force", false)) {
+                sendResult("up-to-date")
                 return
+            }
             Log.i("Downloader", "timetable is newer ($lastModified > $currentLastModified)")
 
             notify(0)
@@ -56,16 +60,22 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 val prefsEditor = prefs.edit()
                 prefsEditor.putString("timetableLastModified", lastModified)
                 prefsEditor.apply()
-                val broadcastIntent = Intent()
-                broadcastIntent.action = "ml.adamsprogs.bimba.timetableDownloaded"
-                broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT)
-                sendBroadcast(broadcastIntent)
+                sendResult("downloaded")
             } else {
                 Log.i("Downloader", "downloaded but is wrong")
+                sendResult("validity failed")
             }
 
             cancelNotification()
         }
+    }
+
+    private fun sendResult(result: String) {
+        val broadcastIntent = Intent()
+        broadcastIntent.action = "ml.adamsprogs.bimba.timetableDownloaded"
+        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT)
+        broadcastIntent.putExtra("result", result)
+        sendBroadcast(broadcastIntent)
     }
 
     private fun notify(progress: Int) {
@@ -100,7 +110,6 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 out.write(buf, 0, len)
                 lenSum += len.toFloat() / 1024.0f
                 notify(lenSum.toInt())
-                Log.i("Downloader", "downloading $len B: $lenSum KiB")
             }
             out.close()
         } catch (e: Exception) {

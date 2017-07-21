@@ -8,8 +8,9 @@ class MessageReceiver: BroadcastReceiver() {
     val onTimetableDownloadListeners: HashSet<OnTimetableDownloadListener> = HashSet()
 
     override fun onReceive(context: Context?, intent: Intent?) {
+        val result = intent?.getStringExtra("result")
         for (listener in onTimetableDownloadListeners) {
-            listener.onTimetableDownload()
+            listener.onTimetableDownload(result)
         }
     }
 
@@ -22,6 +23,6 @@ class MessageReceiver: BroadcastReceiver() {
     }
 
     interface OnTimetableDownloadListener {
-        fun onTimetableDownload()
+        fun onTimetableDownload(result: String?)
     }
 }

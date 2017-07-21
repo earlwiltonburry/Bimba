@@ -9,4 +9,12 @@
     <string name="departure_in">Za %1$s minut</string>
     <string name="departure_at">O %1$s</string>
     <string name="departure_to">→ %1$s</string>
+    <string name="no_db_connect">Połącz się z Internetem aby pobrać rozkład</string>
+    <string name="no_db_downloading">Pobieranie rozkładu…</string>
+    <string name="timetable_downloading">Pobieranie rozkładu…</string>
+    <string name="search_placeholder">Szukaj…</string>
+    <string name="timetable_up_to_date">Rozkład jest aktualny</string>
+    <string name="validity_failed">Pobrany rozkład jest uszkodzony – nie można zaktualizować</string>
+    <string name="no_connectivity">Brak połączenia z Internetem – nie można zaktualizować rozkładu</string>
+    <string name="error_try_later">Błąd. Spróbuj ponownie później</string>
 </resources>
