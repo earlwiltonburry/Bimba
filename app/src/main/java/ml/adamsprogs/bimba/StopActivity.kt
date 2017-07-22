@@ -25,6 +25,8 @@ class StopActivity : AppCompatActivity() { //todo refresh
     private var sectionsPagerAdapter: SectionsPagerAdapter? = null
     private var viewPager: ViewPager? = null
     private lateinit var timetable: Timetable
+    private val today = Calendar.getInstance()
+    private lateinit var tabLayout: TabLayout
 
     override fun onCreate(savedInstanceState: Bundle?) { //todo select current mode
         super.onCreate(savedInstanceState)
@@ -42,13 +44,15 @@ class StopActivity : AppCompatActivity() { //todo refresh
         supportActionBar?.title = timetable.getStopName(stopId) ?: "Stop"
 
         viewPager = findViewById(R.id.container) as ViewPager
-        val tabLayout = findViewById(R.id.tabs) as TabLayout
+        tabLayout = findViewById(R.id.tabs) as TabLayout
 
         sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, createDepartures())
 
         viewPager!!.adapter = sectionsPagerAdapter
         viewPager!!.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tabLayout))
         tabLayout.addOnTabSelectedListener(TabLayout.ViewPagerOnTabSelectedListener(viewPager))
+
+        selectTodayPage()
 
         val fab = findViewById(R.id.fab) as FloatingActionButton
         fab.setOnClickListener { view ->
@@ -58,7 +62,7 @@ class StopActivity : AppCompatActivity() { //todo refresh
         }
     }
 
-    fun createDepartures(): HashMap<String, ArrayList<Departure>> {
+    private fun createDepartures(): HashMap<String, ArrayList<Departure>> {
         val departures = timetable.getStopDepartures(stopId)
         val moreDepartures = timetable.getStopDepartures(stopId)
         val rolledDepartures = HashMap<String, ArrayList<Departure>>()
@@ -76,7 +80,7 @@ class StopActivity : AppCompatActivity() { //todo refresh
         return rolledDepartures
     }
 
-    fun filterDepartures(departures: List<Departure>?): ArrayList<Departure> {
+    private fun filterDepartures(departures: List<Departure>?): ArrayList<Departure> {
         val filtered = ArrayList<Departure>()
         val lines = HashMap<String, Int>()
         val now = Calendar.getInstance()
@@ -98,6 +102,13 @@ class StopActivity : AppCompatActivity() { //todo refresh
         return filtered
     }
 
+    private fun selectTodayPage() {
+        when (today.get(Calendar.DAY_OF_WEEK)) {
+            Calendar.SATURDAY -> tabLayout.getTabAt(1)?.select()
+            Calendar.SUNDAY -> tabLayout.getTabAt(2)?.select()
+            else -> tabLayout.getTabAt(0)?.select()
+        }
+    }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_stop, menu)
