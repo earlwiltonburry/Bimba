@@ -1,7 +1,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="ml.adamsprogs.bimba.StopActivity">
+    tools:context="ml.adamsprogs.bimba.activities.StopActivity">
     <item
         android:id="@+id/action_change_type"
         android:orderInCategory="100"

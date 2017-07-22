@@ -1,4 +1,4 @@
-package ml.adamsprogs.bimba
+package ml.adamsprogs.bimba.activities
 
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -10,10 +10,12 @@ class SplashActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if(Timetable(this).isDatabaseHealthy())
+        val timetable = Timetable(this)
+        if(timetable.isDatabaseHealthy())
             startActivity(Intent(this, MainActivity::class.java))
         else
             startActivity(Intent(this, NoDbActivity::class.java))
+        timetable.close()
         finish()
     }
 }

@@ -1,10 +1,11 @@
-package ml.adamsprogs.bimba
+package ml.adamsprogs.bimba.activities
 
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.content.IntentFilter
 import android.widget.TextView
+import ml.adamsprogs.bimba.*
 
 
 class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityChangeListener, MessageReceiver.OnTimetableDownloadListener {

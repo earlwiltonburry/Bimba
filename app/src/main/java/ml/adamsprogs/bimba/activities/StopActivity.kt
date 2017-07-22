@@ -1,5 +1,7 @@
-package ml.adamsprogs.bimba
+package ml.adamsprogs.bimba.activities
 
+import android.content.Intent
+import android.content.IntentFilter
 import android.support.design.widget.*
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.Toolbar
@@ -13,12 +15,15 @@ import android.view.*
 
 import ml.adamsprogs.bimba.models.*
 import android.support.v7.widget.*
+import ml.adamsprogs.bimba.MessageReceiver
+import ml.adamsprogs.bimba.R
+import ml.adamsprogs.bimba.VmClient
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 
-class StopActivity : AppCompatActivity() { //todo refresh
+class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
 
     private lateinit var stopId: String
     private var timetableType = "departure"
@@ -27,8 +32,12 @@ class StopActivity : AppCompatActivity() { //todo refresh
     private lateinit var timetable: Timetable
     private val today = Calendar.getInstance()
     private lateinit var tabLayout: TabLayout
+    private var timer = Timer()
+    private lateinit var timerTask:TimerTask
+    private val context = this
+    val receiver = MessageReceiver()
 
-    override fun onCreate(savedInstanceState: Bundle?) { //todo select current mode
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stop)
         stopId = intent.getStringExtra("stop")
@@ -36,23 +45,25 @@ class StopActivity : AppCompatActivity() { //todo refresh
         val toolbar = findViewById(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
 
-        /*todo when Internet connection
-        exists -> download vm
-        else -> timetable
-         */
+        createTimerTask()
+
+        prepareOnDownloadListener()
+
         timetable = Timetable(this)
         supportActionBar?.title = timetable.getStopName(stopId) ?: "Stop"
 
         viewPager = findViewById(R.id.container) as ViewPager
         tabLayout = findViewById(R.id.tabs) as TabLayout
 
-        sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, createDepartures())
+        sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, createDepartures(this, stopId))
 
         viewPager!!.adapter = sectionsPagerAdapter
         viewPager!!.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tabLayout))
         tabLayout.addOnTabSelectedListener(TabLayout.ViewPagerOnTabSelectedListener(viewPager))
 
         selectTodayPage()
+
+        scheduleRefresh()
 
         val fab = findViewById(R.id.fab) as FloatingActionButton
         fab.setOnClickListener { view ->
@@ -62,44 +73,26 @@ class StopActivity : AppCompatActivity() { //todo refresh
         }
     }
 
-    private fun createDepartures(): HashMap<String, ArrayList<Departure>> {
-        val departures = timetable.getStopDepartures(stopId)
-        val moreDepartures = timetable.getStopDepartures(stopId)
-        val rolledDepartures = HashMap<String, ArrayList<Departure>>()
-
-        for ((_, tomorrowDepartures) in moreDepartures!!) {
-            tomorrowDepartures.forEach{it.tomorrow = true}
-        }
-
-        for ((mode, _) in departures!!) {
-            rolledDepartures[mode] = (departures[mode] as ArrayList<Departure> +
-                    moreDepartures[mode] as ArrayList<Departure>) as ArrayList<Departure>
-            rolledDepartures[mode] = filterDepartures(rolledDepartures[mode])
-        }
-
-        return rolledDepartures
-    }
-
-    private fun filterDepartures(departures: List<Departure>?): ArrayList<Departure> {
-        val filtered = ArrayList<Departure>()
-        val lines = HashMap<String, Int>()
-        val now = Calendar.getInstance()
-        for (departure in departures!!) {
-            val time = Calendar.getInstance()
-            time.set(Calendar.HOUR_OF_DAY, Integer.parseInt(departure.time.split(":")[0]))
-            time.set(Calendar.MINUTE, Integer.parseInt(departure.time.split(":")[1]))
-            time.set(Calendar.SECOND, 0)
-            time.set(Calendar.MILLISECOND, 0)
-            if (departure.tomorrow)
-                time.add(Calendar.DAY_OF_MONTH, 1)
-            var lineExistedTimes = lines[departure.line]
-            if (now.before(time) && lineExistedTimes ?: 0 < 3) {
-                lineExistedTimes = (lineExistedTimes ?: 0) + 1
-                lines[departure.line] = lineExistedTimes
-                filtered.add(departure)
+    private fun createTimerTask() {
+        timerTask = object : TimerTask() {
+            override fun run() {
+                val vmIntent = Intent(context, VmClient::class.java)
+                vmIntent.putExtra("stopId", stopId)
+                startService(vmIntent)
             }
         }
-        return filtered
+    }
+
+    private fun prepareOnDownloadListener() {
+        val filter = IntentFilter("ml.adamsprogs.bimba.departuresCreated")
+        filter.addCategory(Intent.CATEGORY_DEFAULT)
+        registerReceiver(receiver, filter)
+        receiver.addOnVmListener(context as MessageReceiver.OnVmListener)
+    }
+
+    override fun onVm(departures: HashMap<String, ArrayList<Departure>>) {
+        sectionsPagerAdapter?.departures = departures
+        sectionsPagerAdapter?.notifyDataSetChanged()
     }
 
     private fun selectTodayPage() {
@@ -108,6 +101,13 @@ class StopActivity : AppCompatActivity() { //todo refresh
             Calendar.SUNDAY -> tabLayout.getTabAt(2)?.select()
             else -> tabLayout.getTabAt(0)?.select()
         }
+    }
+
+    private fun scheduleRefresh() {
+        timer.cancel()
+        timer = Timer()
+        createTimerTask()
+        timer.scheduleAtFixedRate(timerTask, 0, 15000)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -122,18 +122,30 @@ class StopActivity : AppCompatActivity() { //todo refresh
             if (timetableType == "departure") {
                 timetableType = "full"
                 item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_timetable_departure, this.theme))
-                sectionsPagerAdapter?.changeDepartures(timetable.getStopDepartures(stopId)!!)
+                sectionsPagerAdapter?.departures = timetable.getStopDepartures(stopId)!!
+                sectionsPagerAdapter?.relativeTime = false
                 sectionsPagerAdapter?.notifyDataSetChanged()
+                timer.cancel()
             } else {
                 timetableType = "departure"
                 item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_timetable_full, this.theme))
-                sectionsPagerAdapter?.changeDepartures(createDepartures())
+                sectionsPagerAdapter?.departures = createDepartures(this, stopId)
+                sectionsPagerAdapter?.relativeTime = true
                 sectionsPagerAdapter?.notifyDataSetChanged()
+                scheduleRefresh()
             }
             return true
         }
 
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        receiver.removeOnVmListener(context as MessageReceiver.OnVmListener)
+        unregisterReceiver(receiver)
+        timer.cancel()
+        timetable.close()
     }
 
     class PlaceholderFragment : Fragment() {
@@ -146,7 +158,8 @@ class StopActivity : AppCompatActivity() { //todo refresh
             val departuresList: RecyclerView = rootView.findViewById(R.id.departuresList) as RecyclerView
             val dividerItemDecoration = DividerItemDecoration(departuresList.context, layoutManager.orientation)
             departuresList.addItemDecoration(dividerItemDecoration)
-            val adapter = DeparturesAdapter(activity, arguments.getStringArrayList("departures").map { fromString(it) })
+            val adapter = DeparturesAdapter(activity, arguments.getStringArrayList("departures").map { fromString(it) },
+                    arguments["relativeTime"] as Boolean)
             departuresList.adapter = adapter
             departuresList.layoutManager = layoutManager
             return rootView
@@ -155,7 +168,8 @@ class StopActivity : AppCompatActivity() { //todo refresh
         companion object {
             private val ARG_SECTION_NUMBER = "section_number"
 
-            fun newInstance(sectionNumber: Int, stopId: String, departures: ArrayList<Departure>?): PlaceholderFragment {
+            fun newInstance(sectionNumber: Int, stopId: String, departures: ArrayList<Departure>?, relativeTime: Boolean):
+                    PlaceholderFragment {
                 val fragment = PlaceholderFragment()
                 val args = Bundle()
                 args.putInt(ARG_SECTION_NUMBER, sectionNumber)
@@ -163,6 +177,7 @@ class StopActivity : AppCompatActivity() { //todo refresh
                 val d = ArrayList<String>()
                 departures?.mapTo(d) { it.toString() }
                 args.putStringArrayList("departures", d)
+                args.putBoolean("relativeTime", relativeTime)
                 fragment.arguments = args
                 return fragment
             }
@@ -170,6 +185,8 @@ class StopActivity : AppCompatActivity() { //todo refresh
     }
 
     inner class SectionsPagerAdapter(fm: FragmentManager, var departures: HashMap<String, ArrayList<Departure>>) : FragmentStatePagerAdapter(fm) {
+
+        var relativeTime = true
 
         override fun getItemPosition(obj: Any?): Int {
             return PagerAdapter.POSITION_NONE
@@ -182,11 +199,7 @@ class StopActivity : AppCompatActivity() { //todo refresh
                 1 -> mode = "saturdays"
                 2 -> mode = "sundays"
             }
-            return PlaceholderFragment.newInstance(position + 1, stopId, departures[mode])
-        }
-
-        fun changeDepartures(departures: HashMap<String, ArrayList<Departure>>) {
-            this.departures = departures
+            return PlaceholderFragment.newInstance(position + 1, stopId, departures[mode], relativeTime)
         }
 
         override fun getCount() = 3

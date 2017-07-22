@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
     android:animateLayoutChanges="true"
-    tools:context="ml.adamsprogs.bimba.StopActivity">
+    tools:context="ml.adamsprogs.bimba.activities.StopActivity">
 
     <android.support.design.widget.AppBarLayout
         android:id="@+id/appbar"

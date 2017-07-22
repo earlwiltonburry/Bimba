@@ -86,4 +86,8 @@ class Timetable(var context: Context) {
         cursor.close()
         return departures
     }
+
+    fun close() {
+        db?.close()
+    }
 }

@@ -1,4 +1,4 @@
-package ml.adamsprogs.bimba
+package ml.adamsprogs.bimba.activities
 
 import android.content.Intent
 import android.content.IntentFilter
@@ -16,6 +16,9 @@ import android.content.Context
 import android.support.v4.widget.SwipeRefreshLayout
 import android.util.Log
 import android.view.inputmethod.InputMethodManager
+import ml.adamsprogs.bimba.MessageReceiver
+import ml.adamsprogs.bimba.R
+import ml.adamsprogs.bimba.TimetableDownloader
 
 
 class MainActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, SwipeRefreshLayout.OnRefreshListener {
@@ -111,6 +114,7 @@ class MainActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         super.onDestroy()
         receiver.removeOnTimetableDownloadListener(context as MessageReceiver.OnTimetableDownloadListener)
         unregisterReceiver(receiver)
+        timetable.close()
     }
 
     fun deAccent(str: String): String {
