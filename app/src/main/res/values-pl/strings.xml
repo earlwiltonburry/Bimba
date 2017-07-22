@@ -17,4 +17,5 @@
     <string name="validity_failed">Pobrany rozkład jest uszkodzony – nie można zaktualizować</string>
     <string name="no_connectivity">Brak połączenia z Internetem – nie można zaktualizować rozkładu</string>
     <string name="error_try_later">Błąd. Spróbuj ponownie później</string>
+    <string name="now">Teraz</string>
 </resources>
