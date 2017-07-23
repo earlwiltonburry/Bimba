@@ -35,6 +35,8 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
     implementation 'com.github.arimorty:floatingsearchview:2.1.1'
     implementation 'org.tukaani:xz:1.6'
+    implementation 'com.google.code.gson:gson:2.8.1'
+    implementation 'com.squareup.okhttp3:okhttp:3.8.1'
 }
 repositories {
     maven {

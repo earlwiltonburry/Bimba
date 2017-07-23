@@ -26,6 +26,7 @@ import kotlin.collections.HashMap
 class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
 
     private lateinit var stopId: String
+    private lateinit var stopSymbol: String
     private var timetableType = "departure"
     private var sectionsPagerAdapter: SectionsPagerAdapter? = null
     private var viewPager: ViewPager? = null
@@ -40,7 +41,8 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stop)
-        stopId = intent.getStringExtra("stop")
+        stopId = intent.getStringExtra("stopId")
+        stopSymbol = intent.getStringExtra("stopSymbol")
 
         val toolbar = findViewById(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
@@ -78,6 +80,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
             override fun run() {
                 val vmIntent = Intent(context, VmClient::class.java)
                 vmIntent.putExtra("stopId", stopId)
+                vmIntent.putExtra("stopSymbol", stopSymbol)
                 startService(vmIntent)
             }
         }

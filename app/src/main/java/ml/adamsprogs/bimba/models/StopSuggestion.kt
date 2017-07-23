@@ -4,10 +4,10 @@ import android.os.Parcel
 import android.os.Parcelable
 import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
 
-class StopSuggestion(text: String, val id: String) : SearchSuggestion {
+class StopSuggestion(text: String, val id: String, val symbol: String) : SearchSuggestion {
     private val body: String = text
 
-    constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString())
+    constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString())
 
     override fun describeContents(): Int {
         TODO("not implemented")
@@ -16,6 +16,7 @@ class StopSuggestion(text: String, val id: String) : SearchSuggestion {
     override fun writeToParcel(dest: Parcel?, flags: Int) {
         dest?.writeString(body)
         dest?.writeString(id)
+        dest?.writeString(symbol)
     }
 
     override fun getBody(): String {

@@ -42,10 +42,10 @@ class Timetable(var context: Context) {
         val stops = ArrayList<StopSuggestion>()
         var cursor : Cursor? = null
         try {
-            cursor = db!!.rawQuery("select name ||char(10)|| headsigns as suggestion, id from stops" +
+            cursor = db!!.rawQuery("select name ||char(10)|| headsigns as suggestion, id, stops.symbol || number as stopSymbol from stops" +
                     " join nodes on(stops.symbol = nodes.symbol) order by name, id;", null)
             while (cursor.moveToNext())
-                stops.add(StopSuggestion(cursor.getString(0), cursor.getString(1)))
+                stops.add(StopSuggestion(cursor.getString(0), cursor.getString(1), cursor.getString(2)))
         }catch (e: SQLiteDatabaseCorruptException) {
             cursor?.close()
             return null

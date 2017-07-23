@@ -24,7 +24,7 @@ fun filterDepartures(departures: List<Departure>?): ArrayList<Departure> {
         if (departure.tomorrow)
             time.add(Calendar.DAY_OF_MONTH, 1)
         var lineExistedTimes = lines[departure.line]
-        if (now.before(time) && lineExistedTimes ?: 0 < 3) {
+        if ((now.before(time) || now == time) && lineExistedTimes ?: 0 < 3) {
             lineExistedTimes = (lineExistedTimes ?: 0) + 1
             lines[departure.line] = lineExistedTimes
             filtered.add(departure)
@@ -74,7 +74,7 @@ class DeparturesAdapter(val context: Context, val departures: List<Departure>, v
 
         if (departureIn > 60 || departureIn < 0 || !relativeTime)
             timeString = context.getString(R.string.departure_at, departure.time)
-        else if (departureIn > 0)
+        else if (departureIn > 0 && !departure.onStop)
             timeString = context.getString(R.string.departure_in, departureIn.toString())
         else
             timeString = context.getString(R.string.now)

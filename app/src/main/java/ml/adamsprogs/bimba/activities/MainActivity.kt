@@ -58,7 +58,8 @@ class MainActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 }
                 imm.hideSoftInputFromWindow(view.windowToken, 0)
                 intent = Intent(context, StopActivity::class.java)
-                intent.putExtra("stop", (searchSuggestion as StopSuggestion).id)
+                intent.putExtra("stopId", (searchSuggestion as StopSuggestion).id)
+                intent.putExtra("stopSymbol", (searchSuggestion as StopSuggestion).symbol)
                 startActivity(intent)
             }
 
