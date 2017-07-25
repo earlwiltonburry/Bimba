@@ -87,6 +87,20 @@ class Timetable(var context: Context) {
         return departures
     }
 
+    fun getLines(stopId: String?): ArrayList<String>? {
+        if (db == null)
+            return null
+        val cursor = db!!.rawQuery(" select distinct line_id from timetables join " +
+                "stops on(stop_id = stops.id) where stops.id = ?;",
+                listOf(stopId).toTypedArray())
+        val lines = ArrayList<String>()
+        while (cursor.moveToNext()) {
+            lines.add(cursor.getString(1))
+        }
+        cursor.close()
+        return lines
+    }
+
     fun close() {
         db?.close()
     }

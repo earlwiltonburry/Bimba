@@ -1,26 +1,21 @@
 package ml.adamsprogs.bimba.activities
 
-import android.content.Intent
-import android.content.IntentFilter
+import java.util.*
+import kotlin.collections.*
+
+import android.content.*
+import android.os.Bundle
+import android.view.*
 import android.support.design.widget.*
 import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.Toolbar
-
+import android.support.v7.widget.*
 import android.support.v4.app.*
-import android.support.v4.view.ViewPager
-import android.os.Bundle
+import android.support.v4.view.*
 import android.support.v4.content.res.ResourcesCompat
-import android.support.v4.view.PagerAdapter
-import android.view.*
+import com.google.gson.Gson
 
 import ml.adamsprogs.bimba.models.*
-import android.support.v7.widget.*
-import ml.adamsprogs.bimba.MessageReceiver
-import ml.adamsprogs.bimba.R
-import ml.adamsprogs.bimba.VmClient
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
+import ml.adamsprogs.bimba.*
 
 
 class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
@@ -34,9 +29,10 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
     private val today = Calendar.getInstance()
     private lateinit var tabLayout: TabLayout
     private var timer = Timer()
-    private lateinit var timerTask:TimerTask
+    private lateinit var timerTask: TimerTask
     private val context = this
-    val receiver = MessageReceiver()
+    private val receiver = MessageReceiver()
+    private lateinit var sharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +42,8 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
 
         val toolbar = findViewById(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
+
+        sharedPreferences = this.getSharedPreferences("ml.adamsprogs.bimba.prefs", Context.MODE_PRIVATE)
 
         createTimerTask()
 
@@ -68,10 +66,22 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         scheduleRefresh()
 
         val fab = findViewById(R.id.fab) as FloatingActionButton
-        fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show()
-            //todo favourites
+        fab.setOnClickListener {
+            var favouritesString = sharedPreferences.getString("favourites", "{}")
+            @Suppress("UNCHECKED_CAST")
+            val favourites = Gson().fromJson(favouritesString, HashMap::class.java) as HashMap<String, ArrayList<HashMap<String,String>>>
+            if (favourites[stopSymbol] == null) {
+                val items = ArrayList<HashMap<String, String>>()
+                timetable.getLines(stopId)?.forEach {items.add(mapOf("stop" to stopId, "line" to it) as HashMap<String, String>)}
+                favourites[stopSymbol] = items
+                favouritesString = Gson().toJson(favourites)
+                val editor = sharedPreferences.edit()
+                editor.putString("favourites", favouritesString)
+                editor.apply()
+            } else {
+                Snackbar.make(it, getString(R.string.stop_already_fav), Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show()
+            }
         }
     }
 
