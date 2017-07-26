@@ -5,6 +5,7 @@ import android.content.Intent
 import ml.adamsprogs.bimba.models.*
 import okhttp3.*
 import com.google.gson.Gson
+import java.io.IOException
 import java.util.*
 
 
@@ -29,8 +30,13 @@ class VmClient : IntentService("VmClient") {
                         .url(url)
                         .post(formBody)
                         .build()
-                val response = client.newCall(request).execute()
-                val responseBody = response.body()?.string()
+                val responseBody : String?
+                try {
+                    responseBody = client.newCall(request).execute().body()?.string()
+                } catch(e: IOException) {
+                    sendResult(departures)
+                    return
+                }
                 val javaRootMapObject = Gson().fromJson(responseBody, HashMap::class.java)
                 val times = (javaRootMapObject["success"] as Map<*, *>)["times"] as List<*>
                 val date = Calendar.getInstance()
