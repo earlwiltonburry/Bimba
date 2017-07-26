@@ -56,7 +56,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 Log.i("Downloader", "downloaded")
                 val oldFile = File(this.filesDir, "timetable.db")
                 oldFile.delete()
-                file.renameTo(File("timetable.db"))
+                file.renameTo(oldFile)
                 val prefsEditor = prefs.edit()
                 prefsEditor.putString("timetableLastModified", lastModified)
                 prefsEditor.apply()

@@ -25,7 +25,7 @@ class Timetable(var context: Context) {
 
     private fun readDbFile() {
         try {
-            db = SQLiteDatabase.openDatabase(File(context.filesDir, "new_timetable.db").path,
+            db = SQLiteDatabase.openDatabase(File(context.filesDir, "timetable.db").path,
                     null, SQLiteDatabase.OPEN_READONLY)
         } catch(e: SQLiteCantOpenDatabaseException) {
             Log.e("Timetable", "Cannot open database")
