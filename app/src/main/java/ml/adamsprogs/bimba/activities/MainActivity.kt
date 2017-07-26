@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         searchView.setOnQueryChangeListener({ _, newQuery ->
             thread {
-                val newStops = stops!!.filter { deAccent(it.body.split("\n")[0]).contains(newQuery, true) }
+                val newStops = stops!!.filter { deAccent(it.body.split("\n")[0]).contains(deAccent(newQuery), true) }
                 runOnUiThread { searchView.swapSuggestions(newStops) }
             }
         })
