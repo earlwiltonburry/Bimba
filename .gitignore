@@ -43,3 +43,11 @@ captures/
 .DS_Store
 /captures
 .externalNativeBuild
+
+app/release/
+research/cron
+research/peka-vm-api.md
+research/svg/
+research/timetable/
+research/timetable.db
+research/timetable.db-journal
