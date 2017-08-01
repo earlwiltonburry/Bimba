@@ -96,8 +96,8 @@ class DeparturesAdapter(val context: Context, val departures: List<Departure>, v
         val context = parent?.context
         val inflater = LayoutInflater.from(context)
 
-        val contactView = inflater.inflate(R.layout.departure_row, parent, false)
-        val viewHolder = ViewHolder(contactView)
+        val rowView = inflater.inflate(R.layout.row_departure, parent, false)
+        val viewHolder = ViewHolder(rowView)
         return viewHolder
     }
 

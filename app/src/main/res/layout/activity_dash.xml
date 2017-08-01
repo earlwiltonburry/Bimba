@@ -5,7 +5,7 @@
     android:id="@+id/swipeRefreshLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="ml.adamsprogs.bimba.activities.MainActivity">
+    tools:context="ml.adamsprogs.bimba.activities.DashActivity">
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/main_layout"

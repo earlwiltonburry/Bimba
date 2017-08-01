@@ -1,7 +1,6 @@
 package ml.adamsprogs.bimba.activities
 
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
 import android.os.*
 import android.support.design.widget.Snackbar
 import android.support.v7.app.*
@@ -12,25 +11,27 @@ import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
 import ml.adamsprogs.bimba.models.*
 import kotlin.concurrent.thread
 import android.app.Activity
-import android.content.Context
-import android.support.v4.widget.SwipeRefreshLayout
+import android.support.v4.widget.*
+import android.support.v7.widget.*
 import android.util.Log
 import android.view.inputmethod.InputMethodManager
-import ml.adamsprogs.bimba.MessageReceiver
-import ml.adamsprogs.bimba.R
-import ml.adamsprogs.bimba.TimetableDownloader
+import com.google.gson.Gson
+import com.google.gson.JsonObject
+import ml.adamsprogs.bimba.*
 
-
-class MainActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, SwipeRefreshLayout.OnRefreshListener {
+//todo refresh every 15s
+class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, SwipeRefreshLayout.OnRefreshListener {
     val context: Context = this
     val receiver = MessageReceiver()
     lateinit var timetable: Timetable
     var stops: ArrayList<StopSuggestion>? = null
     lateinit var swipeRefreshLayout: SwipeRefreshLayout
+    lateinit var favouritesList: RecyclerView
+    lateinit var searchView: FloatingSearchView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_dash)
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO)
 
         prepareSwipeLayout()
@@ -40,9 +41,25 @@ class MainActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         getStops()
 
-        val searchView = findViewById(R.id.search_view) as FloatingSearchView
+        prepareFavourites()
 
-        searchView.setOnQueryChangeListener({ _, newQuery ->
+        searchView = findViewById(R.id.search_view) as FloatingSearchView
+
+        searchView.setOnFocusChangeListener(object : FloatingSearchView.OnFocusChangeListener {
+            override fun onFocus() {
+                swipeRefreshLayout.isEnabled = false
+                favouritesList.visibility = View.GONE
+            }
+
+            override fun onFocusCleared() {
+                swipeRefreshLayout.isEnabled = true
+                favouritesList.visibility = View.VISIBLE
+            }
+        })
+
+        searchView.setOnQueryChangeListener({ oldQuery, newQuery ->
+            if (oldQuery != "" && newQuery == "")
+                searchView.clearSuggestions()
             thread {
                 val newStops = stops!!.filter { deAccent(it.body.split("\n")[0]).contains(deAccent(newQuery), true) }
                 runOnUiThread { searchView.swapSuggestions(newStops) }
@@ -52,7 +69,7 @@ class MainActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         searchView.setOnSearchListener(object : FloatingSearchView.OnSearchListener {
             override fun onSuggestionClicked(searchSuggestion: SearchSuggestion) {
                 val imm = context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
-                var view = (context as MainActivity).currentFocus
+                var view = (context as DashActivity).currentFocus
                 if (view == null) {
                     view = View(context)
                 }
@@ -82,6 +99,31 @@ class MainActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         //todo searchView.attachNavigationDrawerToMenuButton(mDrawerLayout)
     }
 
+    private fun prepareFavourites() {
+        val layoutManager = LinearLayoutManager(context)
+        favouritesList = findViewById(R.id.favouritesList) as RecyclerView
+        favouritesList.adapter = FavouritesAdapter(context, getFavourites())
+        favouritesList.layoutManager = layoutManager
+    }
+
+    private fun getFavourites(): ArrayList<Favourite> {
+        val preferences = context.getSharedPreferences("ml.adamsprogs.bimba.prefs", Context.MODE_PRIVATE)
+        val favouritesString = preferences.getString("favourites", "{}")
+        val favouritesMap = Gson().fromJson(favouritesString, JsonObject::class.java)
+        val favourites = ArrayList<Favourite>()
+        for ((name, jsonTimetables) in favouritesMap.entrySet()) {
+            val timetables = ArrayList<HashMap<String, String>>()
+            for (jsonTimetable in jsonTimetables.asJsonArray) {
+                val timetable = HashMap<String, String>()
+                timetable["stop"] = jsonTimetable.asJsonObject["stop"].asString
+                timetable["line"] = jsonTimetable.asJsonObject["line"].asString
+                timetables.add(timetable)
+            }
+            favourites.add(Favourite(name, timetables, context))
+        }
+        return favourites
+    }
+
     private fun getStops() {
         timetable = Timetable(this)
         stops = timetable.getStops()
@@ -109,6 +151,18 @@ class MainActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         swipeRefreshLayout.isRefreshing = true
         Log.i("Refresh", "Downloading")
         startDownloaderService()
+    }
+
+    override fun onBackPressed() {
+        if (!searchView.setSearchFocused(false)) {
+            super.onBackPressed()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        favouritesList.adapter = FavouritesAdapter(context, getFavourites())
+        favouritesList.adapter.notifyDataSetChanged()
     }
 
     override fun onDestroy() {

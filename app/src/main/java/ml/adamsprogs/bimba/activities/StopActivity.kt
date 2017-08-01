@@ -12,7 +12,7 @@ import android.support.v7.widget.*
 import android.support.v4.app.*
 import android.support.v4.view.*
 import android.support.v4.content.res.ResourcesCompat
-import com.google.gson.Gson
+import com.google.gson.*
 
 import ml.adamsprogs.bimba.models.*
 import ml.adamsprogs.bimba.*
@@ -66,15 +66,24 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         scheduleRefresh()
 
         val fab = findViewById(R.id.fab) as FloatingActionButton
+
+        var favourites = Gson().fromJson(sharedPreferences.getString("favourites", "{}"), JsonObject::class.java)
+        if (favourites[stopSymbol] == null) {
+            fab.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_favourite_empty, this.theme))
+        }
+
         fab.setOnClickListener {
-            var favouritesString = sharedPreferences.getString("favourites", "{}")
-            @Suppress("UNCHECKED_CAST")
-            val favourites = Gson().fromJson(favouritesString, HashMap::class.java) as HashMap<String, ArrayList<HashMap<String,String>>>
+            favourites = Gson().fromJson(sharedPreferences.getString("favourites", "{}"), JsonObject::class.java)
             if (favourites[stopSymbol] == null) {
-                val items = ArrayList<HashMap<String, String>>()
-                timetable.getLines(stopId)?.forEach {items.add(mapOf("stop" to stopId, "line" to it) as HashMap<String, String>)}
-                favourites[stopSymbol] = items
-                favouritesString = Gson().toJson(favourites)
+                val items = JsonArray()
+                timetable.getLines(stopId)?.forEach {
+                    val o = JsonObject()
+                    o.addProperty("stop", stopId)
+                    o.addProperty("line", it)
+                    items.add(o)
+                }
+                favourites.add(stopSymbol,items)
+                val favouritesString = Gson().toJson(favourites)
                 val editor = sharedPreferences.edit()
                 editor.putString("favourites", favouritesString)
                 editor.apply()

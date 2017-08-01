@@ -12,7 +12,7 @@ class SplashActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         val timetable = Timetable(this)
         if(timetable.isDatabaseHealthy())
-            startActivity(Intent(this, MainActivity::class.java))
+            startActivity(Intent(this, DashActivity::class.java))
         else
             startActivity(Intent(this, NoDbActivity::class.java))
         timetable.close()

@@ -10,6 +10,7 @@
     <string name="departure_type_icon_description" translatable="false">departure type (timetable, VM)</string>
     <string name="departure_in">In %1$s minutes</string>
     <string name="departure_to">→ %1$s</string>
+    <string name="departure_to_line">%1$s → %2$s</string>
     <string name="departure_at">At %1$s</string>
     <string name="no_database_background" translatable="false">no database background</string>
     <string name="no_db_connect">Connect to the Internet to download the timetable</string>
@@ -22,4 +23,7 @@
     <string name="error_try_later">Error. Try again later</string>
     <string name="now">Now</string>
     <string name="stop_already_fav">This stop is already in favourites</string>
+    <string name="favourite_row_more_button" translatable="false">favourite row more button</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_delete">Delete</string>
 </resources>

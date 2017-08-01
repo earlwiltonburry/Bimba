@@ -67,13 +67,18 @@ class Timetable(var context: Context) {
         return name
     }
 
-    fun getStopDepartures(stopId: String): HashMap<String, ArrayList<Departure>>? {
+    fun getStopDepartures(stopId: String, lineId: String? = null): HashMap<String, ArrayList<Departure>>? {
         if (db == null)
             return null
+        val andLine:String
+        if (lineId == null)
+            andLine = ""
+        else
+            andLine = "and line_id = '$lineId'"
         val cursor = db!!.rawQuery("select lines.number, mode, substr('0'||hour, -2) || ':' || " +
                 "substr('0'||minute, -2) as time, lowFloor, modification, headsign from departures join " +
                 "timetables on(timetable_id = timetables.id) join lines on(line_id = lines.id) where " +
-                "stop_id = ? order by mode, time;", listOf(stopId).toTypedArray())
+                "stop_id = ? $andLine order by mode, time;", listOf(stopId).toTypedArray())
         val departures = HashMap<String, ArrayList<Departure>>()
         departures.put("workdays", ArrayList())
         departures.put("saturdays", ArrayList())
@@ -95,7 +100,7 @@ class Timetable(var context: Context) {
                 listOf(stopId).toTypedArray())
         val lines = ArrayList<String>()
         while (cursor.moveToNext()) {
-            lines.add(cursor.getString(1))
+            lines.add(cursor.getString(0))
         }
         cursor.close()
         return lines

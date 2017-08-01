@@ -19,4 +19,7 @@
     <string name="error_try_later">Błąd. Spróbuj ponownie później</string>
     <string name="now">Teraz</string>
     <string name="stop_already_fav">Ten przystanek już jest pośród ulubionych</string>
+    <string name="departure_to_line">%1$s → %2$s</string>
+    <string name="action_delete">Usuń</string>
+    <string name="action_edit">Edytuj</string>
 </resources>

@@ -53,7 +53,7 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
             "downloaded" -> {
                 timetableDownloadReceiver.removeOnTimetableDownloadListener(this)
                 networkStateReceiver.removeOnConnectivityChangeListener(this)
-                startActivity(Intent(this, MainActivity::class.java))
+                startActivity(Intent(this, DashActivity::class.java))
                 finish()
             }
             else -> (findViewById(R.id.noDbCaption) as TextView).text = getString(R.string.error_try_later)
