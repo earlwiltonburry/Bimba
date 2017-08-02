@@ -15,7 +15,6 @@
         android:layout_marginEnd="16dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
-        android:gravity="center"
         android:text=""
         android:textAlignment="viewStart"
         android:textAppearance="@style/TextAppearance.AppCompat"
@@ -36,7 +35,8 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_delete"
         tools:layout_editor_absoluteX="335dp"
-        tools:layout_editor_absoluteY="16dp" />
+        tools:layout_editor_absoluteY="16dp"
+        android:contentDescription="@string/favourite_element_delete_button" />
 
     <ImageView
         android:id="@+id/favourite_edit_split"
@@ -50,5 +50,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_split"
         tools:layout_editor_absoluteX="302dp"
-        tools:layout_editor_absoluteY="16dp" />
+        tools:layout_editor_absoluteY="16dp"
+        android:contentDescription="@string/favourite_element_split_button" />
 </android.support.constraint.ConstraintLayout>
