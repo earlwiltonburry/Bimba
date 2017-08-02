@@ -26,4 +26,8 @@
     <string name="favourite_row_more_button" translatable="false">favourite row more button</string>
     <string name="action_edit">Edit</string>
     <string name="action_delete">Delete</string>
+    <string name="done">Done</string>
+    <string name="favourite_edit">Edit favourite</string>
+    <string name="favourite_name">Favourite name</string>
+    <string name="edit_favourite_title">Edit ‘%1$s’</string>
 </resources>

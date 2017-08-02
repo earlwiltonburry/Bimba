@@ -33,8 +33,8 @@ fun filterDepartures(departures: List<Departure>?): ArrayList<Departure> {
     return filtered
 }
 
-fun createDepartures(context: Context, stopId: String): HashMap<String, ArrayList<Departure>> {
-    val timetable = Timetable(context)
+fun createDepartures(stopId: String): HashMap<String, ArrayList<Departure>> {
+    val timetable = getTimetable()
     val departures = timetable.getStopDepartures(stopId)
     val moreDepartures = timetable.getStopDepartures(stopId)
     val rolledDepartures = HashMap<String, ArrayList<Departure>>()
@@ -48,8 +48,6 @@ fun createDepartures(context: Context, stopId: String): HashMap<String, ArrayLis
                 moreDepartures[mode] as ArrayList<Departure>) as ArrayList<Departure>
         rolledDepartures[mode] = filterDepartures(rolledDepartures[mode])
     }
-
-    timetable.close()
 
     return rolledDepartures
 }

@@ -22,4 +22,6 @@
     <string name="departure_to_line">%1$s → %2$s</string>
     <string name="action_delete">Usuń</string>
     <string name="action_edit">Edytuj</string>
+    <string name="done">Zakończ</string>
+    <string name="favourite_edit">Edytuj ulubiony</string>
 </resources>

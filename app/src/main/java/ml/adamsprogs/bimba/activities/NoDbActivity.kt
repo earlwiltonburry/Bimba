@@ -17,8 +17,7 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_nodb)
-        var filter: IntentFilter
-        filter = IntentFilter("ml.adamsprogs.bimba.timetableDownloaded")
+        var filter: IntentFilter = IntentFilter("ml.adamsprogs.bimba.timetableDownloaded")
         filter.addCategory(Intent.CATEGORY_DEFAULT)
         registerReceiver(timetableDownloadReceiver, filter)
         timetableDownloadReceiver.addOnTimetableDownloadListener(this)
@@ -30,6 +29,21 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
             registerReceiver(networkStateReceiver, filter)
             networkStateReceiver.addOnConnectivityChangeListener(this)
         } else
+            downloadTimetable()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        var filter: IntentFilter = IntentFilter("ml.adamsprogs.bimba.timetableDownloaded")
+        filter.addCategory(Intent.CATEGORY_DEFAULT)
+        registerReceiver(timetableDownloadReceiver, filter)
+        if (!isNetworkAvailable(this)) {
+            askedForNetwork = true
+            (findViewById(R.id.noDbCaption) as TextView).text = getString(R.string.no_db_connect)
+            filter = IntentFilter("android.net.conn.CONNECTIVITY_CHANGE")
+            registerReceiver(networkStateReceiver, filter)
+            networkStateReceiver.addOnConnectivityChangeListener(this)
+        } else if (!serviceRunning)
             downloadTimetable()
     }
 

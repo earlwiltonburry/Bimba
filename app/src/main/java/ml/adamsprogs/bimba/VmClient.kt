@@ -15,10 +15,10 @@ class VmClient : IntentService("VmClient") {
         if (intent != null) {
             val stopId = intent.getStringExtra("stopId")
             if (!isNetworkAvailable(this)) {
-                sendResult(createDepartures(this, stopId))
+                sendResult(createDepartures(stopId))
             } else {
                 val stopSymbol = intent.getStringExtra("stopSymbol")
-                val departures = createDepartures(this, stopId)
+                val departures = createDepartures(stopId)
 
                 val client = OkHttpClient()
                 val url = "http://www.peka.poznan.pl/vm/method.vm?ts=${Calendar.getInstance().timeInMillis}"

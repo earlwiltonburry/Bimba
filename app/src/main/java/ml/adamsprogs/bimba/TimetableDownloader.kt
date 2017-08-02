@@ -27,7 +27,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 sendResult("no connectivity")
                 return
             }
-            val metadataUrl = URL("https://adamsprogs.ml/w/_media/programmes/bimba/timetable.db.meta")
+            val metadataUrl = URL("https://adamsprogs.ml/w/_media/programmes/bimba/timetable.meta")
             var httpCon = metadataUrl.openConnection() as HttpURLConnection
             if (httpCon.responseCode != HttpURLConnection.HTTP_OK)
                 throw Exception("Failed to connect")
@@ -36,7 +36,13 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
             val lastModified = reader.readLine()
             val checksum = reader.readLine()
             size = Integer.parseInt(reader.readLine()) / 1024
-            val currentLastModified = prefs.getString("timetableLastModified", "1979-10-12T00:00")
+            val dbVersion = reader.readLine()
+            if (Integer.parseInt(dbVersion.split(".")[0]) > 1) { //todo version to const
+                sendResult("version mismatch")
+                return
+            }
+            val dbFilename = reader.readLine()
+            val currentLastModified = prefs.getString("timetableLastModified", "19791012")
             if (lastModified <= currentLastModified && !intent.getBooleanExtra("force", false)) {
                 sendResult("up-to-date")
                 return
@@ -45,7 +51,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
 
             notify(0)
 
-            val xzDbUrl = URL("https://adamsprogs.ml/w/_media/programmes/bimba/timetable.db.xz")
+            val xzDbUrl = URL("https://adamsprogs.ml/w/_media/programmes/bimba/$dbFilename")
             httpCon = xzDbUrl.openConnection() as HttpURLConnection
             if (httpCon.responseCode != HttpURLConnection.HTTP_OK)
                 throw Exception("Failed to connect")

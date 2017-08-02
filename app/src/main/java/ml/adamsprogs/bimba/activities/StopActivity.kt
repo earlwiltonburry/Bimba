@@ -12,7 +12,7 @@ import android.support.v7.widget.*
 import android.support.v4.app.*
 import android.support.v4.view.*
 import android.support.v4.content.res.ResourcesCompat
-import com.google.gson.*
+import android.util.Log
 
 import ml.adamsprogs.bimba.models.*
 import ml.adamsprogs.bimba.*
@@ -49,13 +49,13 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
 
         prepareOnDownloadListener()
 
-        timetable = Timetable(this)
+        timetable = getTimetable()
         supportActionBar?.title = timetable.getStopName(stopId) ?: "Stop"
 
         viewPager = findViewById(R.id.container) as ViewPager
         tabLayout = findViewById(R.id.tabs) as TabLayout
 
-        sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, createDepartures(this, stopId))
+        sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, createDepartures(stopId))
 
         viewPager!!.adapter = sectionsPagerAdapter
         viewPager!!.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tabLayout))
@@ -67,26 +67,26 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
 
         val fab = findViewById(R.id.fab) as FloatingActionButton
 
-        var favourites = Gson().fromJson(sharedPreferences.getString("favourites", "{}"), JsonObject::class.java)
-        if (favourites[stopSymbol] == null) {
+        val favourites = FavouriteStorage(context)
+        if (!favourites.has(stopSymbol)) {
             fab.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_favourite_empty, this.theme))
         }
 
         fab.setOnClickListener {
-            favourites = Gson().fromJson(sharedPreferences.getString("favourites", "{}"), JsonObject::class.java)
-            if (favourites[stopSymbol] == null) {
-                val items = JsonArray()
+            Log.i("FAB", "Click")
+            if (!favourites.has(stopSymbol)) {
+                Log.i("FAB", "Add")
+                val items = ArrayList<HashMap<String, String>>()
                 timetable.getLines(stopId)?.forEach {
-                    val o = JsonObject()
-                    o.addProperty("stop", stopId)
-                    o.addProperty("line", it)
+                    val o = HashMap<String, String>()
+                    o["stop"] = stopId
+                    o["line"] = it
                     items.add(o)
                 }
-                favourites.add(stopSymbol,items)
-                val favouritesString = Gson().toJson(favourites)
-                val editor = sharedPreferences.edit()
-                editor.putString("favourites", favouritesString)
-                editor.apply()
+                Log.i("FAB", "Say")
+                favourites.add(stopSymbol, items)
+                Log.i("FAB", "Change")
+                fab.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_favourite, this.theme))
             } else {
                 Snackbar.make(it, getString(R.string.stop_already_fav), Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show()
@@ -151,7 +151,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
             } else {
                 timetableType = "departure"
                 item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_timetable_full, this.theme))
-                sectionsPagerAdapter?.departures = createDepartures(this, stopId)
+                sectionsPagerAdapter?.departures = createDepartures(stopId)
                 sectionsPagerAdapter?.relativeTime = true
                 sectionsPagerAdapter?.notifyDataSetChanged()
                 scheduleRefresh()
@@ -167,7 +167,6 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         receiver.removeOnVmListener(context as MessageReceiver.OnVmListener)
         unregisterReceiver(receiver)
         timer.cancel()
-        timetable.close()
     }
 
     class PlaceholderFragment : Fragment() {

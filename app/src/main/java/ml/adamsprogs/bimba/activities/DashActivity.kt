@@ -15,12 +15,10 @@ import android.support.v4.widget.*
 import android.support.v7.widget.*
 import android.util.Log
 import android.view.inputmethod.InputMethodManager
-import com.google.gson.Gson
-import com.google.gson.JsonObject
 import ml.adamsprogs.bimba.*
 
 //todo refresh every 15s
-class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, SwipeRefreshLayout.OnRefreshListener {
+class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, SwipeRefreshLayout.OnRefreshListener, FavouritesAdapter.OnMenuItemClickListener {
     val context: Context = this
     val receiver = MessageReceiver()
     lateinit var timetable: Timetable
@@ -28,6 +26,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     lateinit var swipeRefreshLayout: SwipeRefreshLayout
     lateinit var favouritesList: RecyclerView
     lateinit var searchView: FloatingSearchView
+    lateinit var favourites: FavouriteStorage
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,6 +48,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             override fun onFocus() {
                 swipeRefreshLayout.isEnabled = false
                 favouritesList.visibility = View.GONE
+                //todo show suggestions
             }
 
             override fun onFocusCleared() {
@@ -100,32 +100,15 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun prepareFavourites() {
+        favourites = FavouriteStorage(context)
         val layoutManager = LinearLayoutManager(context)
         favouritesList = findViewById(R.id.favouritesList) as RecyclerView
-        favouritesList.adapter = FavouritesAdapter(context, getFavourites())
+        favouritesList.adapter = FavouritesAdapter(context, favourites.favouritesList, this)
         favouritesList.layoutManager = layoutManager
     }
 
-    private fun getFavourites(): ArrayList<Favourite> {
-        val preferences = context.getSharedPreferences("ml.adamsprogs.bimba.prefs", Context.MODE_PRIVATE)
-        val favouritesString = preferences.getString("favourites", "{}")
-        val favouritesMap = Gson().fromJson(favouritesString, JsonObject::class.java)
-        val favourites = ArrayList<Favourite>()
-        for ((name, jsonTimetables) in favouritesMap.entrySet()) {
-            val timetables = ArrayList<HashMap<String, String>>()
-            for (jsonTimetable in jsonTimetables.asJsonArray) {
-                val timetable = HashMap<String, String>()
-                timetable["stop"] = jsonTimetable.asJsonObject["stop"].asString
-                timetable["line"] = jsonTimetable.asJsonObject["line"].asString
-                timetables.add(timetable)
-            }
-            favourites.add(Favourite(name, timetables, context))
-        }
-        return favourites
-    }
-
     private fun getStops() {
-        timetable = Timetable(this)
+        timetable = getTimetable(this)
         stops = timetable.getStops()
     }
 
@@ -161,7 +144,8 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     override fun onResume() {
         super.onResume()
-        favouritesList.adapter = FavouritesAdapter(context, getFavourites())
+        favourites.refresh()
+        favouritesList.adapter = FavouritesAdapter(context, favourites.favouritesList, this)
         favouritesList.adapter.notifyDataSetChanged()
     }
 
@@ -169,7 +153,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         super.onDestroy()
         receiver.removeOnTimetableDownloadListener(context as MessageReceiver.OnTimetableDownloadListener)
         unregisterReceiver(receiver)
-        timetable.close()
     }
 
     fun deAccent(str: String): String {
@@ -199,5 +182,22 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         stops = timetable.getStops()
         Snackbar.make(swipeRefreshLayout, message, Snackbar.LENGTH_LONG).show()
         swipeRefreshLayout.isRefreshing = false
+    }
+
+    override fun edit(name: String): Boolean {
+        val intent = Intent(this, EditFavouriteActivity::class.java)
+        intent.putExtra("favourite", favourites.favourites[name])
+        startActivity(intent)
+        favourites.refresh()
+        (favouritesList.adapter as FavouritesAdapter).favourites = favourites.favouritesList
+        favouritesList.adapter.notifyDataSetChanged()
+        return true
+    }
+
+    override fun delete(name: String): Boolean {
+        favourites.delete(name)
+        (favouritesList.adapter as FavouritesAdapter).favourites = favourites.favouritesList
+        favouritesList.adapter.notifyDataSetChanged()
+        return true
     }
 }

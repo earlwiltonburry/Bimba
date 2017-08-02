@@ -12,7 +12,7 @@ import android.view.LayoutInflater
 import java.util.*
 
 
-class FavouritesAdapter(val context: Context, val favourites: List<Favourite>) :
+class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, val onMenuItemClickListener: FavouritesAdapter.OnMenuItemClickListener) :
         RecyclerView.Adapter<FavouritesAdapter.ViewHolder>() {
     override fun getItemCount(): Int {
         return favourites.size
@@ -37,24 +37,14 @@ class FavouritesAdapter(val context: Context, val favourites: List<Favourite>) :
             val inflater = popup.menuInflater
             popup.setOnMenuItemClickListener {
                 when (it.itemId) {
-                    R.id.favourite_edit -> editFavourite(favourite.name)
-                    R.id.favourite_delete -> deleteFavourite(favourite.name)
+                    R.id.favourite_edit -> onMenuItemClickListener.edit(favourite.name)
+                    R.id.favourite_delete -> onMenuItemClickListener.delete(favourite.name)
                     else -> false
                 }
             }
             inflater.inflate(R.menu.favourite_actions, popup.menu)
             popup.show()
         }
-    }
-
-    private fun editFavourite(name: String): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-        return true
-    }
-
-    private fun deleteFavourite(name: String): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-        return true
     }
 
     override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolder {
@@ -71,5 +61,10 @@ class FavouritesAdapter(val context: Context, val favourites: List<Favourite>) :
         val timeTextView = itemView.findViewById(R.id.favourite_time) as TextView
         val lineTextView = itemView.findViewById(R.id.favourite_line) as TextView
         val moreButton = itemView.findViewById(R.id.favourite_more_button) as ImageView
+    }
+
+    interface OnMenuItemClickListener {
+        fun edit(name: String): Boolean
+        fun delete(name: String): Boolean
     }
 }
