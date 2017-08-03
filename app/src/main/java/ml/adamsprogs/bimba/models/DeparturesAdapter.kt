@@ -34,7 +34,7 @@ fun filterDepartures(departures: List<Departure>?): ArrayList<Departure> {
 }
 
 fun createDepartures(stopId: String): HashMap<String, ArrayList<Departure>> {
-    val timetable = getTimetable()
+    val timetable = Timetable.getTimetable()
     val departures = timetable.getStopDepartures(stopId)
     val moreDepartures = timetable.getStopDepartures(stopId)
     val rolledDepartures = HashMap<String, ArrayList<Departure>>()

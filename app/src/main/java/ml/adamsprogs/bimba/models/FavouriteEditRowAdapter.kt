@@ -1,8 +1,6 @@
 package ml.adamsprogs.bimba.models
 
-import android.content.Context
 import android.support.v7.widget.RecyclerView
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,15 +8,15 @@ import android.widget.ImageView
 import android.widget.TextView
 import ml.adamsprogs.bimba.R
 
-class FavouriteEditRowAdapter(val context: Context, var favourite: Favourite) :
+class FavouriteEditRowAdapter(var favourite: Favourite) :
         RecyclerView.Adapter<FavouriteEditRowAdapter.ViewHolder>() {
     override fun getItemCount(): Int {
         return favourite.size
     }
 
     override fun onBindViewHolder(holder: ViewHolder?, position: Int) {
-        val timetable = getTimetable()
-        val favourites = FavouriteStorage(context)
+        val timetable = Timetable.getTimetable()
+        val favourites = FavouriteStorage.getFavouriteStorage()
         val favouriteElement = timetable.getFavouriteElement(favourite.timetables[position]["stop"]!!,
                 favourite.timetables[position]["line"]!!)
         holder?.rowTextView?.text = favouriteElement

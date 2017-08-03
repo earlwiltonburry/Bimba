@@ -27,7 +27,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 sendResult("no connectivity")
                 return
             }
-            val metadataUrl = URL("https://adamsprogs.ml/w/_media/programmes/bimba/timetable.meta")
+            val metadataUrl = URL("https://adamsprogs.ml/w/_media/programmes/bimba/timetable.db.meta")
             var httpCon = metadataUrl.openConnection() as HttpURLConnection
             if (httpCon.responseCode != HttpURLConnection.HTTP_OK)
                 throw Exception("Failed to connect")

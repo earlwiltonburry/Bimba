@@ -49,7 +49,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
 
         prepareOnDownloadListener()
 
-        timetable = getTimetable()
+        timetable = Timetable.getTimetable()
         supportActionBar?.title = timetable.getStopName(stopId) ?: "Stop"
 
         viewPager = findViewById(R.id.container) as ViewPager
@@ -67,7 +67,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
 
         val fab = findViewById(R.id.fab) as FloatingActionButton
 
-        val favourites = FavouriteStorage(context)
+        val favourites = FavouriteStorage.getFavouriteStorage(context)
         if (!favourites.has(stopSymbol)) {
             fab.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_favourite_empty, this.theme))
         }

@@ -7,7 +7,22 @@ import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 
-class FavouriteStorage(val context: Context) {
+
+class FavouriteStorage private constructor(context: Context) {
+    companion object {
+        private var favouriteStorage: FavouriteStorage? = null
+        fun getFavouriteStorage(context: Context? = null): FavouriteStorage {
+            if (favouriteStorage == null) {
+                if (context == null)
+                    throw IllegalArgumentException("requested new storage context not given")
+                else {
+                    favouriteStorage = FavouriteStorage(context)
+                    return favouriteStorage as FavouriteStorage
+                }
+            } else
+                return favouriteStorage as FavouriteStorage
+        }
+    }
     val favourites = HashMap<String, Favourite>()
     val preferences: SharedPreferences = context.getSharedPreferences("ml.adamsprogs.bimba.prefs", Context.MODE_PRIVATE)
     val favouritesList: List<Favourite>
@@ -43,8 +58,18 @@ class FavouriteStorage(val context: Context) {
         }
     }
 
+    fun add(name: String, favourite: Favourite) {
+        if (favourites[name] == null) {
+            favourites[name] = favourite
+            serialize()
+        }
+    }
+
     fun delete(name: String) {
-        favourites.remove(name)
+        Log.i("ROW", "Deleting $name")
+        Log.i("ROW", "$name is in favourites?: ${favourites.contains(name)}")
+        val b = favourites.remove(name)
+        Log.i("ROW", "deleted: $b")
         serialize()
     }
 

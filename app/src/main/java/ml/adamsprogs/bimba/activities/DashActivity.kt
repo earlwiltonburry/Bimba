@@ -15,6 +15,7 @@ import android.support.v4.widget.*
 import android.support.v7.widget.*
 import android.util.Log
 import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 import ml.adamsprogs.bimba.*
 
 //todo refresh every 15s
@@ -75,8 +76,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 }
                 imm.hideSoftInputFromWindow(view.windowToken, 0)
                 intent = Intent(context, StopActivity::class.java)
-                intent.putExtra("stopId", (searchSuggestion as StopSuggestion).id)
-                intent.putExtra("stopSymbol", (searchSuggestion as StopSuggestion).symbol)
+                searchSuggestion as StopSuggestion
+                intent.putExtra("stopId", searchSuggestion.id)
+                intent.putExtra("stopSymbol", searchSuggestion.symbol)
                 startActivity(intent)
             }
 
@@ -100,7 +102,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun prepareFavourites() {
-        favourites = FavouriteStorage(context)
+        favourites = FavouriteStorage.getFavouriteStorage(context)
         val layoutManager = LinearLayoutManager(context)
         favouritesList = findViewById(R.id.favouritesList) as RecyclerView
         favouritesList.adapter = FavouritesAdapter(context, favourites.favouritesList, this)
@@ -108,7 +110,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun getStops() {
-        timetable = getTimetable(this)
+        timetable = Timetable.getTimetable(this)
         stops = timetable.getStops()
     }
 
@@ -144,7 +146,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     override fun onResume() {
         super.onResume()
-        favourites.refresh()
+        Toast.makeText(this, "Resume", Toast.LENGTH_LONG).show()
         favouritesList.adapter = FavouritesAdapter(context, favourites.favouritesList, this)
         favouritesList.adapter.notifyDataSetChanged()
     }
@@ -188,7 +190,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         val intent = Intent(this, EditFavouriteActivity::class.java)
         intent.putExtra("favourite", favourites.favourites[name])
         startActivity(intent)
-        favourites.refresh()
         (favouritesList.adapter as FavouritesAdapter).favourites = favourites.favouritesList
         favouritesList.adapter.notifyDataSetChanged()
         return true

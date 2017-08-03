@@ -7,33 +7,34 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteDatabaseCorruptException
 import java.io.File
 
-private var timetable: Timetable? = null
+class Timetable private constructor() {
+    companion object {
+        private var timetable: Timetable? = null
 
-fun getTimetable(context: Context? = null, force: Boolean = false): Timetable {
-    if (timetable == null || force)
-        if (context != null) {
-            val db: SQLiteDatabase?
-            try {
-                db = SQLiteDatabase.openDatabase(File(context.filesDir, "timetable.db").path,
-                        null, SQLiteDatabase.OPEN_READONLY)
-            } catch(e: NoSuchFileException) {
-                throw SQLiteCantOpenDatabaseException("no such file")
-            } catch(e: SQLiteCantOpenDatabaseException) {
-                throw SQLiteCantOpenDatabaseException("cannot open db")
-            } catch(e: SQLiteDatabaseCorruptException) {
-                throw SQLiteCantOpenDatabaseException("db corrupt")
-            }
-            timetable = Timetable()
-            timetable!!.db = db
-            return timetable as Timetable
+        fun getTimetable(context: Context? = null, force: Boolean = false): Timetable {
+            if (timetable == null || force)
+                if (context != null) {
+                    val db: SQLiteDatabase?
+                    try {
+                        db = SQLiteDatabase.openDatabase(File(context.filesDir, "timetable.db").path,
+                                null, SQLiteDatabase.OPEN_READONLY)
+                    } catch(e: NoSuchFileException) {
+                        throw SQLiteCantOpenDatabaseException("no such file")
+                    } catch(e: SQLiteCantOpenDatabaseException) {
+                        throw SQLiteCantOpenDatabaseException("cannot open db")
+                    } catch(e: SQLiteDatabaseCorruptException) {
+                        throw SQLiteCantOpenDatabaseException("db corrupt")
+                    }
+                    timetable = Timetable()
+                    timetable!!.db = db
+                    return timetable as Timetable
+                }
+                else
+                    throw IllegalArgumentException("new timetable requested and no context given")
+            else
+                return timetable as Timetable
         }
-        else
-            throw IllegalArgumentException("new timetable requested and no context given")
-    else
-        return timetable as Timetable
-}
-
-class Timetable internal constructor() {
+    }
     lateinit var db: SQLiteDatabase
 
     init {

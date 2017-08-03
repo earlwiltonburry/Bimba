@@ -44,7 +44,7 @@ class Favourite : Parcelable {
         dest?.writeString(name)
     }
 
-    val timetable = getTimetable()
+    val timetable = Timetable.getTimetable()
     val size: Int
         get() = timetables.size
 
