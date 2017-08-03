@@ -146,7 +146,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     override fun onResume() {
         super.onResume()
-        Toast.makeText(this, "Resume", Toast.LENGTH_LONG).show()
         favouritesList.adapter = FavouritesAdapter(context, favourites.favouritesList, this)
         favouritesList.adapter.notifyDataSetChanged()
     }

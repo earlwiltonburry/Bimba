@@ -1,5 +1,6 @@
 package ml.adamsprogs.bimba.models
 
+import android.app.Activity
 import android.content.Context
 import android.support.v7.widget.PopupMenu
 import android.support.v7.widget.RecyclerView
@@ -10,6 +11,7 @@ import android.widget.TextView
 import ml.adamsprogs.bimba.R
 import android.view.LayoutInflater
 import java.util.*
+import kotlin.concurrent.thread
 
 
 class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, val onMenuItemClickListener: FavouritesAdapter.OnMenuItemClickListener) :
@@ -20,30 +22,43 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, v
 
     override fun onBindViewHolder(holder: ViewHolder?, position: Int) {
 
-        val favourite = favourites[position]
-        holder?.nameTextView?.text = favourite.name
-        val nextDeparture = favourite.nextDeparture ?: return
-        val now = Calendar.getInstance()
-        val departureTime = Calendar.getInstance()
-        departureTime.set(Calendar.HOUR_OF_DAY, Integer.parseInt(nextDeparture.time.split(":")[0]))
-        departureTime.set(Calendar.MINUTE, Integer.parseInt(nextDeparture.time.split(":")[1]))
-        if (nextDeparture.tomorrow)
-            departureTime.add(Calendar.DAY_OF_MONTH, 1)
-        val interval = (departureTime.timeInMillis - now.timeInMillis) / (1000 * 60)
-        holder?.timeTextView?.text = context.getString(R.string.departure_in, interval.toString())
-        holder?.lineTextView?.text = context.getString(R.string.departure_to_line, nextDeparture.line, nextDeparture.direction)
-        holder?.moreButton?.setOnClickListener {
-            val popup = PopupMenu(context, it)
-            val inflater = popup.menuInflater
-            popup.setOnMenuItemClickListener {
-                when (it.itemId) {
-                    R.id.favourite_edit -> onMenuItemClickListener.edit(favourite.name)
-                    R.id.favourite_delete -> onMenuItemClickListener.delete(favourite.name)
-                    else -> false
+        thread {
+            val favourite = favourites[position]
+            holder?.nameTextView?.text = favourite.name
+            val nextDeparture = favourite.nextDeparture
+            val nextDepartureText: String
+            val nextDepartureLineText: String
+            if (nextDeparture != null) {
+                val now = Calendar.getInstance()
+                val departureTime = Calendar.getInstance()
+                departureTime.set(Calendar.HOUR_OF_DAY, Integer.parseInt(nextDeparture.time.split(":")[0]))
+                departureTime.set(Calendar.MINUTE, Integer.parseInt(nextDeparture.time.split(":")[1]))
+                if (nextDeparture.tomorrow)
+                    departureTime.add(Calendar.DAY_OF_MONTH, 1)
+                val interval = ((departureTime.timeInMillis - now.timeInMillis) / (1000 * 60)).toString()
+                nextDepartureText = context.getString(R.string.departure_in, interval)
+                nextDepartureLineText =context.getString(R.string.departure_to_line, nextDeparture.line, nextDeparture.direction)
+            } else {
+                nextDepartureText = context.getString(R.string.no_next_departure)
+                nextDepartureLineText = ""
+            }
+            (context as Activity).runOnUiThread {
+                holder?.timeTextView?.text = nextDepartureText
+                holder?.lineTextView?.text = nextDepartureLineText
+                holder?.moreButton?.setOnClickListener {
+                    val popup = PopupMenu(context, it)
+                    val inflater = popup.menuInflater
+                    popup.setOnMenuItemClickListener {
+                        when (it.itemId) {
+                            R.id.favourite_edit -> onMenuItemClickListener.edit(favourite.name)
+                            R.id.favourite_delete -> onMenuItemClickListener.delete(favourite.name)
+                            else -> false
+                        }
+                    }
+                    inflater.inflate(R.menu.favourite_actions, popup.menu)
+                    popup.show()
                 }
             }
-            inflater.inflate(R.menu.favourite_actions, popup.menu)
-            popup.show()
         }
     }
 

@@ -1,7 +1,6 @@
 package ml.adamsprogs.bimba.models
 
 import android.content.Context
-import android.database.Cursor
 import android.database.sqlite.SQLiteCantOpenDatabaseException
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteDatabaseCorruptException
@@ -28,14 +27,15 @@ class Timetable private constructor() {
                     timetable = Timetable()
                     timetable!!.db = db
                     return timetable as Timetable
-                }
-                else
+                } else
                     throw IllegalArgumentException("new timetable requested and no context given")
             else
                 return timetable as Timetable
         }
     }
+
     lateinit var db: SQLiteDatabase
+    private var _stops: ArrayList<StopSuggestion>? = null
 
     init {
         readDbFile()
@@ -48,20 +48,17 @@ class Timetable private constructor() {
     private fun readDbFile() {
     }
 
-    fun getStops(): ArrayList<StopSuggestion>? {
+    fun getStops(): ArrayList<StopSuggestion> {
+        if (_stops != null)
+            return _stops!!
+
         val stops = ArrayList<StopSuggestion>()
-        var cursor: Cursor? = null
-        try {
-            cursor = db.rawQuery("select name ||char(10)|| headsigns as suggestion, id, stops.symbol || number as stopSymbol from stops" +
-                    " join nodes on(stops.symbol = nodes.symbol) order by name, id;", null)
-            while (cursor.moveToNext())
-                stops.add(StopSuggestion(cursor.getString(0), cursor.getString(1), cursor.getString(2)))
-        } catch (e: SQLiteDatabaseCorruptException) {
-            cursor?.close()
-            return null
-        } finally {
-            cursor?.close()
-        }
+        val cursor = db.rawQuery("select name ||char(10)|| headsigns as suggestion, id, stops.symbol || number as stopSymbol from stops" +
+                " join nodes on(stops.symbol = nodes.symbol) order by name, id;", null)
+        while (cursor.moveToNext())
+            stops.add(StopSuggestion(cursor.getString(0), cursor.getString(1), cursor.getString(2)))
+        cursor?.close()
+        _stops = stops
         return stops
     }
 
@@ -75,7 +72,7 @@ class Timetable private constructor() {
         return name
     }
 
-    fun getStopDepartures(stopId: String, lineId: String? = null): HashMap<String, ArrayList<Departure>>? {
+    fun getStopDepartures(stopId: String, lineId: String? = null, tomorrow: Boolean = false): HashMap<String, ArrayList<Departure>>? {
         val andLine: String
         if (lineId == null)
             andLine = ""
@@ -92,13 +89,13 @@ class Timetable private constructor() {
         while (cursor.moveToNext()) {
             departures[cursor.getString(1)]?.add(Departure(cursor.getString(0),
                     cursor.getString(1), cursor.getString(2), cursor.getInt(3) == 1,
-                    cursor.getString(4), cursor.getString(5)))
+                    cursor.getString(4), cursor.getString(5), tomorrow = tomorrow))
         }
         cursor.close()
         return departures
     }
 
-    fun getLines(stopId: String?): ArrayList<String>? {
+    fun getLines(stopId: String): ArrayList<String> {
         val cursor = db.rawQuery(" select distinct line_id from timetables join " +
                 "stops on(stop_id = stops.id) where stops.id = ?;",
                 listOf(stopId).toTypedArray())
