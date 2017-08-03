@@ -171,7 +171,6 @@ def main():
         updating = True
 
 
-    print(time.time())
     with sqlite3.connect('timetable.db') as connection:
         try:
             cursor = connection.cursor()
@@ -181,7 +180,6 @@ def main():
                 if get_validity() <= current_valid_from:
                     return 304
             else:
-                print('creating tables')
                 cursor.execute('create table metadata(key TEXT PRIMARY KEY, value TEXT)')
                 cursor.execute('create table checksums(checksum TEXT, for TEXT, id TEXT)')
                 cursor.execute('create table nodes(symbol TEXT PRIMARY KEY, name TEXT)')
@@ -196,10 +194,10 @@ def main():
                                 hour INTEGER, minute INTEGER, mode TEXT, \
                                 lowFloor INTEGER, modification TEXT)')
 
-            print('getting validity')
             cursor.execute("delete from metadata where key = 'validFrom'")
-            cursor.execute("insert into metadata values('validFrom', ?)", (get_validity(),))
-            print('getting nodes')
+            validity = get_validity()
+            print(validity)
+            cursor.execute("insert into metadata values('validFrom', ?)", (validity,))
             cursor.execute("select checksum from checksums where for = 'nodes'")
             checksum = cursor.fetchone()
             if checksum != None:
@@ -219,10 +217,8 @@ def main():
                 nodes = cursor.fetchall()
                 nodes = [(sym, nam) for sym, nam, _ in nodes]
             nodes_no = len(nodes)
-            print('getting stops')
             node_i = 1
             for symbol, _ in nodes:
-                print('\rnode {}/{}'.format(node_i, nodes_no), end='')
                 sys.stdout.flush()
                 cursor.execute("select checksum from checksums where for = 'node' and id = ?", (symbol,))
                 checksum = cursor.fetchone()
@@ -238,7 +234,6 @@ def main():
                     cursor.execute("update checksums set checksum = ? where for = 'node' and id = ?", (checksum, symbol))
                     changed = True
                 node_i += 1
-            print('\ngetting lines')
             cursor.execute("select checksum from checksums where for = 'lines'")
             checksum = cursor.fetchone()
             if checksum != None:
@@ -268,8 +263,6 @@ def main():
                     stop_i = 1
                     for stop in stops:
                         timetable_id = secrets.token_hex(4)
-                        print('line {}/{} route {}/{} stop {}/{}'.
-                              format(line_i, lines_no, route_i, routes_no, stop_i, stops_no), end='')
                         sys.stdout.flush()
                         cursor.execute("select checksum from checksums where for = 'timetable' and id = ?", (timetable_id,))
                         checksum = cursor.fetchone()
@@ -293,14 +286,11 @@ def main():
                                                     ?)', [(timetable_id, hour, minute, mode, lowfloor, desc)
                                                           for hour, minute, desc, lowfloor in times])
                         stop_i += 1
-                        print('{}\r'.format(' '*35), end='')
                         sys.stdout.flush()
                     route_i += 1
-                print('')
                 line_i += 1
         except KeyboardInterrupt:
             return 404
-    print(time.time())
     if changed:
         return 0
     return 304
