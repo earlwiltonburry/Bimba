@@ -14,8 +14,9 @@ import android.app.Activity
 import android.support.v4.widget.*
 import android.support.v7.widget.*
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.view.inputmethod.InputMethodManager
-import android.widget.Toast
 import ml.adamsprogs.bimba.*
 
 //todo refresh every 15s
@@ -33,6 +34,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dash)
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO)
+        val toolbar = findViewById(R.id.toolbar) as Toolbar
+        setSupportActionBar(toolbar)
+        supportActionBar?.title = getString(R.string.merge_favourites)
 
         prepareSwipeLayout()
 
@@ -49,7 +53,10 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             override fun onFocus() {
                 swipeRefreshLayout.isEnabled = false
                 favouritesList.visibility = View.GONE
-                //todo show suggestions
+                thread {
+                    val newStops = stops!!.filter { deAccent(it.body.split("\n")[0]).contains(deAccent(searchView.query), true) }
+                    runOnUiThread { searchView.swapSuggestions(newStops) }
+                }
             }
 
             override fun onFocusCleared() {
@@ -134,7 +141,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     override fun onRefresh() {
         swipeRefreshLayout.isRefreshing = true
-        Log.i("Refresh", "Downloading")
         startDownloaderService()
     }
 
@@ -146,7 +152,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     override fun onResume() {
         super.onResume()
-        favouritesList.adapter = FavouritesAdapter(context, favourites.favouritesList, this)
+        (favouritesList.adapter as FavouritesAdapter).favourites = favourites.favouritesList
         favouritesList.adapter.notifyDataSetChanged()
     }
 
@@ -154,6 +160,25 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         super.onDestroy()
         receiver.removeOnTimetableDownloadListener(context as MessageReceiver.OnTimetableDownloadListener)
         unregisterReceiver(receiver)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_favourite_merge, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val id = item.itemId
+
+        if (id == R.id.action_merge) {
+            val names = (favouritesList.adapter as FavouritesAdapter).selectedNames
+            favourites.merge(names)
+            (favouritesList.adapter as FavouritesAdapter).favourites = favourites.favouritesList
+            favouritesList.adapter.notifyDataSetChanged()
+            (favouritesList.adapter as FavouritesAdapter).stopSelecting(names[0])
+        }
+
+        return super.onOptionsItemSelected(item)
     }
 
     fun deAccent(str: String): String {

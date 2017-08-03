@@ -33,4 +33,6 @@
     <string name="favourite_element_delete_button" translatable="false">favourite element delete button</string>
     <string name="favourite_element_split_button" translatable="false">favourite element split button</string>
     <string name="no_next_departure">No next departure</string>
+    <string name="action_merge">Merge</string>
+    <string name="merge_favourites">Merge favourites</string>
 </resources>

@@ -77,7 +77,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
             if (!favourites.has(stopSymbol)) {
                 Log.i("FAB", "Add")
                 val items = ArrayList<HashMap<String, String>>()
-                timetable.getLines(stopId)?.forEach {
+                timetable.getLines(stopId).forEach {
                     val o = HashMap<String, String>()
                     o["stop"] = stopId
                     o["line"] = it

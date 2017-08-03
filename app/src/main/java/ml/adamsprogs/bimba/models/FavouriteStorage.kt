@@ -31,10 +31,6 @@ class FavouriteStorage private constructor(context: Context) {
         }
 
     init {
-        refresh()
-    }
-
-    fun refresh() {
         val favouritesString = preferences.getString("favourites", "{}")
         val favouritesMap = Gson().fromJson(favouritesString, JsonObject::class.java)
         for ((name, jsonTimetables) in favouritesMap.entrySet()) {
@@ -66,17 +62,12 @@ class FavouriteStorage private constructor(context: Context) {
     }
 
     fun delete(name: String) {
-        Log.i("ROW", "Deleting $name")
-        Log.i("ROW", "$name is in favourites?: ${favourites.contains(name)}")
-        val b = favourites.remove(name)
-        Log.i("ROW", "deleted: $b")
+        favourites.remove(name)
         serialize()
     }
 
     fun delete(name: String, stop: String, line: String) {
-        Log.i("ROW", "delete $name, $stop, $line")
         favourites[name]?.delete(stop, line)
-        //todo check empty
         serialize()
     }
 
@@ -109,5 +100,18 @@ class FavouriteStorage private constructor(context: Context) {
         serialize()
 
         delete(name, stop, line)
+    }
+
+    fun merge(names: ArrayList<String>) {
+        if (names.size < 2 )
+            return
+        val newFavourite = Favourite(names[0], ArrayList<HashMap<String, String>>())
+        for (name in names) {
+            newFavourite.timetables.addAll(favourites[name]!!.timetables)
+            favourites.remove(name)
+        }
+        favourites[names[0]] = newFavourite
+
+        serialize()
     }
 }
