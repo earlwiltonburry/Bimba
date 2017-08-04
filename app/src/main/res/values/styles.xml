@@ -17,4 +17,8 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
+    <style name="DividerTheme">
+        <item name="android:background">?android:attr/dividerVertical</item>
+    </style>
+
 </resources>

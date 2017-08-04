@@ -99,6 +99,7 @@ class Favourite : Parcelable {
                 }
             }
 
+            Log.i("preInterval", "$minInterval")
             return minDeparture
         }
         private set

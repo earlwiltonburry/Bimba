@@ -38,4 +38,11 @@
     <string name="departure_in__singular_genitive">In %1$s minute</string>
     <string name="departure_in__plural_genitive">In %1$s minutes</string>
     <string name="departure_in__plural_nominative">In %1$s minutes</string>
+
+    <string name="home">Home</string>
+    <string name="refresh">Refresh</string>
+    <string name="help">Help</string>
+    <string name="navigation_drawer_home_button" translatable="false">navigation drawer home button</string>
+    <string name="navigation_drawer_refresh_button" translatable="false">navigation drawer refresh button</string>
+    <string name="navigation_drawer_help_button" translatable="false">navigation drawer help button</string>
 </resources>

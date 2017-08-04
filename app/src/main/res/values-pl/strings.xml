@@ -32,4 +32,7 @@
     <string name="departure_in__singular_genitive">Za %1$s minutę</string>
     <string name="departure_in__plural_genitive">Za %1$s minut</string>
     <string name="departure_in__plural_nominative">Za %1$s minuty</string>
+    <string name="home">Dom</string>
+    <string name="refresh">Odśwież</string>
+    <string name="help">Pomoc</string>
 </resources>

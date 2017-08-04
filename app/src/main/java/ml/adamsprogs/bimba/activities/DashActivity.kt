@@ -20,12 +20,11 @@ import android.view.inputmethod.InputMethodManager
 import ml.adamsprogs.bimba.*
 import java.util.*
 
-class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, SwipeRefreshLayout.OnRefreshListener, FavouritesAdapter.OnMenuItemClickListener {
+class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, FavouritesAdapter.OnMenuItemClickListener {
     val context: Context = this
     val receiver = MessageReceiver()
     lateinit var timetable: Timetable
     var stops: ArrayList<StopSuggestion>? = null
-    lateinit var swipeRefreshLayout: SwipeRefreshLayout
     lateinit var favouritesList: RecyclerView
     lateinit var searchView: FloatingSearchView
     lateinit var favourites: FavouriteStorage
@@ -39,8 +38,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         val toolbar = findViewById(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
         supportActionBar?.title = getString(R.string.merge_favourites)
-
-        prepareSwipeLayout()
 
         createTimerTask()
 
@@ -57,7 +54,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         searchView.setOnFocusChangeListener(object : FloatingSearchView.OnFocusChangeListener {
             override fun onFocus() {
-                swipeRefreshLayout.isEnabled = false
                 favouritesList.visibility = View.GONE
                 thread {
                     val newStops = stops!!.filter { deAccent(it.body.split("\n")[0]).contains(deAccent(searchView.query), true) }
@@ -66,7 +62,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             }
 
             override fun onFocusCleared() {
-                swipeRefreshLayout.isEnabled = true
                 favouritesList.visibility = View.VISIBLE
             }
         })
@@ -111,7 +106,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             }
         }
 
-        //todo searchView.attachNavigationDrawerToMenuButton(mDrawerLayout)
+        searchView.attachNavigationDrawerToMenuButton(findViewById(R.id.drawer_layout) as DrawerLayout)
     }
 
     private fun prepareFavourites() {
@@ -154,18 +149,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     private fun startDownloaderService() {
         startService(Intent(context, TimetableDownloader::class.java))
-    }
-
-    private fun prepareSwipeLayout() {
-        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout) as SwipeRefreshLayout
-        swipeRefreshLayout.isEnabled = true
-        swipeRefreshLayout.setOnRefreshListener(this)
-        swipeRefreshLayout.setColorSchemeResources(R.color.colorAccent, R.color.colorPrimary)
-    }
-
-    override fun onRefresh() {
-        swipeRefreshLayout.isRefreshing = true
-        startDownloaderService()
     }
 
     override fun onBackPressed() {
@@ -230,8 +213,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         }
         timetable.refresh()
         stops = timetable.getStops()
-        Snackbar.make(swipeRefreshLayout, message, Snackbar.LENGTH_LONG).show()
-        swipeRefreshLayout.isRefreshing = false
+        Snackbar.make(findViewById(R.id.drawer_layout), message, Snackbar.LENGTH_LONG).show()
     }
 
     override fun edit(name: String): Boolean {

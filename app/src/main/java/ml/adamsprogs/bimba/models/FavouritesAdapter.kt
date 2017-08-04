@@ -6,6 +6,7 @@ import android.os.Build
 import android.support.v7.widget.CardView
 import android.support.v7.widget.PopupMenu
 import android.support.v7.widget.RecyclerView
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -51,7 +52,6 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, v
 
         thread {
             val favourite = favourites[position]
-            holder?.nameTextView?.text = favourite.name
             val nextDeparture: Departure?
             try {
                 nextDeparture = favourite.nextDeparture
@@ -68,7 +68,8 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, v
                 if (nextDeparture.tomorrow)
                     departureTime.add(Calendar.DAY_OF_MONTH, 1)
                 val interval = ((departureTime.timeInMillis - now.timeInMillis) / (1000 * 60))
-                nextDepartureText = context.getString(Declinator.decline(interval), interval.toString())
+                Log.i("Interval", "$interval")
+                nextDepartureText = context.getString(Declinator.decline(interval), interval.toString()) // fixme -1
                 nextDepartureLineText = context.getString(R.string.departure_to_line, nextDeparture.line, nextDeparture.direction)
             } else {
                 nextDepartureText = context.getString(R.string.no_next_departure)
@@ -79,6 +80,7 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, v
                     toggleSelected(it as CardView, position)
                     true
                 }
+                holder?.nameTextView?.text = favourite.name
                 holder?.timeTextView?.text = nextDepartureText
                 holder?.lineTextView?.text = nextDepartureLineText
                 holder?.moreButton?.setOnClickListener {

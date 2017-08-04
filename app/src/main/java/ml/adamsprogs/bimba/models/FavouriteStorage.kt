@@ -120,5 +120,6 @@ class FavouriteStorage private constructor(context: Context) {
         favourite.name = newName
         favourites.remove(oldName)
         favourites[newName] = favourite
+        serialize()
     }
 }
