@@ -1,6 +1,5 @@
 package ml.adamsprogs.bimba.models
 
-import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
 import android.util.Log
@@ -9,11 +8,9 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 class Favourite : Parcelable {
-    lateinit var name: String
-    lateinit var timetables: ArrayList<HashMap<String, String>>
-    lateinit var context: Context
-
-    private constructor()
+    var name: String
+    var timetables: ArrayList<HashMap<String, String>>
+    private var oneDayDepartures:ArrayList<HashMap<String, ArrayList<Departure>>>? = null
 
     constructor(parcel: Parcel) {
         val array = ArrayList<String>()
@@ -54,7 +51,6 @@ class Favourite : Parcelable {
                 return null
             val today: String
             val tomorrow: String
-            val oneDayDepartures = ArrayList<HashMap<String, ArrayList<Departure>>>()
             val twoDayDepartures = ArrayList<Departure>()
             val now = Calendar.getInstance()
             val departureTime = Calendar.getInstance()
@@ -71,13 +67,17 @@ class Favourite : Parcelable {
                 else -> tomorrow = "workdays"
             }
 
-            timetables.mapTo(oneDayDepartures) { timetable.getStopDepartures(it["stop"] as String, it["line"])!! }
-            oneDayDepartures.forEach {
+            if (oneDayDepartures == null) {
+                oneDayDepartures = ArrayList<HashMap<String, ArrayList<Departure>>>()
+                timetables.mapTo(oneDayDepartures!!) { timetable.getStopDepartures(it["stop"] as String, it["line"])!! }
+            }
+
+            oneDayDepartures!!.forEach {
                 it[today]!!.forEach {
                     twoDayDepartures.add(fromString(it.toString()))
                 }
             }
-            oneDayDepartures.forEach {
+            oneDayDepartures!!.forEach {
                 it[tomorrow]!!.forEach {
                     val d = fromString(it.toString())
                     d.tomorrow = true
