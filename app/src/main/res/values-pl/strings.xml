@@ -29,4 +29,5 @@
     <string name="no_next_departure">Brak następnego odjazdu</string>
     <string name="action_merge">Połącz</string>
     <string name="merge_favourites">Połącz ulubione</string>
+    <string name="calculating">Obliczam…</string>
 </resources>

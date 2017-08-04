@@ -35,4 +35,5 @@
     <string name="no_next_departure">No next departure</string>
     <string name="action_merge">Merge</string>
     <string name="merge_favourites">Merge favourites</string>
+    <string name="calculating">Calculating…</string>
 </resources>

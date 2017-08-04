@@ -51,7 +51,12 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, v
         thread {
             val favourite = favourites[position]
             holder?.nameTextView?.text = favourite.name
-            val nextDeparture = favourite.nextDeparture
+            val nextDeparture: Departure?
+            try {
+                nextDeparture = favourite.nextDeparture
+            } catch (e: ConcurrentModificationException) {
+                return@thread
+            }
             val nextDepartureText: String
             val nextDepartureLineText: String
             if (nextDeparture != null) {
@@ -94,13 +99,22 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, v
     }
 
     fun toggleSelected(view: CardView, position: Int) {
+        growSelected(position)
+
         if (selected[position])
             unSelect(view, position)
         else
             select(view, position)
     }
 
+    private fun growSelected(position: Int) {
+        while (position >= selected.size)
+            selected.add(false)
+    }
+
     fun select(view: CardView, position: Int) {
+        growSelected(position)
+
         @Suppress("DEPRECATION")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             view.setCardBackgroundColor(context.resources.getColor(R.color.colorAccent, null))
@@ -111,6 +125,8 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, v
     }
 
     fun unSelect(view: CardView, position: Int) {
+        growSelected(position)
+
         val colour = TypedValue()
         context.theme.resolveAttribute(R.attr.cardBackgroundColor, colour, true)
         view.setCardBackgroundColor(colour.data)
