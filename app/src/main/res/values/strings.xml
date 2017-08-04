@@ -8,7 +8,6 @@
     <string name="tab_sunday_text">Sundays</string>
     <string name="action_change_type">Type</string>
     <string name="departure_type_icon_description" translatable="false">departure type (timetable, VM)</string>
-    <string name="departure_in">In %1$s minutes</string>
     <string name="departure_to">→ %1$s</string>
     <string name="departure_to_line">%1$s → %2$s</string>
     <string name="departure_at">At %1$s</string>
@@ -36,4 +35,7 @@
     <string name="action_merge">Merge</string>
     <string name="merge_favourites">Merge favourites</string>
     <string name="calculating">Calculating…</string>
+    <string name="departure_in__singular_genitive">In %1$s minute</string>
+    <string name="departure_in__plural_genitive">In %1$s minutes</string>
+    <string name="departure_in__plural_nominative">In %1$s minutes</string>
 </resources>

@@ -15,6 +15,7 @@ import android.view.LayoutInflater
 import java.util.*
 import kotlin.concurrent.thread
 import android.util.TypedValue
+import ml.adamsprogs.bimba.Declinator
 import kotlin.collections.ArrayList
 
 //todo list to storage
@@ -66,8 +67,8 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, v
                 departureTime.set(Calendar.MINUTE, Integer.parseInt(nextDeparture.time.split(":")[1]))
                 if (nextDeparture.tomorrow)
                     departureTime.add(Calendar.DAY_OF_MONTH, 1)
-                val interval = ((departureTime.timeInMillis - now.timeInMillis) / (1000 * 60)).toString()
-                nextDepartureText = context.getString(R.string.departure_in, interval)
+                val interval = ((departureTime.timeInMillis - now.timeInMillis) / (1000 * 60))
+                nextDepartureText = context.getString(Declinator.decline(interval), interval.toString())
                 nextDepartureLineText = context.getString(R.string.departure_to_line, nextDeparture.line, nextDeparture.direction)
             } else {
                 nextDepartureText = context.getString(R.string.no_next_departure)

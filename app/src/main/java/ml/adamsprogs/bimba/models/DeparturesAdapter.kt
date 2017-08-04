@@ -9,6 +9,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import ml.adamsprogs.bimba.R
 import android.view.LayoutInflater
+import ml.adamsprogs.bimba.Declinator
 import java.util.*
 
 fun filterDepartures(departures: List<Departure>?): ArrayList<Departure> {
@@ -73,7 +74,7 @@ class DeparturesAdapter(val context: Context, val departures: List<Departure>, v
         if (departureIn > 60 || departureIn < 0 || !relativeTime)
             timeString = context.getString(R.string.departure_at, departure.time)
         else if (departureIn > 0 && !departure.onStop)
-            timeString = context.getString(R.string.departure_in, departureIn.toString())
+            timeString = context.getString(Declinator.decline(departureIn), departureIn.toString())
         else
             timeString = context.getString(R.string.now)
 
