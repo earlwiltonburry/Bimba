@@ -50,6 +50,8 @@ class Favourite : Parcelable {
 
     var nextDeparture: Departure? = null
         get() {
+            if (timetables.isEmpty())
+                return null
             val today: String
             val tomorrow: String
             val oneDayDepartures = ArrayList<HashMap<String, ArrayList<Departure>>>()
@@ -103,11 +105,7 @@ class Favourite : Parcelable {
 
     fun delete(stop: String, line: String) {
         Log.i("ROW", "Favourite deleting $stop, $line")
-        val element = HashMap<String, String>()
-        element["stop"] = stop
-        element["line"] = line
-        val b = timetables.remove(element)
-        Log.i("ROW", "$b")
+        timetables.remove(timetables.find { it["stop"] == stop && it["line"] == line })
         Log.i("ROW", timetables.toString())
     }
 

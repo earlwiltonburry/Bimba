@@ -41,11 +41,7 @@ class EditFavouriteActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        val oldName = favourite?.name
-        val newName = nameEdit.text.toString()
-        favourites.delete(oldName!!)
-        favourite?.name = newName
-        favourites.add(newName, favourite!!)
+        favourites.rename(favourite?.name!!, nameEdit.text.toString())
         super.onBackPressed()
     }
 }

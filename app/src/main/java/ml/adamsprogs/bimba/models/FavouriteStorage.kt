@@ -114,4 +114,11 @@ class FavouriteStorage private constructor(context: Context) {
 
         serialize()
     }
+
+    fun rename(oldName: String, newName: String) {
+        val favourite = favourites[oldName] ?: return
+        favourite.name = newName
+        favourites.remove(oldName)
+        favourites[newName] = favourite
+    }
 }
