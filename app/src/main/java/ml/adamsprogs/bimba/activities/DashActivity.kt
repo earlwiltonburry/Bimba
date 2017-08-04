@@ -18,8 +18,8 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.inputmethod.InputMethodManager
 import ml.adamsprogs.bimba.*
+import java.util.*
 
-//todo refresh every 15s
 class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, SwipeRefreshLayout.OnRefreshListener, FavouritesAdapter.OnMenuItemClickListener {
     val context: Context = this
     val receiver = MessageReceiver()
@@ -29,6 +29,8 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     lateinit var favouritesList: RecyclerView
     lateinit var searchView: FloatingSearchView
     lateinit var favourites: FavouriteStorage
+    var timer = Timer()
+    private lateinit var timerTask: TimerTask
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,12 +42,16 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         prepareSwipeLayout()
 
+        createTimerTask()
+
         prepareOnDownloadListener()
         startDownloaderService()
 
         getStops()
 
         prepareFavourites()
+
+        scheduleRefresh()
 
         searchView = findViewById(R.id.search_view) as FloatingSearchView
 
@@ -114,6 +120,24 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         favouritesList = findViewById(R.id.favouritesList) as RecyclerView
         favouritesList.adapter = FavouritesAdapter(context, favourites.favouritesList, this)
         favouritesList.layoutManager = layoutManager
+    }
+
+    private fun scheduleRefresh() {
+        timer.cancel()
+        timer = Timer()
+        createTimerTask()
+        timer.scheduleAtFixedRate(timerTask, 0, 15000)
+    }
+
+    private fun createTimerTask() {
+        timerTask = object : TimerTask() {
+            override fun run() {
+                runOnUiThread {
+                    favouritesList.adapter.notifyDataSetChanged()
+                    //todo vm
+                }
+            }
+        }
     }
 
     private fun getStops() {
