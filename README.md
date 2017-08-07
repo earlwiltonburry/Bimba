@@ -5,8 +5,13 @@ First Free-Software Poznań Wandering Guide
 
 *more important higher*
 
-* [ ] incremental timetable generator
+*(tick – released, M – on master, T – testing)*
+
+* [x] incremental timetable generator
 * [ ] favourite stops
+    * [M] offline timetable
+    * [ ] Virtual Monitor
+    * [ ] peek all departures in a favourite
 * [ ] less nonintuitive timetable refresh gesture
 * [ ] nearest stop(s) by GPS
 * [ ] ‘through mid-stop’ on lines with only 1 direction
