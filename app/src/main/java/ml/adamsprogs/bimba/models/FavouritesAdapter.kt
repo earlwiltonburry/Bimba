@@ -69,7 +69,7 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, v
                     departureTime.add(Calendar.DAY_OF_MONTH, 1)
                 val interval = ((departureTime.timeInMillis - now.timeInMillis) / (1000 * 60))
                 Log.i("Interval", "$interval")
-                nextDepartureText = context.getString(Declinator.decline(interval), interval.toString()) // fixme -1
+                nextDepartureText = context.getString(Declinator.decline(interval), interval.toString())
                 nextDepartureLineText = context.getString(R.string.departure_to_line, nextDeparture.line, nextDeparture.direction)
             } else {
                 nextDepartureText = context.getString(R.string.no_next_departure)

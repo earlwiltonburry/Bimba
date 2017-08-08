@@ -85,8 +85,8 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 imm.hideSoftInputFromWindow(view.windowToken, 0)
                 intent = Intent(context, StopActivity::class.java)
                 searchSuggestion as StopSuggestion
-                intent.putExtra("stopId", searchSuggestion.id)
-                intent.putExtra("stopSymbol", searchSuggestion.symbol)
+                intent.putExtra(StopActivity.EXTRA_STOP_ID, searchSuggestion.id)
+                intent.putExtra(StopActivity.EXTRA_STOP_SYMBOL, searchSuggestion.symbol)
                 startActivity(intent)
             }
 
@@ -141,7 +141,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun prepareOnDownloadListener() {
-        val filter = IntentFilter("ml.adamsprogs.bimba.timetableDownloaded")
+        val filter = IntentFilter(TimetableDownloader.ACTION_DOWNLOADED)
         filter.addCategory(Intent.CATEGORY_DEFAULT)
         registerReceiver(receiver, filter)
         receiver.addOnTimetableDownloadListener(context as MessageReceiver.OnTimetableDownloadListener)
@@ -205,10 +205,10 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         Log.i("Refresh", "downloaded: $result")
         val message: String
         when (result) {
-            "downloaded" -> message = getString(R.string.timetable_downloaded)
-            "no connectivity" -> message = getString(R.string.no_connectivity)
-            "up-to-date" -> message = getString(R.string.timetable_up_to_date)
-            "validity failed" -> message = getString(R.string.validity_failed)
+            TimetableDownloader.RESULT_DOWNLOADED -> message = getString(R.string.timetable_downloaded)
+            TimetableDownloader.RESULT_NO_CONNECTIVITY -> message = getString(R.string.no_connectivity)
+            TimetableDownloader.RESULT_UP_TO_DATE -> message = getString(R.string.timetable_up_to_date)
+            TimetableDownloader.RESULT_VALIDITY_FAILED -> message = getString(R.string.validity_failed)
             else -> message = getString(R.string.error_try_later)
         }
         timetable.refresh()
@@ -218,7 +218,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     override fun edit(name: String): Boolean {
         val intent = Intent(this, EditFavouriteActivity::class.java)
-        intent.putExtra("favourite", favourites.favourites[name])
+        intent.putExtra(EditFavouriteActivity.EXTRA_FAVOURITE, favourites.favourites[name])
         startActivity(intent)
         (favouritesList.adapter as FavouritesAdapter).favourites = favourites.favouritesList
         favouritesList.adapter.notifyDataSetChanged()

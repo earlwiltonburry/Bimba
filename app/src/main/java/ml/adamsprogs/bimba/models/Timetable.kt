@@ -8,9 +8,13 @@ import java.io.File
 
 class Timetable private constructor() {
     companion object {
+        val version = 1
+        val MODE_WORKDAYS = "workdays"
+        val MODE_SATURDAYS = "saturdays"
+        val MODE_SUNDAYS = "sundays"
         private var timetable: Timetable? = null
 
-        fun getTimetable(context: Context? = null, force: Boolean = false): Timetable {
+        fun getTimetable(context: Context? = null, force: Boolean = false): Timetable{
             if (timetable == null || force)
                 if (context != null) {
                     val db: SQLiteDatabase?
@@ -83,9 +87,9 @@ class Timetable private constructor() {
                 "timetables on(timetable_id = timetables.id) join lines on(line_id = lines.id) where " +
                 "stop_id = ? $andLine order by mode, time;", listOf(stopId).toTypedArray())
         val departures = HashMap<String, ArrayList<Departure>>()
-        departures.put("workdays", ArrayList())
-        departures.put("saturdays", ArrayList())
-        departures.put("sundays", ArrayList())
+        departures.put(MODE_WORKDAYS, ArrayList())
+        departures.put(MODE_SATURDAYS, ArrayList())
+        departures.put(MODE_SUNDAYS, ArrayList())
         while (cursor.moveToNext()) {
             departures[cursor.getString(1)]?.add(Departure(cursor.getString(0),
                     cursor.getString(1), cursor.getString(2), cursor.getInt(3) == 1,

@@ -13,6 +13,9 @@ import ml.adamsprogs.bimba.models.FavouriteEditRowAdapter
 import ml.adamsprogs.bimba.models.FavouriteStorage
 
 class EditFavouriteActivity : AppCompatActivity() {
+    companion object {
+        val EXTRA_FAVOURITE = "favourite"
+    }
 
     lateinit var favourites: FavouriteStorage
     lateinit var nameEdit: EditText
@@ -22,7 +25,7 @@ class EditFavouriteActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit_favourite)
 
-        favourite = intent.getParcelableExtra<Favourite>("favourite")
+        favourite = intent.getParcelableExtra<Favourite>(EXTRA_FAVOURITE)
         if (favourite == null)
             finish()
         favourites = FavouriteStorage.getFavouriteStorage(this)

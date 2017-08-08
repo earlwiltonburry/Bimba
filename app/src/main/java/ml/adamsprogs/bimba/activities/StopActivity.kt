@@ -12,13 +12,17 @@ import android.support.v7.widget.*
 import android.support.v4.app.*
 import android.support.v4.view.*
 import android.support.v4.content.res.ResourcesCompat
-import android.util.Log
 
 import ml.adamsprogs.bimba.models.*
 import ml.adamsprogs.bimba.*
 
 
 class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
+
+    companion object {
+        val EXTRA_STOP_ID = "stopId"
+        val EXTRA_STOP_SYMBOL = "stopSymbol"
+    }
 
     private lateinit var stopId: String
     private lateinit var stopSymbol: String
@@ -32,18 +36,15 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
     private lateinit var timerTask: TimerTask
     private val context = this
     private val receiver = MessageReceiver()
-    private lateinit var sharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stop)
-        stopId = intent.getStringExtra("stopId")
-        stopSymbol = intent.getStringExtra("stopSymbol")
+        stopId = intent.getStringExtra(EXTRA_STOP_ID)
+        stopSymbol = intent.getStringExtra(EXTRA_STOP_SYMBOL)
 
         val toolbar = findViewById(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
-
-        sharedPreferences = this.getSharedPreferences("ml.adamsprogs.bimba.prefs", Context.MODE_PRIVATE)
 
         createTimerTask()
 
@@ -55,7 +56,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         viewPager = findViewById(R.id.container) as ViewPager
         tabLayout = findViewById(R.id.tabs) as TabLayout
 
-        sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, createDepartures(stopId))
+        sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, Departure.createDepartures(stopId))
 
         viewPager!!.adapter = sectionsPagerAdapter
         viewPager!!.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tabLayout))
@@ -73,19 +74,15 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         }
 
         fab.setOnClickListener {
-            Log.i("FAB", "Click")
             if (!favourites.has(stopSymbol)) {
-                Log.i("FAB", "Add")
                 val items = ArrayList<HashMap<String, String>>()
                 timetable.getLines(stopId).forEach {
                     val o = HashMap<String, String>()
-                    o["stop"] = stopId
-                    o["line"] = it
+                    o[Favourite.TAG_STOP] = stopId
+                    o[Favourite.TAG_LINE] = it
                     items.add(o)
                 }
-                Log.i("FAB", "Say")
                 favourites.add(stopSymbol, items)
-                Log.i("FAB", "Change")
                 fab.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_favourite, this.theme))
             } else {
                 Snackbar.make(it, getString(R.string.stop_already_fav), Snackbar.LENGTH_LONG)
@@ -98,23 +95,29 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         timerTask = object : TimerTask() {
             override fun run() {
                 val vmIntent = Intent(context, VmClient::class.java)
-                vmIntent.putExtra("stopId", stopId)
-                vmIntent.putExtra("stopSymbol", stopSymbol)
+                vmIntent.putExtra(VmClient.EXTRA_STOP_SYMBOL, stopSymbol)
                 startService(vmIntent)
             }
         }
     }
 
     private fun prepareOnDownloadListener() {
-        val filter = IntentFilter("ml.adamsprogs.bimba.departuresCreated")
+        val filter = IntentFilter(VmClient.ACTION_DEPARTURES_CREATED)
+        filter.addAction(VmClient.ACTION_NO_DEPARTURES)
         filter.addCategory(Intent.CATEGORY_DEFAULT)
         registerReceiver(receiver, filter)
         receiver.addOnVmListener(context as MessageReceiver.OnVmListener)
     }
 
-    override fun onVm(departures: HashMap<String, ArrayList<Departure>>) {
-        sectionsPagerAdapter?.departures = departures
-        sectionsPagerAdapter?.notifyDataSetChanged()
+    override fun onVm(vmDepartures: ArrayList<Departure>?) {
+        if (timetableType == "departure") {
+            val fullDepartures = Departure.createDepartures(stopId)
+            if (vmDepartures != null) {
+                fullDepartures[today.getMode()] = vmDepartures
+            }
+            sectionsPagerAdapter?.departures = fullDepartures
+            sectionsPagerAdapter?.notifyDataSetChanged()
+        }
     }
 
     private fun selectTodayPage() {
@@ -151,7 +154,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
             } else {
                 timetableType = "departure"
                 item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_timetable_full, this.theme))
-                sectionsPagerAdapter?.departures = createDepartures(stopId)
+                sectionsPagerAdapter?.departures = Departure.createDepartures(stopId)
                 sectionsPagerAdapter?.relativeTime = true
                 sectionsPagerAdapter?.notifyDataSetChanged()
                 scheduleRefresh()
@@ -179,7 +182,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
             val departuresList: RecyclerView = rootView.findViewById(R.id.departuresList) as RecyclerView
             val dividerItemDecoration = DividerItemDecoration(departuresList.context, layoutManager.orientation)
             departuresList.addItemDecoration(dividerItemDecoration)
-            val adapter = DeparturesAdapter(activity, arguments.getStringArrayList("departures").map { fromString(it) },
+            val adapter = DeparturesAdapter(activity, arguments.getStringArrayList("departures").map { Departure.fromString(it) },
                     arguments["relativeTime"] as Boolean)
             departuresList.adapter = adapter
             departuresList.layoutManager = layoutManager
@@ -216,9 +219,9 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         override fun getItem(position: Int): Fragment {
             var mode: String? = null
             when (position) {
-                0 -> mode = "workdays"
-                1 -> mode = "saturdays"
-                2 -> mode = "sundays"
+                0 -> mode = Timetable.MODE_WORKDAYS
+                1 -> mode = Timetable.MODE_SATURDAYS
+                2 -> mode = Timetable.MODE_SUNDAYS
             }
             return PlaceholderFragment.newInstance(position + 1, stopId, departures[mode], relativeTime)
         }

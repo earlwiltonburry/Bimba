@@ -5,12 +5,6 @@ import android.content.Intent
 import android.content.BroadcastReceiver
 import android.content.Context
 
-fun isNetworkAvailable(context: Context): Boolean {
-    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    val activeNetworkInfo = connectivityManager.activeNetworkInfo
-    return activeNetworkInfo != null && activeNetworkInfo.isConnected
-}
-
 class NetworkStateReceiver : BroadcastReceiver() {
 
     val onConnectivityChangeListeners = HashSet<OnConnectivityChangeListener>()
@@ -40,5 +34,13 @@ class NetworkStateReceiver : BroadcastReceiver() {
 
     interface OnConnectivityChangeListener {
         fun onConnectivityChange(connected: Boolean)
+    }
+
+    companion object {
+        fun isNetworkAvailable(context: Context): Boolean {
+            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val activeNetworkInfo = connectivityManager.activeNetworkInfo
+            return activeNetworkInfo != null && activeNetworkInfo.isConnected
+        }
     }
 }

@@ -17,12 +17,12 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_nodb)
-        var filter: IntentFilter = IntentFilter("ml.adamsprogs.bimba.timetableDownloaded")
+        var filter: IntentFilter = IntentFilter(TimetableDownloader.ACTION_DOWNLOADED)
         filter.addCategory(Intent.CATEGORY_DEFAULT)
         registerReceiver(timetableDownloadReceiver, filter)
         timetableDownloadReceiver.addOnTimetableDownloadListener(this)
 
-        if (!isNetworkAvailable(this)) {
+        if (!NetworkStateReceiver.isNetworkAvailable(this)) {
             askedForNetwork = true
             (findViewById(R.id.noDbCaption) as TextView).text = getString(R.string.no_db_connect)
             filter = IntentFilter("android.net.conn.CONNECTIVITY_CHANGE")
@@ -34,10 +34,10 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
 
     override fun onResume() {
         super.onResume()
-        var filter: IntentFilter = IntentFilter("ml.adamsprogs.bimba.timetableDownloaded")
+        var filter: IntentFilter = IntentFilter(TimetableDownloader.ACTION_DOWNLOADED)
         filter.addCategory(Intent.CATEGORY_DEFAULT)
         registerReceiver(timetableDownloadReceiver, filter)
-        if (!isNetworkAvailable(this)) {
+        if (!NetworkStateReceiver.isNetworkAvailable(this)) {
             askedForNetwork = true
             (findViewById(R.id.noDbCaption) as TextView).text = getString(R.string.no_db_connect)
             filter = IntentFilter("android.net.conn.CONNECTIVITY_CHANGE")
@@ -51,7 +51,7 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
         (findViewById(R.id.noDbCaption) as TextView).text = getString(R.string.no_db_downloading)
         serviceRunning = true
         intent = Intent(this, TimetableDownloader::class.java)
-        intent.putExtra("force", true)
+        intent.putExtra(TimetableDownloader.EXTRA_FORCE, true)
         startService(intent)
     }
 
@@ -64,7 +64,7 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
 
     override fun onTimetableDownload(result: String?) {
         when (result) {
-            "downloaded" -> {
+            TimetableDownloader.RESULT_DOWNLOADED -> {
                 timetableDownloadReceiver.removeOnTimetableDownloadListener(this)
                 networkStateReceiver.removeOnConnectivityChangeListener(this)
                 startActivity(Intent(this, DashActivity::class.java))

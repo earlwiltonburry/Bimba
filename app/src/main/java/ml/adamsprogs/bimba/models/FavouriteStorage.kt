@@ -37,8 +37,8 @@ class FavouriteStorage private constructor(context: Context) {
             val timetables = ArrayList<HashMap<String, String>>()
             for (jsonTimetable in jsonTimetables.asJsonArray) {
                 val timetable = HashMap<String, String>()
-                timetable["stop"] = jsonTimetable.asJsonObject["stop"].asString
-                timetable["line"] = jsonTimetable.asJsonObject["line"].asString
+                timetable[Favourite.TAG_STOP] = jsonTimetable.asJsonObject[Favourite.TAG_STOP].asString
+                timetable[Favourite.TAG_LINE] = jsonTimetable.asJsonObject[Favourite.TAG_LINE].asString
                 timetables.add(timetable)
             }
             favourites[name] = Favourite(name, timetables)
@@ -77,8 +77,8 @@ class FavouriteStorage private constructor(context: Context) {
             val timetables = JsonArray()
             for (timetable in favourite.timetables) {
                 val element = JsonObject()
-                element.addProperty("stop", timetable["stop"])
-                element.addProperty("line", timetable["line"])
+                element.addProperty(Favourite.TAG_STOP, timetable[Favourite.TAG_STOP])
+                element.addProperty(Favourite.TAG_LINE, timetable[Favourite.TAG_LINE])
                 timetables.add(element)
             }
             rootObject.add(name, timetables)
@@ -92,8 +92,8 @@ class FavouriteStorage private constructor(context: Context) {
 
     fun detach(name: String, stop: String, line: String, newName: String) {
         val element = HashMap<String, String>()
-        element["stop"] = stop
-        element["line"] = line
+        element[Favourite.TAG_STOP] = stop
+        element[Favourite.TAG_LINE] = line
         val array = ArrayList<HashMap<String, String>>()
         array.add(element)
         favourites[newName] = Favourite(newName, array)

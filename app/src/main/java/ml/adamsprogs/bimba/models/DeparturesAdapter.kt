@@ -12,47 +12,6 @@ import android.view.LayoutInflater
 import ml.adamsprogs.bimba.Declinator
 import java.util.*
 
-fun filterDepartures(departures: List<Departure>?): ArrayList<Departure> {
-    val filtered = ArrayList<Departure>()
-    val lines = HashMap<String, Int>()
-    val now = Calendar.getInstance()
-    for (departure in departures!!) {
-        val time = Calendar.getInstance()
-        time.set(Calendar.HOUR_OF_DAY, Integer.parseInt(departure.time.split(":")[0]))
-        time.set(Calendar.MINUTE, Integer.parseInt(departure.time.split(":")[1]))
-        time.set(Calendar.SECOND, 0)
-        time.set(Calendar.MILLISECOND, 0)
-        if (departure.tomorrow)
-            time.add(Calendar.DAY_OF_MONTH, 1)
-        var lineExistedTimes = lines[departure.line]
-        if ((now.before(time) || now == time) && lineExistedTimes ?: 0 < 3) {
-            lineExistedTimes = (lineExistedTimes ?: 0) + 1
-            lines[departure.line] = lineExistedTimes
-            filtered.add(departure)
-        }
-    }
-    return filtered
-}
-
-fun createDepartures(stopId: String): HashMap<String, ArrayList<Departure>> {
-    val timetable = Timetable.getTimetable()
-    val departures = timetable.getStopDepartures(stopId)
-    val moreDepartures = timetable.getStopDepartures(stopId)
-    val rolledDepartures = HashMap<String, ArrayList<Departure>>()
-
-    for ((_, tomorrowDepartures) in moreDepartures!!) {
-        tomorrowDepartures.forEach { it.tomorrow = true }
-    }
-
-    for ((mode, _) in departures!!) {
-        rolledDepartures[mode] = (departures[mode] as ArrayList<Departure> +
-                moreDepartures[mode] as ArrayList<Departure>) as ArrayList<Departure>
-        rolledDepartures[mode] = filterDepartures(rolledDepartures[mode])
-    }
-
-    return rolledDepartures
-}
-
 class DeparturesAdapter(val context: Context, val departures: List<Departure>, val relativeTime: Boolean) :
         RecyclerView.Adapter<DeparturesAdapter.ViewHolder>() {
     override fun getItemCount(): Int {

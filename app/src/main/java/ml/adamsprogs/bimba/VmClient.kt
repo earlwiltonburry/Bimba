@@ -10,47 +10,50 @@ import java.util.*
 
 
 class VmClient : IntentService("VmClient") {
+    companion object {
+        val ACTION_DEPARTURES_CREATED = "ml.adamsprogs.bimba.departuresCreated"
+        val ACTION_NO_DEPARTURES = "ml.adamsprogs.bimba.noVM"
+        val EXTRA_STOP_SYMBOL = "stopSymbol"
+        val EXTRA_LINE_NUMBER = "lineNumber"
+        val EXTRA_DEPARTURES = "departures"
+    }
 
     override fun onHandleIntent(intent: Intent?) {
         if (intent != null) {
-            val stopId = intent.getStringExtra("stopId")
-            if (!isNetworkAvailable(this)) {
-                sendResult(createDepartures(stopId))
-            } else {
-                val stopSymbol = intent.getStringExtra("stopSymbol")
-                val departures = createDepartures(stopId)
+            if (!NetworkStateReceiver.isNetworkAvailable(this)) {
+                sendNullResult()
+                return
+            }
 
-                val client = OkHttpClient()
-                val url = "http://www.peka.poznan.pl/vm/method.vm?ts=${Calendar.getInstance().timeInMillis}"
-                val formBody = FormBody.Builder()
-                        .add("method", "getTimes")
-                        .add("p0", "{\"symbol\": \"$stopSymbol\"}")
-                        .build()
-                val request = Request.Builder()
-                        .url(url)
-                        .post(formBody)
-                        .build()
-                val responseBody : String?
-                try {
-                    responseBody = client.newCall(request).execute().body()?.string()
-                } catch(e: IOException) {
-                    sendResult(departures)
-                    return
-                }
-                val javaRootMapObject = Gson().fromJson(responseBody, HashMap::class.java)
-                val times = (javaRootMapObject["success"] as Map<*, *>)["times"] as List<*>
-                val date = Calendar.getInstance()
-                val today = date.get(Calendar.DAY_OF_WEEK)
-                val todayDay = "${date.get(Calendar.DATE)}"
-                val todayMode: String
-                when (today) {
-                    Calendar.SATURDAY -> todayMode = "saturdays"
-                    Calendar.SUNDAY -> todayMode = "sundays"
-                    else -> todayMode = "workdays"
-                }
-                val departuresToday = ArrayList<Departure>()
-                for (time in times) {
-                    val t = time as Map<*, *>
+            val stopSymbol = intent.getStringExtra(EXTRA_STOP_SYMBOL)
+            val lineNumber = intent.getStringExtra(EXTRA_LINE_NUMBER)
+
+            val client = OkHttpClient()
+            val url = "http://www.peka.poznan.pl/vm/method.vm?ts=${Calendar.getInstance().timeInMillis}"
+            val formBody = FormBody.Builder()
+                    .add("method", "getTimes")
+                    .add("p0", "{\"symbol\": \"$stopSymbol\"}")
+                    .build()
+            val request = Request.Builder()
+                    .url(url)
+                    .post(formBody)
+                    .build()
+            val responseBody: String?
+            try {
+                responseBody = client.newCall(request).execute().body()?.string()
+            } catch(e: IOException) {
+                sendNullResult()
+                return
+            }
+            val javaRootMapObject = Gson().fromJson(responseBody, HashMap::class.java)
+            val times = (javaRootMapObject["success"] as Map<*, *>)["times"] as List<*>
+            val date = Calendar.getInstance()
+            val todayDay = "${date.get(Calendar.DATE)}"
+            val todayMode = date.getMode()
+            val departuresToday = ArrayList<Departure>()
+            for (time in times) {
+                val t = time as Map<*, *>
+                if (lineNumber == null || t["line"] == lineNumber) {
                     val departureDay = (t["departure"] as String).split("T")[0].split("-")[2]
 
                     val departureTimeRaw = (t["departure"] as String).split("T")[1].split(":")
@@ -60,19 +63,27 @@ class VmClient : IntentService("VmClient") {
                             departureDay != todayDay, t["onStopPoint"] as Boolean)
                     departuresToday.add(departure)
                 }
-                departures[todayMode] = departuresToday
-                sendResult(departures)
             }
+            if (departuresToday.isEmpty())
+                sendNullResult()
+            else
+                sendResult(departuresToday)
+
         }
     }
 
-    private fun sendResult(departures: HashMap<String, ArrayList<Departure>>) {
+    private fun sendNullResult() {
         val broadcastIntent = Intent()
-        broadcastIntent.action = "ml.adamsprogs.bimba.departuresCreated"
+        broadcastIntent.action = ACTION_NO_DEPARTURES
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT)
-        broadcastIntent.putStringArrayListExtra("workdays", departures["workdays"]?.map { it.toString() } as java.util.ArrayList<String>)
-        broadcastIntent.putStringArrayListExtra("saturdays", departures["saturdays"]?.map { it.toString() } as java.util.ArrayList<String>)
-        broadcastIntent.putStringArrayListExtra("sundays", departures["sundays"]?.map { it.toString() } as java.util.ArrayList<String>)
+        sendBroadcast(broadcastIntent)
+    }
+
+    private fun sendResult(departures: ArrayList<Departure>) {
+        val broadcastIntent = Intent()
+        broadcastIntent.action = ACTION_DEPARTURES_CREATED
+        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT)
+        broadcastIntent.putStringArrayListExtra(EXTRA_DEPARTURES, departures.map { it.toString() } as java.util.ArrayList<String>)
         sendBroadcast(broadcastIntent)
     }
 }

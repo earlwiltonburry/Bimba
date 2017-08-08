@@ -3,6 +3,7 @@ package ml.adamsprogs.bimba.models
 import android.os.Parcel
 import android.os.Parcelable
 import android.util.Log
+import ml.adamsprogs.bimba.getMode
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
@@ -10,7 +11,7 @@ import kotlin.collections.HashMap
 class Favourite : Parcelable {
     var name: String
     var timetables: ArrayList<HashMap<String, String>>
-    private var oneDayDepartures:ArrayList<HashMap<String, ArrayList<Departure>>>? = null
+    private var oneDayDepartures: ArrayList<HashMap<String, ArrayList<Departure>>>? = null
 
     constructor(parcel: Parcel) {
         val array = ArrayList<String>()
@@ -18,8 +19,8 @@ class Favourite : Parcelable {
         val timetables = ArrayList<HashMap<String, String>>()
         for (row in array) {
             val element = HashMap<String, String>()
-            element["stop"] = row.split("|")[0]
-            element["line"] = row.split("|")[1]
+            element[TAG_STOP] = row.split("|")[0]
+            element[TAG_LINE] = row.split("|")[1]
             timetables.add(element)
         }
         this.name = parcel.readString()
@@ -36,7 +37,7 @@ class Favourite : Parcelable {
     }
 
     override fun writeToParcel(dest: Parcel?, flags: Int) {
-        val parcel = timetables.map { "${it["stop"]}|${it["line"]}" }
+        val parcel = timetables.map { "${it[TAG_STOP]}|${it[TAG_LINE]}" }
         dest?.writeStringList(parcel)
         dest?.writeString(name)
     }
@@ -49,41 +50,34 @@ class Favourite : Parcelable {
         get() {
             if (timetables.isEmpty())
                 return null
-            val today: String
-            val tomorrow: String
             val twoDayDepartures = ArrayList<Departure>()
             val now = Calendar.getInstance()
             val departureTime = Calendar.getInstance()
-            when (Calendar.getInstance().get(Calendar.DAY_OF_WEEK)) {
-                Calendar.SUNDAY -> today = "sundays"
-                Calendar.SATURDAY -> today = "saturdays"
-                else -> today = "workdays"
-            }
+            val today = now.getMode()
             val tomorrowCal = Calendar.getInstance()
             tomorrowCal.add(Calendar.DAY_OF_MONTH, 1)
-            when (tomorrowCal.get(Calendar.DAY_OF_WEEK)) {
-                Calendar.SUNDAY -> tomorrow = "sundays"
-                Calendar.SATURDAY -> tomorrow = "saturdays"
-                else -> tomorrow = "workdays"
-            }
+            val tomorrow = tomorrowCal.getMode()
 
             if (oneDayDepartures == null) {
                 oneDayDepartures = ArrayList<HashMap<String, ArrayList<Departure>>>()
-                timetables.mapTo(oneDayDepartures!!) { timetable.getStopDepartures(it["stop"] as String, it["line"])!! }
+                timetables.mapTo(oneDayDepartures!!) { timetable.getStopDepartures(it[TAG_STOP] as String, it[TAG_LINE])!! }
             }
 
             oneDayDepartures!!.forEach {
                 it[today]!!.forEach {
-                    twoDayDepartures.add(fromString(it.toString()))
+                    twoDayDepartures.add(it.copy())
                 }
             }
             oneDayDepartures!!.forEach {
                 it[tomorrow]!!.forEach {
-                    val d = fromString(it.toString())
+                    val d = it.copy()
                     d.tomorrow = true
                     twoDayDepartures.add(d)
                 }
             }
+
+            if (twoDayDepartures.isEmpty())
+                return null
 
             var minDeparture: Departure = twoDayDepartures[0]
             var minInterval = 24 * 60L
@@ -106,7 +100,7 @@ class Favourite : Parcelable {
 
     fun delete(stop: String, line: String) {
         Log.i("ROW", "Favourite deleting $stop, $line")
-        timetables.remove(timetables.find { it["stop"] == stop && it["line"] == line })
+        timetables.remove(timetables.find { it[TAG_STOP] == stop && it[TAG_LINE] == line })
         Log.i("ROW", timetables.toString())
     }
 
@@ -118,5 +112,8 @@ class Favourite : Parcelable {
         override fun newArray(size: Int): Array<Favourite?> {
             return arrayOfNulls(size)
         }
+
+        val TAG_STOP = "stop"
+        val TAG_LINE = "line"
     }
 }

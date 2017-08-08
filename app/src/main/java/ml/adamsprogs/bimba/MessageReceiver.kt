@@ -4,29 +4,27 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import ml.adamsprogs.bimba.models.Departure
-import ml.adamsprogs.bimba.models.fromString
 
-class MessageReceiver: BroadcastReceiver() {
+class MessageReceiver : BroadcastReceiver() {
     val onTimetableDownloadListeners: HashSet<OnTimetableDownloadListener> = HashSet()
     val onVmListeners: HashSet<OnVmListener> = HashSet()
 
     override fun onReceive(context: Context?, intent: Intent?) {
-        if (intent?.action == "ml.adamsprogs.bimba.timetableDownloaded") {
-            val result = intent.getStringExtra("result")
+        if (intent?.action == TimetableDownloader.ACTION_DOWNLOADED) {
+            val result = intent.getStringExtra(TimetableDownloader.EXTRA_RESULT)
             for (listener in onTimetableDownloadListeners) {
                 listener.onTimetableDownload(result)
             }
         }
-        if (intent?.action == "ml.adamsprogs.bimba.departuresCreated") {
-            val workdays = intent.getStringArrayListExtra("workdays").map { fromString(it)} as ArrayList<Departure>
-            val saturdays = intent.getStringArrayListExtra("saturdays").map { fromString(it)} as ArrayList<Departure>
-            val sundays = intent.getStringArrayListExtra("sundays").map { fromString(it)} as ArrayList<Departure>
-            val departures = HashMap<String, ArrayList<Departure>>()
-            departures["workdays"] = workdays
-            departures["saturdays"] = saturdays
-            departures["sundays"] = sundays
+        if (intent?.action == VmClient.ACTION_DEPARTURES_CREATED) {
+            val departures = intent.getStringArrayListExtra(VmClient.EXTRA_DEPARTURES).map { Departure.fromString(it) } as ArrayList<Departure>
             for (listener in onVmListeners) {
                 listener.onVm(departures)
+            }
+        }
+        if (intent?.action == VmClient.ACTION_NO_DEPARTURES) {
+            for (listener in onVmListeners) {
+                listener.onVm(null)
             }
         }
     }
@@ -52,6 +50,6 @@ class MessageReceiver: BroadcastReceiver() {
     }
 
     interface OnVmListener {
-        fun onVm(departures: HashMap<String, ArrayList<Departure>>)
+        fun onVm(vmDepartures: ArrayList<Departure>?)
     }
 }

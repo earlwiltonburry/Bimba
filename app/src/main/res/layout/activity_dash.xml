@@ -29,20 +29,6 @@
                 app:popupTheme="@style/AppTheme.PopupOverlay" />
         </android.support.design.widget.AppBarLayout>
 
-        <com.arlib.floatingsearchview.FloatingSearchView
-            android:id="@+id/search_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:floatingSearch_close_search_on_keyboard_dismiss="true"
-            app:floatingSearch_leftActionMode="showHamburger"
-            app:floatingSearch_searchBarMarginLeft="16dp"
-            app:floatingSearch_searchBarMarginRight="16dp"
-            app:floatingSearch_searchBarMarginTop="16dp"
-            app:floatingSearch_searchHint="@string/search_placeholder"
-            app:floatingSearch_showSearchKey="false"
-            app:floatingSearch_suggestionsListAnimDuration="250" />
-
-
         <android.support.v7.widget.RecyclerView
             android:id="@+id/favouritesList"
             android:layout_width="match_parent"
@@ -56,6 +42,19 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <com.arlib.floatingsearchview.FloatingSearchView
+            android:id="@+id/search_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:floatingSearch_close_search_on_keyboard_dismiss="true"
+            app:floatingSearch_leftActionMode="showHamburger"
+            app:floatingSearch_searchBarMarginLeft="16dp"
+            app:floatingSearch_searchBarMarginRight="16dp"
+            app:floatingSearch_searchBarMarginTop="16dp"
+            app:floatingSearch_searchHint="@string/search_placeholder"
+            app:floatingSearch_showSearchKey="false"
+            app:floatingSearch_suggestionsListAnimDuration="250" />
 
     </android.support.constraint.ConstraintLayout>
 

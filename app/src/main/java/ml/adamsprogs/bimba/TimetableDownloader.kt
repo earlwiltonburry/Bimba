@@ -12,9 +12,20 @@ import java.security.MessageDigest
 import kotlin.experimental.and
 import android.util.Log
 import android.app.NotificationManager
+import ml.adamsprogs.bimba.models.Timetable
 
 
 class TimetableDownloader : IntentService("TimetableDownloader") {
+    companion object {
+        val ACTION_DOWNLOADED = "ml.adamsprogs.bimba.timetableDownloaded"
+        val EXTRA_FORCE = "force"
+        val EXTRA_RESULT = "result"
+        val RESULT_NO_CONNECTIVITY = "no connectivity"
+        val RESULT_VERSION_MISMATCH = "version mismatch"
+        val RESULT_UP_TO_DATE = "up-to-date"
+        val RESULT_DOWNLOADED = "downloaded"
+        val RESULT_VALIDITY_FAILED = "validity failed"
+    }
     lateinit var notificationManager: NotificationManager
     var size: Int = 0
 
@@ -23,28 +34,30 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
         if (intent != null) {
             notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val prefs = this.getSharedPreferences("ml.adamsprogs.bimba.prefs", Context.MODE_PRIVATE)!!
-            if (!isNetworkAvailable(this)) {
-                sendResult("no connectivity")
+            if (!NetworkStateReceiver.isNetworkAvailable(this)) {
+                sendResult(RESULT_NO_CONNECTIVITY)
                 return
             }
             val metadataUrl = URL("https://adamsprogs.ml/w/_media/programmes/bimba/timetable.db.meta")
             var httpCon = metadataUrl.openConnection() as HttpURLConnection
-            if (httpCon.responseCode != HttpURLConnection.HTTP_OK)
-                throw Exception("Failed to connect")
+            if (httpCon.responseCode != HttpURLConnection.HTTP_OK){
+                sendResult(RESULT_NO_CONNECTIVITY)
+                return
+            }
             Log.i("Downloader", "Got metadata")
             val reader = BufferedReader(InputStreamReader(httpCon.inputStream))
             val lastModified = reader.readLine()
             val checksum = reader.readLine()
             size = Integer.parseInt(reader.readLine()) / 1024
             val dbVersion = reader.readLine()
-            if (Integer.parseInt(dbVersion.split(".")[0]) > 1) { //todo version to const
-                sendResult("version mismatch")
+            if (Integer.parseInt(dbVersion.split(".")[0]) > Timetable.version) {
+                sendResult(RESULT_VERSION_MISMATCH)
                 return
             }
             val dbFilename = reader.readLine()
             val currentLastModified = prefs.getString("timetableLastModified", "19791012")
-            if (lastModified <= currentLastModified && !intent.getBooleanExtra("force", false)) {
-                sendResult("up-to-date")
+            if (lastModified <= currentLastModified && !intent.getBooleanExtra(EXTRA_FORCE, false)) {
+                sendResult(RESULT_UP_TO_DATE)
                 return
             }
             Log.i("Downloader", "timetable is newer ($lastModified > $currentLastModified)")
@@ -53,8 +66,10 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
 
             val xzDbUrl = URL("https://adamsprogs.ml/w/_media/programmes/bimba/$dbFilename")
             httpCon = xzDbUrl.openConnection() as HttpURLConnection
-            if (httpCon.responseCode != HttpURLConnection.HTTP_OK)
-                throw Exception("Failed to connect")
+            if (httpCon.responseCode != HttpURLConnection.HTTP_OK){
+                sendResult(RESULT_NO_CONNECTIVITY)
+                return
+            }
             Log.i("Downloader", "connected to db")
             val xzIn = XZInputStream(httpCon.inputStream)
             val file = File(this.filesDir, "new_timetable.db")
@@ -66,10 +81,10 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 val prefsEditor = prefs.edit()
                 prefsEditor.putString("timetableLastModified", lastModified)
                 prefsEditor.apply()
-                sendResult("downloaded")
+                sendResult(RESULT_DOWNLOADED)
             } else {
                 Log.i("Downloader", "downloaded but is wrong")
-                sendResult("validity failed")
+                sendResult(RESULT_VALIDITY_FAILED)
             }
 
             cancelNotification()
@@ -78,9 +93,9 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
 
     private fun sendResult(result: String) {
         val broadcastIntent = Intent()
-        broadcastIntent.action = "ml.adamsprogs.bimba.timetableDownloaded"
+        broadcastIntent.action = ACTION_DOWNLOADED
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT)
-        broadcastIntent.putExtra("result", result)
+        broadcastIntent.putExtra(EXTRA_RESULT, result)
         sendBroadcast(broadcastIntent)
     }
 
