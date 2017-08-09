@@ -12,7 +12,7 @@ First Free-Software Poznań Wandering Guide
     * [M] offline timetable
     * [ ] Virtual Monitor
     * [ ] peek all departures in a favourite
-* [ ] less nonintuitive timetable refresh gesture
+* [M] less nonintuitive timetable refresh gesture
 * [ ] nearest stop(s) by GPS
 * [ ] ‘through mid-stop’ on lines with only 1 direction
 * [ ] city bike stations on map
