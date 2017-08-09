@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:id="@+id/drawer_group_activities">
+        <item
+            android:id="@+id/drawer_home"
+            android:icon="@drawable/ic_home"
+            android:title="@string/home" />
+    </group>
+    <group android:id="@+id/drawer_group_actions">
+        <item
+            android:id="@+id/drawer_refresh"
+            android:icon="@drawable/ic_refresh"
+            android:title="@string/refresh" />
+        <item
+            android:id="@+id/drawer_help"
+            android:icon="@drawable/ic_help"
+            android:title="@string/help" />
+    </group>
+</menu>

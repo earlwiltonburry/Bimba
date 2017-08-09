@@ -31,17 +31,15 @@
 
         <android.support.v7.widget.RecyclerView
             android:id="@+id/favouritesList"
-            android:layout_width="match_parent"
-            android:layout_height="469dp"
-            android:layout_marginBottom="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="100dp"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginBottom="0dp"
+            android:layout_marginTop="80dp"
             android:scrollbars="none"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="@+id/search_view" />
 
         <com.arlib.floatingsearchview.FloatingSearchView
             android:id="@+id/search_view"
@@ -63,91 +61,7 @@
         android:id="@+id/drawer"
         android:layout_width="240dp"
         android:layout_height="match_parent"
-        android:layout_gravity="start">
-
-        <android.support.constraint.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:paddingTop="8dp">
-
-
-            <ImageView
-                android:id="@+id/drawerHomeImage"
-                android:layout_width="wrap_content"
-                android:layout_height="48dp"
-                android:layout_marginStart="16dp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_home"
-                android:contentDescription="@string/navigation_drawer_home_button" />
-
-            <TextView
-                android:id="@+id/drawerHomeText"
-                android:layout_width="wrap_content"
-                android:layout_height="48dp"
-                android:layout_marginStart="72dp"
-                android:gravity="center"
-                android:text="@string/home"
-                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/drawerHomeImage" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginBottom="8dp"
-                android:layout_marginTop="8dp"
-                android:theme="@style/DividerTheme"
-                app:layout_constraintBottom_toTopOf="@+id/drawerRefreshText"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/drawerHomeText" />
-
-            <ImageView
-                android:id="@+id/drawerRefreshImage"
-                android:layout_width="wrap_content"
-                android:layout_height="48dp"
-                android:layout_marginStart="16dp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/drawerHomeImage"
-                app:srcCompat="@drawable/ic_refresh"
-                android:contentDescription="@string/navigation_drawer_refresh_button" />
-
-            <TextView
-                android:id="@+id/drawerRefreshText"
-                android:layout_width="wrap_content"
-                android:layout_height="48dp"
-                android:layout_marginStart="72dp"
-                android:gravity="center"
-                android:text="@string/refresh"
-                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-                app:layout_constraintBottom_toBottomOf="@+id/drawerRefreshImage"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/drawerRefreshImage" />
-
-            <ImageView
-                android:id="@+id/drawerHelpImage"
-                android:layout_width="wrap_content"
-                android:layout_height="48dp"
-                android:layout_marginStart="16dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:srcCompat="@drawable/ic_help"
-                android:contentDescription="@string/navigation_drawer_help_button" />
-
-            <TextView
-                android:id="@+id/drawerHelpText"
-                android:layout_width="wrap_content"
-                android:layout_height="48dp"
-                android:layout_marginStart="72dp"
-                android:gravity="center"
-                android:text="@string/help"
-                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-                app:layout_constraintBottom_toBottomOf="@+id/drawerHelpImage"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/drawerHelpImage" />
-
-
-        </android.support.constraint.ConstraintLayout>
+        android:layout_gravity="start"
+        app:menu="@menu/menu_drawer">
     </android.support.design.widget.NavigationView>
 </android.support.v4.widget.DrawerLayout>

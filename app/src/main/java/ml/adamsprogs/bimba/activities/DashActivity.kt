@@ -5,26 +5,29 @@ import android.os.*
 import android.support.design.widget.Snackbar
 import android.support.v7.app.*
 import android.text.Html
-import android.view.View
 import com.arlib.floatingsearchview.FloatingSearchView
 import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
 import ml.adamsprogs.bimba.models.*
 import kotlin.concurrent.thread
 import android.app.Activity
+import android.support.design.widget.NavigationView
 import android.support.v4.widget.*
 import android.support.v7.widget.*
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
+import android.view.*
 import android.view.inputmethod.InputMethodManager
 import ml.adamsprogs.bimba.*
 import java.util.*
 
-class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, FavouritesAdapter.OnMenuItemClickListener {
+class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener,
+        FavouritesAdapter.OnMenuItemClickListener {
+
     val context: Context = this
     val receiver = MessageReceiver()
     lateinit var timetable: Timetable
     var stops: ArrayList<StopSuggestion>? = null
+    lateinit var drawerLayout: DrawerLayout
+    lateinit var drawer: NavigationView
     lateinit var favouritesList: RecyclerView
     lateinit var searchView: FloatingSearchView
     lateinit var favourites: FavouriteStorage
@@ -49,6 +52,21 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         prepareFavourites()
 
         scheduleRefresh()
+
+        drawerLayout = findViewById(R.id.drawer_layout) as DrawerLayout
+        drawer = findViewById(R.id.drawer) as NavigationView
+        drawer.setCheckedItem(R.id.drawer_home)
+        drawer.setNavigationItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.drawer_refresh -> {
+                    startDownloaderService()
+                }
+                else -> {
+                }
+            }
+            drawerLayout.closeDrawer(drawer)
+            super.onOptionsItemSelected(item)
+        }
 
         searchView = findViewById(R.id.search_view) as FloatingSearchView
 
@@ -152,6 +170,10 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     override fun onBackPressed() {
+        if (drawerLayout.isDrawerOpen(drawer)) {
+            drawerLayout.closeDrawer(drawer)
+            return
+        }
         if (!searchView.setSearchFocused(false)) {
             super.onBackPressed()
         }
