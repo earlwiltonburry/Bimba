@@ -35,4 +35,24 @@
     <string name="home">Dom</string>
     <string name="refresh">Odśwież</string>
     <string name="help">Pomoc</string>
+    <string name="title_activity_help">Pomoc</string>
+    <string name="help_text">
+        "Dlaczego nie ma rozkładu na sobotę?\n\n"
+
+        "Aktualny oficjalny rozkład będzie nieważny przed sobotą, więc nie zawiera czasów dla"
+        "soboty.\n"
+        "Pamiętaj, aby zaktualizować rozkład najpóźniej w sobotę.\n\n"
+
+        "Dlaczego ulubiony pokazuje „Brak następnego odjazdu”?\n\n"
+
+        "Ulubione zawierają czasy dla dzisiaj i jutra."
+        "„Brak następnego odjazdu” może się wydarzyć, np. gdy nie ma rozkładu na jutro, a dzisiaj"
+        "nie ma już odjazdów.\n\n"
+
+        "Dziś jest wtorek, ale jest święto. Nie powinienem patrzeć na rozkład dla niedzieli?\n\n"
+
+        "Oficjalny rozkład jest specjalnie przygotowywany na święta — będzie widoczny w dzisiejszej"
+        "zakładce (jeśli jest wtorek, to w „dni robocze”).\n"
+        "Pamiętaj, aby sprawdzić aktualności na\nhttps://www.ztm.poznan.pl.\n\n"
+    </string>
 </resources>

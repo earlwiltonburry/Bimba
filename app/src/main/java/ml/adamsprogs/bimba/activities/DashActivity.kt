@@ -55,11 +55,14 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         drawerLayout = findViewById(R.id.drawer_layout) as DrawerLayout
         drawer = findViewById(R.id.drawer) as NavigationView
-        drawer.setCheckedItem(R.id.drawer_home)
+        //drawer.setCheckedItem(R.id.drawer_home)
         drawer.setNavigationItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.drawer_refresh -> {
                     startDownloaderService()
+                }
+                R.id.drawer_help -> {
+                    startActivity(Intent(context, HelpActivity::class.java))
                 }
                 else -> {
                 }

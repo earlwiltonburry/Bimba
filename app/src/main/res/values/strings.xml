@@ -45,4 +45,24 @@
     <string name="navigation_drawer_home_button" translatable="false">navigation drawer home button</string>
     <string name="navigation_drawer_refresh_button" translatable="false">navigation drawer refresh button</string>
     <string name="navigation_drawer_help_button" translatable="false">navigation drawer help button</string>
+    <string name="title_activity_help">Help</string>
+    <string name="help_text">
+        "Why is there no timetable for Saturdays?\n\n"
+
+        "Current official timetable will have been invalid by Saturday so it doesn’t contain times"
+        "for Saturdays.\n"
+        "Be sure to update timetable on Saturday at the latest.\n\n"
+
+        "Why a favourite card shows ‘No next departure’?\n\n"
+
+        "Favourite cards contain times for today and tomorrow."
+        "‘No next departure’ may happen when, e.g. there is no timetable for tomorrow and there"
+        "are no more departures today.\n\n"
+
+        "Today is Tuesday but it’s a holiday. Shouldn’t I look at Sundays timetable?\n\n"
+
+        "Official timetable is especially prepared for holidays—it will show up as today (if"
+        "it’s Tuesday, it will be on ‘workdays’ tab).\n"
+        "Be sure to consult the messages on\nhttps://www.ztm.poznan.pl/en.\n\n"
+    </string>
 </resources>
