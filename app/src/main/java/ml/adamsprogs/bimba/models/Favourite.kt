@@ -3,15 +3,39 @@ package ml.adamsprogs.bimba.models
 import android.os.Parcel
 import android.os.Parcelable
 import android.util.Log
+import ml.adamsprogs.bimba.MessageReceiver
 import ml.adamsprogs.bimba.getMode
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
-class Favourite : Parcelable {
+class Favourite : Parcelable, MessageReceiver.OnVmListener {
+    override fun onVm(vmDepartures: ArrayList<Departure>?, requester: String) {
+        val requesterName = requester.split(";")[0]
+        var requesterTimetable: String
+        try {
+            requesterTimetable = requester.split(";")[1]
+        } catch (e: IndexOutOfBoundsException) {
+            requesterTimetable = ""
+        }
+        Log.i("VM", "got vm for $requesterName and my name is $name")
+        if (vmDepartures != null && requesterName == name) {
+            Log.i("VM", "so I’m adding")
+            vmDeparturesMap[requesterTimetable] = vmDepartures
+            this.vmDepartures = vmDeparturesMap.flatMap { it.value } as ArrayList<Departure>
+        }
+        Log.i("VM", "so I’m not adding")
+        filterVmDepartures()
+    }
+
+    private var isRegisteredOnVmListener: Boolean = false
     var name: String
+        private set
     var timetables: ArrayList<HashMap<String, String>>
+        private set
     private var oneDayDepartures: ArrayList<HashMap<String, ArrayList<Departure>>>? = null
+    private val vmDeparturesMap = HashMap<String, ArrayList<Departure>>()
+    private var vmDepartures = ArrayList<Departure>()
 
     constructor(parcel: Parcel) {
         val array = ArrayList<String>()
@@ -30,6 +54,7 @@ class Favourite : Parcelable {
     constructor(name: String, timetables: ArrayList<HashMap<String, String>>) {
         this.name = name
         this.timetables = timetables
+
     }
 
     override fun describeContents(): Int {
@@ -48,19 +73,28 @@ class Favourite : Parcelable {
 
     var nextDeparture: Departure? = null
         get() {
-            if (timetables.isEmpty())
+            filterVmDepartures()
+            if (timetables.isEmpty() && vmDepartures.isEmpty())
                 return null
+
+            Log.i("FAV", "vmDeps is empty? ${vmDepartures.isEmpty()} so")
+            if (vmDepartures.isNotEmpty()) {
+                val d = vmDepartures.minBy { it.timeTill() }
+                Log.i("FAV", "using vm: ${d.toString()}")
+                return d
+            }
+
+            Log.i("FAV", "using offline")
+
             val twoDayDepartures = ArrayList<Departure>()
-            val now = Calendar.getInstance()
-            val departureTime = Calendar.getInstance()
-            val today = now.getMode()
+            val today = Calendar.getInstance().getMode()
             val tomorrowCal = Calendar.getInstance()
             tomorrowCal.add(Calendar.DAY_OF_MONTH, 1)
             val tomorrow = tomorrowCal.getMode()
 
             if (oneDayDepartures == null) {
                 oneDayDepartures = ArrayList<HashMap<String, ArrayList<Departure>>>()
-                timetables.mapTo(oneDayDepartures!!) { timetable.getStopDepartures(it[TAG_STOP] as String, it[TAG_LINE])!! }
+                timetables.mapTo(oneDayDepartures!!) { timetable.getStopDepartures(it[TAG_STOP] as String, it[TAG_LINE]) }
             }
 
             oneDayDepartures!!.forEach {
@@ -79,29 +113,35 @@ class Favourite : Parcelable {
             if (twoDayDepartures.isEmpty())
                 return null
 
-            var minDeparture: Departure = twoDayDepartures[0]
-            var minInterval = 24 * 60L
-            for (departure in twoDayDepartures) {
-                departureTime.set(Calendar.HOUR_OF_DAY, Integer.parseInt(departure.time.split(":")[0]))
-                departureTime.set(Calendar.MINUTE, Integer.parseInt(departure.time.split(":")[1]))
-                if (departure.tomorrow)
-                    departureTime.add(Calendar.DAY_OF_MONTH, 1)
-                val interval = (departureTime.timeInMillis - now.timeInMillis) / (1000 * 60)
-                if (interval in 0..(minInterval - 1)) {
-                    minInterval = (departureTime.timeInMillis - now.timeInMillis) / (1000 * 60)
-                    minDeparture = departure
-                }
-            }
-
-            Log.i("preInterval", "$minInterval")
-            return minDeparture
+            return twoDayDepartures
+                    .filter { it.timeTill() >= 0 }
+                    .minBy { it.timeTill() }
         }
         private set
+
+    fun filterVmDepartures() {
+        this.vmDepartures
+                .filter { it.timeTill() < 0 }
+                .forEach { this.vmDepartures.remove(it) }
+    }
 
     fun delete(stop: String, line: String) {
         Log.i("ROW", "Favourite deleting $stop, $line")
         timetables.remove(timetables.find { it[TAG_STOP] == stop && it[TAG_LINE] == line })
         Log.i("ROW", timetables.toString())
+    }
+
+    fun registerOnVm(receiver: MessageReceiver) {
+        Log.i("FAV", "Shall register? ${!isRegisteredOnVmListener}")
+        if (!isRegisteredOnVmListener) {
+            Log.i("FAV", "registering")
+            receiver.addOnVmListener(this)
+            isRegisteredOnVmListener = true
+        }
+    }
+
+    fun rename(newName: String) {
+        name = newName
     }
 
     companion object CREATOR : Parcelable.Creator<Favourite> {

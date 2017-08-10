@@ -148,9 +148,22 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     private fun createTimerTask() {
         timerTask = object : TimerTask() {
             override fun run() {
+                for (fav in favourites) {
+                    fav.registerOnVm(receiver)
+                    for (t in fav.timetables) {
+                        val symbol = timetable.getStopSymbol(t[Favourite.TAG_STOP]!!)
+                        val line = timetable.getLineNumber(t[Favourite.TAG_LINE]!!)
+                        val intent = Intent(context, VmClient::class.java)
+                        intent.putExtra(VmClient.EXTRA_STOP_SYMBOL, symbol)
+                        intent.putExtra(VmClient.EXTRA_LINE_NUMBER, line)
+                        intent.putExtra(VmClient.EXTRA_REQUESTER,
+                                "${fav.name};${t[Favourite.TAG_STOP]}${t[Favourite.TAG_LINE]}")
+                        context.startService(intent)
+                    }
+                }
+
                 runOnUiThread {
                     favouritesList.adapter.notifyDataSetChanged()
-                    //todo vm
                 }
             }
         }
@@ -163,6 +176,8 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     private fun prepareOnDownloadListener() {
         val filter = IntentFilter(TimetableDownloader.ACTION_DOWNLOADED)
+        filter.addAction(VmClient.ACTION_DEPARTURES_CREATED)
+        filter.addAction(VmClient.ACTION_NO_DEPARTURES)
         filter.addCategory(Intent.CATEGORY_DEFAULT)
         registerReceiver(receiver, filter)
         receiver.addOnTimetableDownloadListener(context as MessageReceiver.OnTimetableDownloadListener)

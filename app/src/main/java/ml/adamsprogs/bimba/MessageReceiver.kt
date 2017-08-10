@@ -3,6 +3,7 @@ package ml.adamsprogs.bimba
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import ml.adamsprogs.bimba.models.Departure
 
 class MessageReceiver : BroadcastReceiver() {
@@ -10,6 +11,7 @@ class MessageReceiver : BroadcastReceiver() {
     val onVmListeners: HashSet<OnVmListener> = HashSet()
 
     override fun onReceive(context: Context?, intent: Intent?) {
+        Log.i("Recv", "${intent?.action}")
         if (intent?.action == TimetableDownloader.ACTION_DOWNLOADED) {
             val result = intent.getStringExtra(TimetableDownloader.EXTRA_RESULT)
             for (listener in onTimetableDownloadListeners) {
@@ -18,13 +20,17 @@ class MessageReceiver : BroadcastReceiver() {
         }
         if (intent?.action == VmClient.ACTION_DEPARTURES_CREATED) {
             val departures = intent.getStringArrayListExtra(VmClient.EXTRA_DEPARTURES).map { Departure.fromString(it) } as ArrayList<Departure>
+            val requester = intent.getStringExtra(VmClient.EXTRA_REQUESTER)
+            Log.i("VmRecv", "Got Vm for $requester")
             for (listener in onVmListeners) {
-                listener.onVm(departures)
+                listener.onVm(departures, requester)
             }
         }
         if (intent?.action == VmClient.ACTION_NO_DEPARTURES) {
+            val requester = intent.getStringExtra(VmClient.EXTRA_REQUESTER)
+            Log.i("VmRecv", "Got null for $requester")
             for (listener in onVmListeners) {
-                listener.onVm(null)
+                listener.onVm(null, requester)
             }
         }
     }
@@ -50,6 +56,6 @@ class MessageReceiver : BroadcastReceiver() {
     }
 
     interface OnVmListener {
-        fun onVm(vmDepartures: ArrayList<Departure>?)
+        fun onVm(vmDepartures: ArrayList<Departure>?, requester: String)
     }
 }

@@ -22,7 +22,7 @@ class FavouriteEditRowAdapter(var favourite: Favourite) :
         holder?.rowTextView?.text = favouriteElement
         holder?.splitButton?.setOnClickListener {
             favourites.detach(favourite.name, favourite.timetables[position][Favourite.TAG_STOP]!!,
-                    favourite.timetables[position][Favourite.TAG_LINE]!!, favouriteElement!!)
+                    favourite.timetables[position][Favourite.TAG_LINE]!!, favouriteElement)
             favourite = favourites.favourites[favourite.name]!!
             notifyDataSetChanged()
         }

@@ -3,14 +3,12 @@ package ml.adamsprogs.bimba.models
 import android.app.Activity
 import android.content.Context
 import android.os.Build
-import android.support.v7.widget.CardView
+import android.support.v4.content.res.ResourcesCompat
+import android.support.v7.widget.*
 import android.support.v7.widget.PopupMenu
-import android.support.v7.widget.RecyclerView
 import android.util.Log
-import android.view.View
-import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
+import android.view.*
+import android.widget.*
 import ml.adamsprogs.bimba.R
 import android.view.LayoutInflater
 import java.util.*
@@ -61,17 +59,14 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, v
             val nextDepartureText: String
             val nextDepartureLineText: String
             if (nextDeparture != null) {
-                val now = Calendar.getInstance()
-                val departureTime = Calendar.getInstance()
-                departureTime.set(Calendar.HOUR_OF_DAY, Integer.parseInt(nextDeparture.time.split(":")[0]))
-                departureTime.set(Calendar.MINUTE, Integer.parseInt(nextDeparture.time.split(":")[1]))
-                if (nextDeparture.tomorrow)
-                    departureTime.add(Calendar.DAY_OF_MONTH, 1)
-                val interval = ((departureTime.timeInMillis - now.timeInMillis) / (1000 * 60))
-                Log.i("Interval", "$interval")
-                nextDepartureText = context.getString(Declinator.decline(interval), interval.toString()) //fixme -1
+                Log.i("NEXT DEP", nextDeparture.toString())
+                val interval = nextDeparture.timeTill()
+                if (interval < 0)
+                    return@thread
+                nextDepartureText = context.getString(Declinator.decline(interval), interval.toString())
                 nextDepartureLineText = context.getString(R.string.departure_to_line, nextDeparture.line, nextDeparture.direction)
             } else {
+                //fixme too early
                 nextDepartureText = context.getString(R.string.no_next_departure)
                 nextDepartureLineText = ""
             }
@@ -83,6 +78,12 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, v
                 holder?.nameTextView?.text = favourite.name
                 holder?.timeTextView?.text = nextDepartureText
                 holder?.lineTextView?.text = nextDepartureLineText
+                if(nextDeparture!=null) {
+                    if (nextDeparture.vm)
+                        holder?.typeIcon?.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_vm, context.theme))
+                    else
+                        holder?.typeIcon?.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_timetable, context.theme))
+                }
                 holder?.moreButton?.setOnClickListener {
                     unSelect(holder.root, position)
                     val popup = PopupMenu(context, it)
@@ -173,6 +174,7 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, v
         val timeTextView = itemView.findViewById(R.id.favourite_time) as TextView
         val lineTextView = itemView.findViewById(R.id.favourite_line) as TextView
         val moreButton = itemView.findViewById(R.id.favourite_more_button) as ImageView
+        val typeIcon = itemView.findViewById(R.id.departureTypeIcon) as ImageView
     }
 
     interface OnMenuItemClickListener {

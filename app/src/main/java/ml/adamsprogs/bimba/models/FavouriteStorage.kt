@@ -8,7 +8,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 
 
-class FavouriteStorage private constructor(context: Context) {
+class FavouriteStorage private constructor(context: Context) : Iterable<Favourite> {
     companion object {
         private var favouriteStorage: FavouriteStorage? = null
         fun getFavouriteStorage(context: Context? = null): FavouriteStorage {
@@ -23,6 +23,7 @@ class FavouriteStorage private constructor(context: Context) {
                 return favouriteStorage as FavouriteStorage
         }
     }
+
     val favourites = HashMap<String, Favourite>()
     val preferences: SharedPreferences = context.getSharedPreferences("ml.adamsprogs.bimba.prefs", Context.MODE_PRIVATE)
     val favouritesList: List<Favourite>
@@ -44,6 +45,8 @@ class FavouriteStorage private constructor(context: Context) {
             favourites[name] = Favourite(name, timetables)
         }
     }
+
+    override fun iterator(): Iterator<Favourite> = favourites.values.iterator()
 
     fun has(name: String): Boolean = favourites.contains(name)
 
@@ -103,7 +106,7 @@ class FavouriteStorage private constructor(context: Context) {
     }
 
     fun merge(names: ArrayList<String>) {
-        if (names.size < 2 )
+        if (names.size < 2)
             return
         val newFavourite = Favourite(names[0], ArrayList<HashMap<String, String>>())
         for (name in names) {
@@ -117,7 +120,7 @@ class FavouriteStorage private constructor(context: Context) {
 
     fun rename(oldName: String, newName: String) {
         val favourite = favourites[oldName] ?: return
-        favourite.name = newName
+        favourite.rename(newName)
         favourites.remove(oldName)
         favourites[newName] = favourite
         serialize()

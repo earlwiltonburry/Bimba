@@ -14,7 +14,7 @@ class Timetable private constructor() {
         val MODE_SUNDAYS = "sundays"
         private var timetable: Timetable? = null
 
-        fun getTimetable(context: Context? = null, force: Boolean = false): Timetable{
+        fun getTimetable(context: Context? = null, force: Boolean = false): Timetable {
             if (timetable == null || force)
                 if (context != null) {
                     val db: SQLiteDatabase?
@@ -66,7 +66,7 @@ class Timetable private constructor() {
         return stops
     }
 
-    fun getStopName(stopId: String): String? {
+    fun getStopName(stopId: String): String {
         val cursor = db.rawQuery("select name from nodes join stops on(stops.symbol = nodes.symbol) where id = ?;",
                 listOf(stopId).toTypedArray())
         val name: String
@@ -76,7 +76,25 @@ class Timetable private constructor() {
         return name
     }
 
-    fun getStopDepartures(stopId: String, lineId: String? = null, tomorrow: Boolean = false): HashMap<String, ArrayList<Departure>>? {
+    fun getStopSymbol(stopId: String): String {
+        val cursor = db.rawQuery("select symbol||number from stops where id = ?", listOf(stopId).toTypedArray())
+        val symbol: String
+        cursor.moveToNext()
+        symbol = cursor.getString(0)
+        cursor.close()
+        return symbol
+    }
+
+    fun getLineNumber(lineId: String): String {
+        val cursor = db.rawQuery("select number from lines where id = ?", listOf(lineId).toTypedArray())
+        val number: String
+        cursor.moveToNext()
+        number = cursor.getString(0)
+        cursor.close()
+        return number
+    }
+
+    fun getStopDepartures(stopId: String, lineId: String? = null, tomorrow: Boolean = false): HashMap<String, ArrayList<Departure>> {
         val andLine: String
         if (lineId == null)
             andLine = ""
@@ -111,7 +129,7 @@ class Timetable private constructor() {
         return lines
     }
 
-    fun getFavouriteElement(stop: String, line: String): String? {
+    fun getFavouriteElement(stop: String, line: String): String {
         val cursor = db.rawQuery("select name || ' (' || stops.symbol || stops.number || '): \n' " +
                 "|| lines.number || ' → ' || headsign from timetables join stops on (stops.id = stop_id) " +
                 "join lines on(lines.id = line_id) join nodes on(nodes.symbol = stops.symbol) where " +

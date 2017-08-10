@@ -43,11 +43,11 @@ data class Departure(val line: String, val mode: String, val time: String, val l
             val moreDepartures = timetable.getStopDepartures(stopId)
             val rolledDepartures = HashMap<String, ArrayList<Departure>>()
 
-            for ((_, tomorrowDepartures) in moreDepartures!!) {
+            for ((_, tomorrowDepartures) in moreDepartures) {
                 tomorrowDepartures.forEach { it.tomorrow = true }
             }
 
-            for ((mode, _) in departures!!) {
+            for ((mode, _) in departures) {
                 rolledDepartures[mode] = (departures[mode] as ArrayList<Departure> +
                         moreDepartures[mode] as ArrayList<Departure>) as ArrayList<Departure>
                 rolledDepartures[mode] = filterDepartures(rolledDepartures[mode])
@@ -61,5 +61,17 @@ data class Departure(val line: String, val mode: String, val time: String, val l
             return Departure(array[0], array[1], array[2], array[3] == "1", array[4], array[5],
                     array[6] == "true", array[7] == "true", array[8] == "true")
         }
+    }
+
+    fun timeTill(): Long {
+        val time = Calendar.getInstance()
+        time.set(Calendar.HOUR_OF_DAY, Integer.parseInt(this.time.split(":")[0]))
+        time.set(Calendar.MINUTE, Integer.parseInt(this.time.split(":")[1]))
+        time.set(Calendar.SECOND, 0)
+        time.set(Calendar.MILLISECOND, 0)
+        val now = Calendar.getInstance()
+        if (this.tomorrow)
+            time.add(Calendar.DAY_OF_MONTH, 1)
+        return (time.timeInMillis - now.timeInMillis) / (1000 * 60)
     }
 }

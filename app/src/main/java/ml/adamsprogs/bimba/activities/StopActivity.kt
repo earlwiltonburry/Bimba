@@ -22,6 +22,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
     companion object {
         val EXTRA_STOP_ID = "stopId"
         val EXTRA_STOP_SYMBOL = "stopSymbol"
+        val REQUESTER_ID = "stopActivity"
     }
 
     private lateinit var stopId: String
@@ -51,7 +52,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         prepareOnDownloadListener()
 
         timetable = Timetable.getTimetable()
-        supportActionBar?.title = timetable.getStopName(stopId) ?: "Stop"
+        supportActionBar?.title = timetable.getStopName(stopId)
 
         viewPager = findViewById(R.id.container) as ViewPager
         tabLayout = findViewById(R.id.tabs) as TabLayout
@@ -96,6 +97,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
             override fun run() {
                 val vmIntent = Intent(context, VmClient::class.java)
                 vmIntent.putExtra(VmClient.EXTRA_STOP_SYMBOL, stopSymbol)
+                vmIntent.putExtra(VmClient.EXTRA_REQUESTER, REQUESTER_ID)
                 startService(vmIntent)
             }
         }
@@ -109,8 +111,8 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         receiver.addOnVmListener(context as MessageReceiver.OnVmListener)
     }
 
-    override fun onVm(vmDepartures: ArrayList<Departure>?) {
-        if (timetableType == "departure") {
+    override fun onVm(vmDepartures: ArrayList<Departure>?, requester:String) {
+        if (timetableType == "departure" && requester == REQUESTER_ID) {
             val fullDepartures = Departure.createDepartures(stopId)
             if (vmDepartures != null) {
                 fullDepartures[today.getMode()] = vmDepartures
@@ -147,7 +149,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
             if (timetableType == "departure") {
                 timetableType = "full"
                 item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_timetable_departure, this.theme))
-                sectionsPagerAdapter?.departures = timetable.getStopDepartures(stopId)!!
+                sectionsPagerAdapter?.departures = timetable.getStopDepartures(stopId)
                 sectionsPagerAdapter?.relativeTime = false
                 sectionsPagerAdapter?.notifyDataSetChanged()
                 timer.cancel()

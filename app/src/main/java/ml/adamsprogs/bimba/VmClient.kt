@@ -2,6 +2,7 @@ package ml.adamsprogs.bimba
 
 import android.app.IntentService
 import android.content.Intent
+import android.util.Log
 import ml.adamsprogs.bimba.models.*
 import okhttp3.*
 import com.google.gson.Gson
@@ -15,13 +16,19 @@ class VmClient : IntentService("VmClient") {
         val ACTION_NO_DEPARTURES = "ml.adamsprogs.bimba.noVM"
         val EXTRA_STOP_SYMBOL = "stopSymbol"
         val EXTRA_LINE_NUMBER = "lineNumber"
+        val EXTRA_REQUESTER = "requester"
         val EXTRA_DEPARTURES = "departures"
     }
 
     override fun onHandleIntent(intent: Intent?) {
         if (intent != null) {
+            val requester = intent.getStringExtra(EXTRA_REQUESTER)
+
+            Log.i("VMClient", "starting vm for $requester")
+
             if (!NetworkStateReceiver.isNetworkAvailable(this)) {
-                sendNullResult()
+                Log.i("VMClient", "offline")
+                sendNullResult(requester)
                 return
             }
 
@@ -42,7 +49,8 @@ class VmClient : IntentService("VmClient") {
             try {
                 responseBody = client.newCall(request).execute().body()?.string()
             } catch(e: IOException) {
-                sendNullResult()
+                Log.i("VMClient", "IO Err")
+                sendNullResult(requester)
                 return
             }
             val javaRootMapObject = Gson().fromJson(responseBody, HashMap::class.java)
@@ -64,26 +72,29 @@ class VmClient : IntentService("VmClient") {
                     departuresToday.add(departure)
                 }
             }
+            Log.i("VMClient", "Sending")
+            departuresToday.forEach {Log.i("VMClient", "send: $it")}
             if (departuresToday.isEmpty())
-                sendNullResult()
+                sendNullResult(requester)
             else
-                sendResult(departuresToday)
-
+                sendResult(departuresToday, requester)
         }
     }
 
-    private fun sendNullResult() {
+    private fun sendNullResult(requester: String) {
         val broadcastIntent = Intent()
         broadcastIntent.action = ACTION_NO_DEPARTURES
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT)
+        broadcastIntent.putExtra(EXTRA_REQUESTER, requester)
         sendBroadcast(broadcastIntent)
     }
 
-    private fun sendResult(departures: ArrayList<Departure>) {
+    private fun sendResult(departures: ArrayList<Departure>, requester: String) {
         val broadcastIntent = Intent()
         broadcastIntent.action = ACTION_DEPARTURES_CREATED
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT)
         broadcastIntent.putStringArrayListExtra(EXTRA_DEPARTURES, departures.map { it.toString() } as java.util.ArrayList<String>)
+        broadcastIntent.putExtra(EXTRA_REQUESTER, requester)
         sendBroadcast(broadcastIntent)
     }
 }
