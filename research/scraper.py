@@ -8,14 +8,22 @@ bike stations: http://www.ztm.poznan.pl/goeuropa-api/bike-stations
 
 """
 import json
-import hashlib
 import os
 import re
 import sqlite3
 import sys
-import time
 import requests
 from bs4 import BeautifulSoup
+
+def get_validity():
+    """
+    get timetable validity
+    """
+    session = requests.session()
+    index = session.get('https://www.ztm.poznan.pl/goeuropa-api/index', verify='bundle.pem')
+    option = re.search('<option value="[0-9]{8}" selected', index.text).group()
+    return option.split('"')[1]
+
 
 def get_nodes():
     """
@@ -111,7 +119,7 @@ def get_stop_times(stop_id, line_id, direction_id):
                 schedule.append((hour, *describe(dep['time'], legends), dep['lowFloor']))
         schedules[mode_name] = schedule
 
-    return schedules, hashlib.sha512(index.text.encode('utf-8')).hexdigest()
+    return schedules, ''
 
 
 def describe(dep_time, legend):
@@ -120,8 +128,11 @@ def describe(dep_time, legend):
     """
     desc = []
     while re.match('^\\d+$', dep_time) is None:
-        if dep_time[-1] != ',':
-            desc.append(legend[dep_time[-1]])
+        try:
+            if dep_time[-1] != ',':
+                desc.append(legend[dep_time[-1]])
+        except KeyError:
+            pass
         dep_time = dep_time[:-1]
     return (int(dep_time), '; '.join(desc))
 
@@ -130,13 +141,28 @@ def main():
     """
     main function
     """
+    validity = get_validity()
     if os.path.exists('timetable.db'):
-        return
+        try:
+            connection = sqlite3.connect('timetable.db')
+            cursor = connection.cursor()
+            cursor.execute("select value from metadata where key = 'validFrom'")
+            current_valid_from = cursor.fetchone()[0]
+            connection.close()
+            if validity <= current_valid_from:
+                return 304
+            else:
+                os.remove('timetable.db')
+        except:
+            connection.close()
+            os.remove('timetable.db')
 
-    print(time.time())
+    print(validity)
+    sys.stdout.flush()
     with sqlite3.connect('timetable.db') as connection:
         print('creating tables')
         cursor = connection.cursor()
+        cursor.execute('create table metadata(key TEXT PRIMARY KEY, value TEXT)')
         cursor.execute('create table nodes(symbol TEXT PRIMARY KEY, name TEXT)')
         cursor.execute('create table stops(id TEXT PRIMARY KEY, symbol TEXT \
                         references node(symbol), number TEXT, lat REAL, lon REAL, headsigns TEXT)')
@@ -155,8 +181,7 @@ def main():
         print('getting stops')
         node_i = 1
         for symbol, _ in nodes:
-            print('\rstop {}/{}'.format(node_i, nodes_no), end='')
-            sys.stdout.flush()
+            print('stop {}/{}'.format(node_i, nodes_no))
             cursor.executemany('insert into stops values(?, ?, ?, ?, ?, ?);', get_stops(symbol))
             node_i += 1
         print('')
@@ -174,8 +199,7 @@ def main():
                 stop_i = 1
                 for stop in stops:
                     print('line {}/{} route {}/{} stop {}/{}'.
-                          format(line_i, lines_no, route_i, routes_no, stop_i, stops_no), end='')
-                    sys.stdout.flush()
+                          format(line_i, lines_no, route_i, routes_no, stop_i, stops_no))
                     timetables, checksum = get_stop_times(stop['id'], line_id, direction)
                     cursor.execute('insert into timetables values(?, ?, ?, ?, ?);',
                                    (tti, stop['id'], line_id, stops[-1]['name'], checksum))
@@ -185,12 +209,9 @@ def main():
                                             for hour, minute, desc, lowfloor in times])
                     stop_i += 1
                     tti += 1
-                    print('{}\r'.format(' '*35), end='')
-                    sys.stdout.flush()
                 route_i += 1
             print('')
             line_i += 1
-    print(time.time())
 
 
 if __name__ == '__main__':
