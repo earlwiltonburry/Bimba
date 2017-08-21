@@ -8,20 +8,12 @@ bike stations: http://www.ztm.poznan.pl/goeuropa-api/bike-stations
 
 """
 import json
-import hashlib
 import os
 import re
 import sqlite3
 import sys
-import time
 import requests
 from bs4 import BeautifulSoup
-import secrets
-
-
-def remove_options(text):
-    return re.sub('(<select[^>]*>([^<]*<option[^>]*>[^<]*</option>)+[^<]*</select>)','', text)
-
 
 def get_validity():
     """
@@ -33,30 +25,23 @@ def get_validity():
     return option.split('"')[1]
 
 
-def get_nodes(checksum):
+def get_nodes():
     """
     get nodes
     """
     session = requests.session()
 
     index = session.get('https://www.ztm.poznan.pl/goeuropa-api/all-nodes', verify='bundle.pem')
-    new_checksum = hashlib.sha512(index.text.encode('utf-8')).hexdigest()
-    if checksum == new_checksum:
-        return None
-    return [(stop['symbol'], stop['name']) for stop in json.loads(index.text)], new_checksum
+    return [(stop['symbol'], stop['name']) for stop in json.loads(index.text)]
 
 
-def get_stops(node, checksum):
+def get_stops(node):
     """
     get stops
     """
     session = requests.session()
 
-    index = session.get('https://www.ztm.poznan.pl/goeuropa-api/node_stops/{}'.format(node),
-                        verify='bundle.pem')
-    new_checksum = hashlib.sha512(index.text.encode('utf-8')).hexdigest()
-    if checksum == new_checksum:
-        return None
+    index = session.get('https://www.ztm.poznan.pl/goeuropa-api/node_stops/{}'.format(node), verify='bundle.pem')
     stops = []
     for stop in json.loads(index.text):
         stop_id = stop['stop']['id']
@@ -66,27 +51,22 @@ def get_stops(node, checksum):
         directions = ', '.join(['{} → {}'.format(transfer['name'], transfer['headsign'])
                                 for transfer in stop['transfers']])
         stops.append((stop_id, node, number, lat, lon, directions))
-    return stops, new_checksum
+    return stops
 
 
-def get_lines(checksum):
+def get_lines():
     """
     get lines
     """
     session = requests.session()
 
     index = session.get('https://www.ztm.poznan.pl/goeuropa-api/index', verify='bundle.pem')
-    index = re.sub('route-modal-[0-9a-f]{7}', '', index.text)
-    index = remove_options(index)
-    new_checksum = hashlib.sha512(index.encode('utf-8')).hexdigest()
-    if new_checksum == checksum:
-        return None
-    soup = BeautifulSoup(index, 'html.parser')
+    soup = BeautifulSoup(index.text, 'html.parser')
 
     lines = {line['data-lineid']: line.text for line in
              soup.findAll(attrs={'class': re.compile(r'.*\blineNo-bt\b.*')})}
 
-    return lines, new_checksum
+    return lines
 
 
 def get_route(line_id):
@@ -95,8 +75,7 @@ def get_route(line_id):
     """
     session = requests.session()
 
-    index = session.get('https://www.ztm.poznan.pl/goeuropa-api/line-info/{}'.format(line_id),
-                        verify='bundle.pem')
+    index = session.get('https://www.ztm.poznan.pl/goeuropa-api/line-info/{}'.format(line_id), verify='bundle.pem')
     soup = BeautifulSoup(index.text, 'html.parser')
     directions = soup.findAll(attrs={'class': re.compile(r'.*\baccordion-item\b.*')})
     routes = {}
@@ -109,21 +88,15 @@ def get_route(line_id):
     return routes
 
 
-def get_stop_times(stop_id, line_id, direction_id, checksum):
+def get_stop_times(stop_id, line_id, direction_id):
     """
     get timetable
     """
     session = requests.session()
 
     index = session.post('https://www.ztm.poznan.pl/goeuropa-api/stop-info/{}/{}'.
-                         format(stop_id, line_id), data={'directionId': direction_id},
-                         verify='bundle.pem')
-    index = re.sub('route-modal-[0-9a-f]{7}', '', index.text)
-    index = remove_options(index)
-    new_checksum = hashlib.sha512(index.encode('utf-8')).hexdigest()
-    if new_checksum == checksum:
-        return None
-    soup = BeautifulSoup(index, 'html.parser')
+                         format(stop_id, line_id), data={'directionId': direction_id}, verify='bundle.pem')
+    soup = BeautifulSoup(index.text, 'html.parser')
     legends = {}
     for row in soup.find(attrs={'class': re.compile(r'.*\blegend-box\b.*')}).findAll('li'):
         row = row.text.split('-')
@@ -146,7 +119,7 @@ def get_stop_times(stop_id, line_id, direction_id, checksum):
                 schedule.append((hour, *describe(dep['time'], legends), dep['lowFloor']))
         schedules[mode_name] = schedule
 
-    return schedules, new_checksum
+    return schedules, ''
 
 
 def describe(dep_time, legend):
@@ -155,8 +128,11 @@ def describe(dep_time, legend):
     """
     desc = []
     while re.match('^\\d+$', dep_time) is None:
-        if dep_time[-1] != ',':
-            desc.append(legend[dep_time[-1]])
+        try:
+            if dep_time[-1] != ',':
+                desc.append(legend[dep_time[-1]])
+        except KeyError:
+            pass
         dep_time = dep_time[:-1]
     return (int(dep_time), '; '.join(desc))
 
@@ -165,136 +141,78 @@ def main():
     """
     main function
     """
-    updating = False
-    changed = False
+    validity = get_validity()
     if os.path.exists('timetable.db'):
-        updating = True
-
-
-    with sqlite3.connect('timetable.db') as connection:
         try:
+            connection = sqlite3.connect('timetable.db')
             cursor = connection.cursor()
-            if updating:
-                cursor.execute("select value from metadata where key = 'validFrom'")
-                current_valid_from = cursor.fetchone()[0]
-                if get_validity() <= current_valid_from:
-                    return 304
+            cursor.execute("select value from metadata where key = 'validFrom'")
+            current_valid_from = cursor.fetchone()[0]
+            connection.close()
+            if validity <= current_valid_from:
+                return 304
             else:
-                cursor.execute('create table metadata(key TEXT PRIMARY KEY, value TEXT)')
-                cursor.execute('create table checksums(checksum TEXT, for TEXT, id TEXT)')
-                cursor.execute('create table nodes(symbol TEXT PRIMARY KEY, name TEXT)')
-                cursor.execute('create table stops(id TEXT PRIMARY KEY, symbol TEXT \
-                                references node(symbol), number TEXT, lat REAL, lon REAL, \
-                                headsigns TEXT)')
-                cursor.execute('create table lines(id TEXT PRIMARY KEY, number TEXT)')
-                cursor.execute('create table timetables(id TEXT PRIMARY KEY, stop_id TEXT references stop(id), \
-                                line_id TEXT references line(id), headsign TEXT)')
-                cursor.execute('create table departures(id INTEGER PRIMARY KEY, \
-                                timetable_id TEXT references timetable(id), \
-                                hour INTEGER, minute INTEGER, mode TEXT, \
-                                lowFloor INTEGER, modification TEXT)')
+                os.remove('timetable.db')
+        except:
+            connection.close()
+            os.remove('timetable.db')
 
-            cursor.execute("delete from metadata where key = 'validFrom'")
-            validity = get_validity()
-            print(validity)
-            cursor.execute("insert into metadata values('validFrom', ?)", (validity,))
-            cursor.execute("select checksum from checksums where for = 'nodes'")
-            checksum = cursor.fetchone()
-            if checksum != None:
-                checksum = checksum[0]
-            else:
-                checksum = ''
-            nodes_result = get_nodes(checksum)
-            if nodes_result is not None:
-                nodes, checksum = nodes_result
-                cursor.execute('delete from nodes')
-                cursor.execute("delete from checksums where for = 'nodes'")
-                cursor.execute("insert into checksums values(?, 'nodes', null)", (checksum,))  # update
-                cursor.executemany('insert into nodes values(?, ?)', nodes)
-                changed = True
-            else:
-                cursor.execute('select * from nodes')
-                nodes = cursor.fetchall()
-                nodes = [(sym, nam) for sym, nam, _ in nodes]
-            nodes_no = len(nodes)
-            node_i = 1
-            for symbol, _ in nodes:
-                sys.stdout.flush()
-                cursor.execute("select checksum from checksums where for = 'node' and id = ?", (symbol,))
-                checksum = cursor.fetchone()
-                if checksum != None:
-                    checksum = checksum[0]
-                else:
-                    checksum = ''
-                stops_result = get_stops(symbol, checksum)
-                if stops_result is not None:
-                    stops, checksum = stops_result
-                    cursor.execute('delete from stops where symbol = ?', (symbol,))
-                    cursor.executemany('insert into stops values(?, ?, ?, ?, ?, ?)', stops)
-                    cursor.execute("update checksums set checksum = ? where for = 'node' and id = ?", (checksum, symbol))
-                    changed = True
-                node_i += 1
-            cursor.execute("select checksum from checksums where for = 'lines'")
-            checksum = cursor.fetchone()
-            if checksum != None:
-                checksum = checksum[0]
-            else:
-                checksum = ''
-            lines_result = get_lines(checksum)
-            if lines_result is not None:
-                lines, checksum = lines_result
-                cursor.execute('delete from lines')
-                cursor.execute("delete from checksums where for = 'lines'")
-                cursor.execute("insert into checksums values(?, 'lines', null)", (checksum,))  # update
-                cursor.executemany('insert into lines values(?, ?)', lines.items())
-                changed = True
-            else:
-                cursor.execute('select * from lines')
-                lines = cursor.fetchall()
+    print(validity)
+    sys.stdout.flush()
+    with sqlite3.connect('timetable.db') as connection:
+        print('creating tables')
+        cursor = connection.cursor()
+        cursor.execute('create table metadata(key TEXT PRIMARY KEY, value TEXT)')
+        cursor.execute('create table nodes(symbol TEXT PRIMARY KEY, name TEXT)')
+        cursor.execute('create table stops(id TEXT PRIMARY KEY, symbol TEXT \
+                        references node(symbol), number TEXT, lat REAL, lon REAL, headsigns TEXT)')
+        cursor.execute('create table lines(id TEXT PRIMARY KEY, number TEXT)')
+        cursor.execute('create table timetables(id INTEGER PRIMARY KEY, stop_id \
+                        TEXT references stop(id), line_id TEXT references line(id), \
+                        headsign TEXT, checksum TEXT)')
+        cursor.execute('create table departures(id INTEGER PRIMARY KEY, timetable_id INTEGER \
+                        references timetable(id), hour INTEGER, minute INTEGER, mode TEXT, \
+                        lowFloor INTEGER, modification TEXT)')
 
-            lines_no = len(lines)
-            line_i = 1
-            for line_id, _ in lines.items():
-                route = get_route(line_id)
-                routes_no = len(route)
-                route_i = 1
-                for direction, stops in route.items():
-                    stops_no = len(stops)
-                    stop_i = 1
-                    for stop in stops:
-                        timetable_id = secrets.token_hex(4)
-                        sys.stdout.flush()
-                        cursor.execute("select checksum from checksums where for = 'timetable' and id = ?", (timetable_id,))
-                        checksum = cursor.fetchone()
-                        if checksum != None:
-                            checksum = checksum[0]
-                        else:
-                            checksum = ''
-                        stop_times = get_stop_times(stop['id'], line_id, direction, checksum)
-                        if stop_times is not None:
-                            timetables, checksum = stop_times
-                            cursor.execute('delete from timetables where line_id = ? and stop_id = ?',
-                                           (line_id, stop['id']))
-                            cursor.execute('insert into timetables values(?, ?, ?, ?)',
-                                           (timetable_id, stop['id'], line_id, stops[-1]['name']))
-                            cursor.execute("insert into checksums values(?, 'timetable', ?)", (checksum, timetable_id))
-                            changed = True
-                            cursor.execute('delete from departures where timetable_id = ?',
-                                           (timetable_id,))
-                            for mode, times in timetables.items():
-                                cursor.executemany('insert into departures values(null, ?, ?, ?, ?, ?, \
-                                                    ?)', [(timetable_id, hour, minute, mode, lowfloor, desc)
-                                                          for hour, minute, desc, lowfloor in times])
-                        stop_i += 1
-                        sys.stdout.flush()
-                    route_i += 1
-                line_i += 1
-        except KeyboardInterrupt:
-            return 404
-    if changed:
-        return 0
-    return 304
+        print('getting nodes')
+        nodes = get_nodes()
+        cursor.executemany('insert into nodes values(?, ?);', nodes)
+        nodes_no = len(nodes)
+        print('getting stops')
+        node_i = 1
+        for symbol, _ in nodes:
+            print('stop {}/{}'.format(node_i, nodes_no))
+            cursor.executemany('insert into stops values(?, ?, ?, ?, ?, ?);', get_stops(symbol))
+            node_i += 1
+        print('')
+        lines = get_lines()
+        lines_no = len(lines)
+        line_i = 1
+        tti = 0
+        cursor.executemany('insert into lines values(?, ?);', lines.items())
+        for line_id, _ in lines.items():
+            route = get_route(line_id)
+            routes_no = len(route)
+            route_i = 1
+            for direction, stops in route.items():
+                stops_no = len(stops)
+                stop_i = 1
+                for stop in stops:
+                    print('line {}/{} route {}/{} stop {}/{}'.
+                          format(line_i, lines_no, route_i, routes_no, stop_i, stops_no))
+                    timetables, checksum = get_stop_times(stop['id'], line_id, direction)
+                    cursor.execute('insert into timetables values(?, ?, ?, ?, ?);',
+                                   (tti, stop['id'], line_id, stops[-1]['name'], checksum))
+                    for mode, times in timetables.items():
+                        cursor.executemany('insert into departures values(null, ?, ?, ?, ?, ?, ?);',
+                                           [(tti, hour, minute, mode, lowfloor, desc)
+                                            for hour, minute, desc, lowfloor in times])
+                    stop_i += 1
+                    tti += 1
+                route_i += 1
+            print('')
+            line_i += 1
 
 
 if __name__ == '__main__':
-    exit(main())
+    main()
