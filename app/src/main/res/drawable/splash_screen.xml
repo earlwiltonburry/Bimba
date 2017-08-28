@@ -4,6 +4,6 @@
     <item android:drawable="@color/colorPrimary" />
     <item
         android:gravity="center"
-        android:drawable="@drawable/logo_96"/>
+        android:drawable="@drawable/logo_splash"/>
 
 </layer-list>
