@@ -12,13 +12,32 @@ import android.view.LayoutInflater
 import ml.adamsprogs.bimba.Declinator
 import java.util.*
 
-class DeparturesAdapter(val context: Context, val departures: List<Departure>, val relativeTime: Boolean) :
+class DeparturesAdapter(val context: Context, private val departures: List<Departure>?, private val relativeTime: Boolean) :
         RecyclerView.Adapter<DeparturesAdapter.ViewHolder>() {
+
+    companion object {
+        const val VIEW_TYPE_LOADING: Int = 0
+        const val VIEW_TYPE_CONTENT: Int = 1
+    }
+
     override fun getItemCount(): Int {
+
+        if (departures == null)
+            return 1
         return departures.size
     }
 
+    override fun getItemViewType(position: Int): Int {
+        return if (departures == null)
+            VIEW_TYPE_LOADING
+        else
+            VIEW_TYPE_CONTENT
+    }
+
     override fun onBindViewHolder(holder: ViewHolder?, position: Int) {
+        if (departures == null) {
+            return
+        }
         val departure = departures[position]
         val now = Calendar.getInstance()
         val departureTime = Calendar.getInstance()
@@ -30,12 +49,12 @@ class DeparturesAdapter(val context: Context, val departures: List<Departure>, v
         val departureIn = (departureTime.timeInMillis - now.timeInMillis) / (1000 * 60)
         val timeString: String
 
-        if (departureIn > 60 || departureIn < 0 || !relativeTime)
-            timeString = context.getString(R.string.departure_at, departure.time)
+        timeString = if (departureIn > 60 || departureIn < 0 || !relativeTime)
+            context.getString(R.string.departure_at, departure.time)
         else if (departureIn > 0 && !departure.onStop)
-            timeString = context.getString(Declinator.decline(departureIn), departureIn.toString())
+            context.getString(Declinator.decline(departureIn), departureIn.toString())
         else
-            timeString = context.getString(R.string.now)
+            context.getString(R.string.now)
 
         val line = holder?.lineTextView
         line?.text = departure.line
@@ -55,8 +74,7 @@ class DeparturesAdapter(val context: Context, val departures: List<Departure>, v
         val inflater = LayoutInflater.from(context)
 
         val rowView = inflater.inflate(R.layout.row_departure, parent, false)
-        val viewHolder = ViewHolder(rowView)
-        return viewHolder
+        return ViewHolder(rowView)
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

@@ -55,4 +55,5 @@
         "zakładce (jeśli jest wtorek, to w „dni robocze”).\n"
         "Pamiętaj, aby sprawdzić aktualności na\nhttps://www.ztm.poznan.pl.\n\n"
     </string>
+    <string name="departure_row_getting_departures">Zbieranie odjazdów…</string>
 </resources>

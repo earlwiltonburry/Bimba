@@ -15,6 +15,7 @@ import android.support.v4.content.res.ResourcesCompat
 
 import ml.adamsprogs.bimba.models.*
 import ml.adamsprogs.bimba.*
+import kotlin.concurrent.thread
 
 
 class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
@@ -57,7 +58,11 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         viewPager = findViewById(R.id.container) as ViewPager
         tabLayout = findViewById(R.id.tabs) as TabLayout
 
-        sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, Departure.createDepartures(stopId))
+        sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, null)
+        thread {
+            sectionsPagerAdapter!!.departures = Departure.createDepartures(stopId)
+            runOnUiThread { sectionsPagerAdapter?.notifyDataSetChanged() }
+        }
 
         viewPager!!.adapter = sectionsPagerAdapter
         viewPager!!.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tabLayout))
@@ -111,7 +116,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         receiver.addOnVmListener(context as MessageReceiver.OnVmListener)
     }
 
-    override fun onVm(vmDepartures: ArrayList<Departure>?, requester:String) {
+    override fun onVm(vmDepartures: ArrayList<Departure>?, requester: String) {
         if (timetableType == "departure" && requester == REQUESTER_ID) {
             val fullDepartures = Departure.createDepartures(stopId)
             if (vmDepartures != null) {
@@ -182,11 +187,11 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
 
             val layoutManager = LinearLayoutManager(activity)
             val departuresList: RecyclerView = rootView.findViewById(R.id.departuresList) as RecyclerView
-            val dividerItemDecoration = DividerItemDecoration(departuresList.context, layoutManager.orientation)
-            departuresList.addItemDecoration(dividerItemDecoration)
-            val adapter = DeparturesAdapter(activity, arguments.getStringArrayList("departures").map { Departure.fromString(it) },
+            departuresList.addItemDecoration(DividerItemDecoration(departuresList.context, layoutManager.orientation))
+
+            val departures = arguments.getStringArrayList("departures")?.map{ Departure.fromString(it) }
+            departuresList.adapter = DeparturesAdapter(activity, departures,
                     arguments["relativeTime"] as Boolean)
-            departuresList.adapter = adapter
             departuresList.layoutManager = layoutManager
             return rootView
         }
@@ -200,9 +205,12 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
                 val args = Bundle()
                 args.putInt(ARG_SECTION_NUMBER, sectionNumber)
                 args.putString("stop", stopId)
-                val d = ArrayList<String>()
-                departures?.mapTo(d) { it.toString() }
-                args.putStringArrayList("departures", d)
+                if (departures != null) {
+                    val d = ArrayList<String>()
+                    departures.mapTo(d) { it.toString() }
+                    args.putStringArrayList("departures", d)
+                } else
+                    args.putStringArrayList("departures", null)
                 args.putBoolean("relativeTime", relativeTime)
                 fragment.arguments = args
                 return fragment
@@ -210,7 +218,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         }
     }
 
-    inner class SectionsPagerAdapter(fm: FragmentManager, var departures: HashMap<String, ArrayList<Departure>>) : FragmentStatePagerAdapter(fm) {
+    inner class SectionsPagerAdapter(fm: FragmentManager, var departures: HashMap<String, ArrayList<Departure>>?) : FragmentStatePagerAdapter(fm) {
 
         var relativeTime = true
 
@@ -225,7 +233,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
                 1 -> mode = Timetable.MODE_SATURDAYS
                 2 -> mode = Timetable.MODE_SUNDAYS
             }
-            return PlaceholderFragment.newInstance(position + 1, stopId, departures[mode], relativeTime)
+            return PlaceholderFragment.newInstance(position + 1, stopId, departures?.get(mode), relativeTime)
         }
 
         override fun getCount() = 3

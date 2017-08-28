@@ -26,8 +26,8 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
         val RESULT_DOWNLOADED = "downloaded"
         val RESULT_VALIDITY_FAILED = "validity failed"
     }
-    lateinit var notificationManager: NotificationManager
-    var size: Int = 0
+    private lateinit var notificationManager: NotificationManager
+    private var size: Int = 0
 
     override fun onHandleIntent(intent: Intent?) {
 
@@ -138,7 +138,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
         } finally {
             ins.close()
             val digest = md.digest()
-            for (i in 0..digest.size - 1) {
+            for (i in 0 until digest.size) {
                 hex += Integer.toString((digest[i] and 0xff.toByte()) + 0x100, 16).padStart(3, '0').substring(1)
             }
             Log.i("Downloader", "checksum is $checksum, and hex is $hex")

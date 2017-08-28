@@ -17,15 +17,15 @@ class EditFavouriteActivity : AppCompatActivity() {
         val EXTRA_FAVOURITE = "favourite"
     }
 
-    lateinit var favourites: FavouriteStorage
-    lateinit var nameEdit: EditText
-    var favourite: Favourite? = null
+    private lateinit var favourites: FavouriteStorage
+    private lateinit var nameEdit: EditText
+    private var favourite: Favourite? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit_favourite)
 
-        favourite = intent.getParcelableExtra<Favourite>(EXTRA_FAVOURITE)
+        favourite = intent.getParcelableExtra(EXTRA_FAVOURITE)
         if (favourite == null)
             finish()
         favourites = FavouriteStorage.getFavouriteStorage(this)

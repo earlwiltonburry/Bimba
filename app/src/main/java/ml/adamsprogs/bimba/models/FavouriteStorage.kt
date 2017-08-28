@@ -12,20 +12,20 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
     companion object {
         private var favouriteStorage: FavouriteStorage? = null
         fun getFavouriteStorage(context: Context? = null): FavouriteStorage {
-            if (favouriteStorage == null) {
+            return if (favouriteStorage == null) {
                 if (context == null)
                     throw IllegalArgumentException("requested new storage context not given")
                 else {
                     favouriteStorage = FavouriteStorage(context)
-                    return favouriteStorage as FavouriteStorage
+                    favouriteStorage as FavouriteStorage
                 }
             } else
-                return favouriteStorage as FavouriteStorage
+                favouriteStorage as FavouriteStorage
         }
     }
 
     val favourites = HashMap<String, Favourite>()
-    val preferences: SharedPreferences = context.getSharedPreferences("ml.adamsprogs.bimba.prefs", Context.MODE_PRIVATE)
+    private val preferences: SharedPreferences = context.getSharedPreferences("ml.adamsprogs.bimba.prefs", Context.MODE_PRIVATE)
     val favouritesList: List<Favourite>
         get() {
             return favourites.values.toList()
@@ -74,7 +74,7 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
         serialize()
     }
 
-    fun serialize() {
+    private fun serialize() {
         val rootObject = JsonObject()
         for ((name, favourite) in favourites) {
             val timetables = JsonArray()
@@ -108,7 +108,7 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
     fun merge(names: ArrayList<String>) {
         if (names.size < 2)
             return
-        val newFavourite = Favourite(names[0], ArrayList<HashMap<String, String>>())
+        val newFavourite = Favourite(names[0], ArrayList())
         for (name in names) {
             newFavourite.timetables.addAll(favourites[name]!!.timetables)
             favourites.remove(name)

@@ -18,14 +18,14 @@ import ml.adamsprogs.bimba.Declinator
 import kotlin.collections.ArrayList
 
 //todo list to storage
-class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, val onMenuItemClickListener: FavouritesAdapter.OnMenuItemClickListener) :
+class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, private val onMenuItemClickListener: FavouritesAdapter.OnMenuItemClickListener) :
         RecyclerView.Adapter<FavouritesAdapter.ViewHolder>() {
 
-    val isSelecting: Boolean
+    private val isSelecting: Boolean
         get() {
             return selected.any { it }
         }
-    val selected = ArrayList<Boolean>()
+    private val selected = ArrayList<Boolean>()
     val selectedNames: ArrayList<String>
         get() {
             val l = ArrayList<String>()
@@ -66,7 +66,7 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, v
                 nextDepartureText = context.getString(Declinator.decline(interval), interval.toString())
                 nextDepartureLineText = context.getString(R.string.departure_to_line, nextDeparture.line, nextDeparture.direction)
             } else {
-                //fixme too early
+                //fixme too early ?
                 nextDepartureText = context.getString(R.string.no_next_departure)
                 nextDepartureLineText = ""
             }
@@ -102,7 +102,7 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, v
         }
     }
 
-    fun toggleSelected(view: CardView, position: Int) {
+    private fun toggleSelected(view: CardView, position: Int) {
         growSelected(position)
 
         if (selected[position])
@@ -116,7 +116,7 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, v
             selected.add(false)
     }
 
-    fun select(view: CardView, position: Int) {
+    private fun select(view: CardView, position: Int) {
         growSelected(position)
 
         @Suppress("DEPRECATION")
@@ -128,7 +128,7 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, v
         setSelecting()
     }
 
-    fun unSelect(view: CardView, position: Int) {
+    private fun unSelect(view: CardView, position: Int) {
         growSelected(position)
 
         val colour = TypedValue()
@@ -138,7 +138,7 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, v
         setSelecting()
     }
 
-    fun setSelecting() {
+    private fun setSelecting() {
         context as Activity
         if (isSelecting) {
             context.findViewById(R.id.search_view).visibility = View.INVISIBLE
@@ -154,8 +154,7 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, v
         val inflater = LayoutInflater.from(context)
 
         val rowView = inflater.inflate(R.layout.row_favourite, parent, false)
-        val viewHolder = ViewHolder(rowView)
-        return viewHolder
+        return ViewHolder(rowView)
     }
 
     fun stopSelecting(name: String) {

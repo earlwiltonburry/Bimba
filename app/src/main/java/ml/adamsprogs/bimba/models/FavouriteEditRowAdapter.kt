@@ -8,7 +8,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import ml.adamsprogs.bimba.R
 
-class FavouriteEditRowAdapter(var favourite: Favourite) :
+class FavouriteEditRowAdapter(private var favourite: Favourite) :
         RecyclerView.Adapter<FavouriteEditRowAdapter.ViewHolder>() {
     override fun getItemCount(): Int {
         return favourite.size
@@ -39,8 +39,7 @@ class FavouriteEditRowAdapter(var favourite: Favourite) :
         val inflater = LayoutInflater.from(context)
 
         val rowView = inflater.inflate(R.layout.row_favourite_edit, parent, false)
-        val viewHolder = ViewHolder(rowView)
-        return viewHolder
+        return ViewHolder(rowView)
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

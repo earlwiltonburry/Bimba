@@ -12,11 +12,10 @@ import kotlin.collections.HashMap
 class Favourite : Parcelable, MessageReceiver.OnVmListener {
     override fun onVm(vmDepartures: ArrayList<Departure>?, requester: String) {
         val requesterName = requester.split(";")[0]
-        var requesterTimetable: String
-        try {
-            requesterTimetable = requester.split(";")[1]
+        val requesterTimetable: String = try {
+            requester.split(";")[1]
         } catch (e: IndexOutOfBoundsException) {
-            requesterTimetable = ""
+            ""
         }
         Log.i("VM", "got vm for $requesterName and my name is $name")
         if (vmDepartures != null && requesterName == name) {
@@ -93,7 +92,7 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
             val tomorrow = tomorrowCal.getMode()
 
             if (oneDayDepartures == null) {
-                oneDayDepartures = ArrayList<HashMap<String, ArrayList<Departure>>>()
+                oneDayDepartures = ArrayList()
                 timetables.mapTo(oneDayDepartures!!) { timetable.getStopDepartures(it[TAG_STOP] as String, it[TAG_LINE]) }
             }
 
@@ -119,7 +118,7 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         }
         private set
 
-    fun filterVmDepartures() {
+    private fun filterVmDepartures() {
         this.vmDepartures
                 .filter { it.timeTill() < 0 }
                 .forEach { this.vmDepartures.remove(it) }

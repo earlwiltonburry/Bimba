@@ -1,9 +1,10 @@
 package ml.adamsprogs.bimba.models
 
 import java.util.*
+import kotlin.collections.ArrayList
 
-data class Departure(val line: String, val mode: String, val time: String, val lowFloor: Boolean,
-                     val modification: String?, val direction: String, val vm: Boolean = false,
+data class Departure(val line: String, private val mode: String, val time: String, private val lowFloor: Boolean,
+                     private val modification: String?, val direction: String, val vm: Boolean = false,
                      var tomorrow: Boolean = false, val onStop: Boolean = false) {
 
     override fun toString(): String {
@@ -15,20 +16,13 @@ data class Departure(val line: String, val mode: String, val time: String, val l
     }
 
     companion object {
-        private fun filterDepartures(departures: List<Departure>?): ArrayList<Departure> {
+        private fun filterDepartures(departures: List<Departure>): ArrayList<Departure> {
             val filtered = ArrayList<Departure>()
             val lines = HashMap<String, Int>()
-            val now = Calendar.getInstance()
-            for (departure in departures!!) {
-                val time = Calendar.getInstance()
-                time.set(Calendar.HOUR_OF_DAY, Integer.parseInt(departure.time.split(":")[0]))
-                time.set(Calendar.MINUTE, Integer.parseInt(departure.time.split(":")[1]))
-                time.set(Calendar.SECOND, 0)
-                time.set(Calendar.MILLISECOND, 0)
-                if (departure.tomorrow)
-                    time.add(Calendar.DAY_OF_MONTH, 1)
+            val sortedDepartures = departures.sortedBy { it.timeTill() }
+            for (departure in sortedDepartures) {
                 var lineExistedTimes = lines[departure.line]
-                if ((now.before(time) || now == time) && lineExistedTimes ?: 0 < 3) {
+                if (departure.timeTill() >= 0 && lineExistedTimes ?: 0 < 3) {
                     lineExistedTimes = (lineExistedTimes ?: 0) + 1
                     lines[departure.line] = lineExistedTimes
                     filtered.add(departure)
@@ -40,7 +34,12 @@ data class Departure(val line: String, val mode: String, val time: String, val l
         fun createDepartures(stopId: String): HashMap<String, ArrayList<Departure>> {
             val timetable = Timetable.getTimetable()
             val departures = timetable.getStopDepartures(stopId)
-            val moreDepartures = timetable.getStopDepartures(stopId)
+            val moreDepartures = HashMap<String, ArrayList<Departure>>()
+            for ((k,v) in departures) {
+                moreDepartures[k] = ArrayList()
+                for (departure in v)
+                    moreDepartures[k]!!.add(departure.copy())
+            }
             val rolledDepartures = HashMap<String, ArrayList<Departure>>()
 
             for ((_, tomorrowDepartures) in moreDepartures) {
@@ -50,7 +49,7 @@ data class Departure(val line: String, val mode: String, val time: String, val l
             for ((mode, _) in departures) {
                 rolledDepartures[mode] = (departures[mode] as ArrayList<Departure> +
                         moreDepartures[mode] as ArrayList<Departure>) as ArrayList<Departure>
-                rolledDepartures[mode] = filterDepartures(rolledDepartures[mode])
+                rolledDepartures[mode] = filterDepartures(rolledDepartures[mode]!!)
             }
 
             return rolledDepartures

@@ -65,4 +65,5 @@
         "it’s Tuesday, it will be on ‘workdays’ tab).\n"
         "Be sure to consult the messages on\nhttps://www.ztm.poznan.pl/en.\n\n"
     </string>
+    <string name="departure_row_getting_departures">Getting departures…</string>
 </resources>

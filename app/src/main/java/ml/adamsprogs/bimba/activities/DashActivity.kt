@@ -26,12 +26,12 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     val receiver = MessageReceiver()
     lateinit var timetable: Timetable
     var stops: ArrayList<StopSuggestion>? = null
-    lateinit var drawerLayout: DrawerLayout
-    lateinit var drawer: NavigationView
+    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var drawer: NavigationView
     lateinit var favouritesList: RecyclerView
     lateinit var searchView: FloatingSearchView
     lateinit var favourites: FavouriteStorage
-    var timer = Timer()
+    private var timer = Timer()
     private lateinit var timerTask: TimerTask
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -243,16 +243,17 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     override fun onTimetableDownload(result: String?) {
         Log.i("Refresh", "downloaded: $result")
-        val message: String
-        when (result) {
-            TimetableDownloader.RESULT_DOWNLOADED -> message = getString(R.string.timetable_downloaded)
-            TimetableDownloader.RESULT_NO_CONNECTIVITY -> message = getString(R.string.no_connectivity)
-            TimetableDownloader.RESULT_UP_TO_DATE -> message = getString(R.string.timetable_up_to_date)
-            TimetableDownloader.RESULT_VALIDITY_FAILED -> message = getString(R.string.validity_failed)
-            else -> message = getString(R.string.error_try_later)
+        val message: String = when (result) {
+            TimetableDownloader.RESULT_DOWNLOADED -> getString(R.string.timetable_downloaded)
+            TimetableDownloader.RESULT_NO_CONNECTIVITY -> getString(R.string.no_connectivity)
+            TimetableDownloader.RESULT_UP_TO_DATE -> getString(R.string.timetable_up_to_date)
+            TimetableDownloader.RESULT_VALIDITY_FAILED -> getString(R.string.validity_failed)
+            else -> getString(R.string.error_try_later)
         }
-        timetable.refresh()
-        stops = timetable.getStops()
+        if (result == TimetableDownloader.RESULT_DOWNLOADED) {
+            timetable.refresh(context)
+            stops = timetable.getStops()
+        }
         Snackbar.make(findViewById(R.id.drawer_layout), message, Snackbar.LENGTH_LONG).show()
     }
 

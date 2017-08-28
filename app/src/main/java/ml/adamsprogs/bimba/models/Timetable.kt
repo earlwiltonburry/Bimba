@@ -1,10 +1,12 @@
 package ml.adamsprogs.bimba.models
 
 import android.content.Context
+import android.database.CursorIndexOutOfBoundsException
 import android.database.sqlite.SQLiteCantOpenDatabaseException
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteDatabaseCorruptException
 import java.io.File
+
 
 class Timetable private constructor() {
     companion object {
@@ -40,16 +42,26 @@ class Timetable private constructor() {
 
     lateinit var db: SQLiteDatabase
     private var _stops: ArrayList<StopSuggestion>? = null
+    private val _stopDepartures = HashMap<String, HashMap<String, ArrayList<Departure>>>()
+    private val _stopDeparturesCount = HashMap<String, Int>()
 
-    init {
-        readDbFile()
-    }
+    fun refresh(context: Context) {
+        val db: SQLiteDatabase?
+        try {
+            db = SQLiteDatabase.openDatabase(File(context.filesDir, "timetable.db").path,
+                    null, SQLiteDatabase.OPEN_READONLY)
+        } catch(e: NoSuchFileException) {
+            throw SQLiteCantOpenDatabaseException("no such file")
+        } catch(e: SQLiteCantOpenDatabaseException) {
+            throw SQLiteCantOpenDatabaseException("cannot open db")
+        } catch(e: SQLiteDatabaseCorruptException) {
+            throw SQLiteCantOpenDatabaseException("db corrupt")
+        }
+        this.db = db
 
-    fun refresh() {
-        readDbFile()
-    }
-
-    private fun readDbFile() {
+        for ((k, _) in _stopDepartures)
+            _stopDepartures.remove(k)
+        //todo recreate cache
     }
 
     fun getStops(): ArrayList<StopSuggestion> {
@@ -95,11 +107,16 @@ class Timetable private constructor() {
     }
 
     fun getStopDepartures(stopId: String, lineId: String? = null, tomorrow: Boolean = false): HashMap<String, ArrayList<Departure>> {
-        val andLine: String
-        if (lineId == null)
-            andLine = ""
+        val andLine: String = if (lineId == null)
+            ""
         else
-            andLine = "and line_id = '$lineId'"
+            "and line_id = '$lineId'"
+
+        if (lineId == null && _stopDepartures.contains(stopId)) {
+            _stopDeparturesCount[stopId] = _stopDeparturesCount[stopId]!! + 1
+            return _stopDepartures[stopId]!!
+        }
+        _stopDeparturesCount[stopId] = _stopDeparturesCount[stopId]?:0 + 1
         val cursor = db.rawQuery("select lines.number, mode, substr('0'||hour, -2) || ':' || " +
                 "substr('0'||minute, -2) as time, lowFloor, modification, headsign from departures join " +
                 "timetables on(timetable_id = timetables.id) join lines on(line_id = lines.id) where " +
@@ -114,6 +131,19 @@ class Timetable private constructor() {
                     cursor.getString(4), cursor.getString(5), tomorrow = tomorrow))
         }
         cursor.close()
+        if (lineId == null) {
+            if (_stopDepartures.size < 10)
+                _stopDepartures[stopId] = departures
+            else {
+                for ((key, value) in _stopDeparturesCount) {
+                    if (value < _stopDeparturesCount[stopId]!!) {
+                        _stopDepartures.remove(key)
+                        _stopDepartures[stopId] = departures
+                        break
+                    }
+                }
+            }
+        }
         return departures
     }
 
@@ -140,5 +170,17 @@ class Timetable private constructor() {
         element = cursor.getString(0)
         cursor.close()
         return element
+    }
+
+    fun isEmpty(): Boolean {
+        val cursor = db.rawQuery("select * from metadata;", null)
+        try {
+            cursor.moveToNext()
+            cursor.getString(0)
+            cursor.close()
+        } catch(e: CursorIndexOutOfBoundsException) {
+            return true
+        }
+        return false
     }
 }

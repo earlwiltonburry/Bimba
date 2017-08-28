@@ -7,8 +7,8 @@ import android.util.Log
 import ml.adamsprogs.bimba.models.Departure
 
 class MessageReceiver : BroadcastReceiver() {
-    val onTimetableDownloadListeners: HashSet<OnTimetableDownloadListener> = HashSet()
-    val onVmListeners: HashSet<OnVmListener> = HashSet()
+    private val onTimetableDownloadListeners: HashSet<OnTimetableDownloadListener> = HashSet()
+    private val onVmListeners: HashSet<OnVmListener> = HashSet()
 
     override fun onReceive(context: Context?, intent: Intent?) {
         Log.i("Recv", "${intent?.action}")

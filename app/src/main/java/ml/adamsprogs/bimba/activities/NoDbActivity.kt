@@ -9,15 +9,15 @@ import ml.adamsprogs.bimba.*
 
 
 class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityChangeListener, MessageReceiver.OnTimetableDownloadListener {
-    val networkStateReceiver = NetworkStateReceiver()
-    val timetableDownloadReceiver = MessageReceiver()
-    var serviceRunning = false
-    var askedForNetwork = false
+    private val networkStateReceiver = NetworkStateReceiver()
+    private val timetableDownloadReceiver = MessageReceiver()
+    private var serviceRunning = false
+    private var askedForNetwork = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_nodb)
-        var filter: IntentFilter = IntentFilter(TimetableDownloader.ACTION_DOWNLOADED)
+        var filter = IntentFilter(TimetableDownloader.ACTION_DOWNLOADED)
         filter.addCategory(Intent.CATEGORY_DEFAULT)
         registerReceiver(timetableDownloadReceiver, filter)
         timetableDownloadReceiver.addOnTimetableDownloadListener(this)
@@ -34,7 +34,7 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
 
     override fun onResume() {
         super.onResume()
-        var filter: IntentFilter = IntentFilter(TimetableDownloader.ACTION_DOWNLOADED)
+        var filter = IntentFilter(TimetableDownloader.ACTION_DOWNLOADED)
         filter.addCategory(Intent.CATEGORY_DEFAULT)
         registerReceiver(timetableDownloadReceiver, filter)
         if (!NetworkStateReceiver.isNetworkAvailable(this)) {
@@ -47,7 +47,7 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
             downloadTimetable()
     }
 
-    fun downloadTimetable() {
+    private fun downloadTimetable() {
         (findViewById(R.id.noDbCaption) as TextView).text = getString(R.string.no_db_downloading)
         serviceRunning = true
         intent = Intent(this, TimetableDownloader::class.java)

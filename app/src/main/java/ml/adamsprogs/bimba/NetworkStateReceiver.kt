@@ -7,7 +7,7 @@ import android.content.Context
 
 class NetworkStateReceiver : BroadcastReceiver() {
 
-    val onConnectivityChangeListeners = HashSet<OnConnectivityChangeListener>()
+    private val onConnectivityChangeListeners = HashSet<OnConnectivityChangeListener>()
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.extras != null) {

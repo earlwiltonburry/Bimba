@@ -6,7 +6,7 @@ import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
 
 class StopSuggestion(text: String, val id: String, val symbol: String) : SearchSuggestion {
     private val body: String = text
-    val CONTENTS_SUGGESTION = 0x0105
+    private val CONTENTS_SUGGESTION = 0x0105
 
     constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString())
 
