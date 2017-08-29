@@ -1,0 +1,6 @@
+- Adding favourites to the dashboard (favourites can be merged and split)
+- Faster transition to the stop screen
+- More intuitive timetable refresh
+- Help screen
+- Bug fix: crash when the timetable is empty
+- Slight change to the icon
