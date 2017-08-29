@@ -2,7 +2,6 @@ package ml.adamsprogs.bimba
 
 import android.app.IntentService
 import android.content.Intent
-import android.util.Log
 import ml.adamsprogs.bimba.models.*
 import okhttp3.*
 import com.google.gson.Gson
@@ -24,10 +23,7 @@ class VmClient : IntentService("VmClient") {
         if (intent != null) {
             val requester = intent.getStringExtra(EXTRA_REQUESTER)
 
-            Log.i("VMClient", "starting vm for $requester")
-
             if (!NetworkStateReceiver.isNetworkAvailable(this)) {
-                Log.i("VMClient", "offline")
                 sendNullResult(requester)
                 return
             }
@@ -49,7 +45,6 @@ class VmClient : IntentService("VmClient") {
             try {
                 responseBody = client.newCall(request).execute().body()?.string()
             } catch(e: IOException) {
-                Log.i("VMClient", "IO Err")
                 sendNullResult(requester)
                 return
             }
@@ -72,8 +67,6 @@ class VmClient : IntentService("VmClient") {
                     departuresToday.add(departure)
                 }
             }
-            Log.i("VMClient", "Sending")
-            departuresToday.forEach {Log.i("VMClient", "send: $it")}
             if (departuresToday.isEmpty())
                 sendNullResult(requester)
             else

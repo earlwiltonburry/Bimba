@@ -13,7 +13,6 @@ import android.app.Activity
 import android.support.design.widget.NavigationView
 import android.support.v4.widget.*
 import android.support.v7.widget.*
-import android.util.Log
 import android.view.*
 import android.view.inputmethod.InputMethodManager
 import ml.adamsprogs.bimba.*
@@ -70,6 +69,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             drawerLayout.closeDrawer(drawer)
             super.onOptionsItemSelected(item)
         }
+
+        val validity = timetable.getValidity()
+        drawer.menu.findItem(R.id.drawer_validity).title = getString(R.string.valid_through, validity)
 
         searchView = findViewById(R.id.search_view) as FloatingSearchView
 
@@ -242,7 +244,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     override fun onTimetableDownload(result: String?) {
-        Log.i("Refresh", "downloaded: $result")
         val message: String = when (result) {
             TimetableDownloader.RESULT_DOWNLOADED -> getString(R.string.timetable_downloaded)
             TimetableDownloader.RESULT_NO_CONNECTIVITY -> getString(R.string.no_connectivity)

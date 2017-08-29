@@ -2,7 +2,6 @@ package ml.adamsprogs.bimba.models
 
 import android.os.Parcel
 import android.os.Parcelable
-import android.util.Log
 import ml.adamsprogs.bimba.MessageReceiver
 import ml.adamsprogs.bimba.getMode
 import java.util.*
@@ -17,13 +16,10 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         } catch (e: IndexOutOfBoundsException) {
             ""
         }
-        Log.i("VM", "got vm for $requesterName and my name is $name")
         if (vmDepartures != null && requesterName == name) {
-            Log.i("VM", "so I’m adding")
             vmDeparturesMap[requesterTimetable] = vmDepartures
             this.vmDepartures = vmDeparturesMap.flatMap { it.value } as ArrayList<Departure>
         }
-        Log.i("VM", "so I’m not adding")
         filterVmDepartures()
     }
 
@@ -76,14 +72,9 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
             if (timetables.isEmpty() && vmDepartures.isEmpty())
                 return null
 
-            Log.i("FAV", "vmDeps is empty? ${vmDepartures.isEmpty()} so")
             if (vmDepartures.isNotEmpty()) {
-                val d = vmDepartures.minBy { it.timeTill() }
-                Log.i("FAV", "using vm: ${d.toString()}")
-                return d
+                return vmDepartures.minBy { it.timeTill() }
             }
-
-            Log.i("FAV", "using offline")
 
             val twoDayDepartures = ArrayList<Departure>()
             val today = Calendar.getInstance().getMode()
@@ -125,15 +116,11 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
     }
 
     fun delete(stop: String, line: String) {
-        Log.i("ROW", "Favourite deleting $stop, $line")
         timetables.remove(timetables.find { it[TAG_STOP] == stop && it[TAG_LINE] == line })
-        Log.i("ROW", timetables.toString())
     }
 
     fun registerOnVm(receiver: MessageReceiver) {
-        Log.i("FAV", "Shall register? ${!isRegisteredOnVmListener}")
         if (!isRegisteredOnVmListener) {
-            Log.i("FAV", "registering")
             receiver.addOnVmListener(this)
             isRegisteredOnVmListener = true
         }

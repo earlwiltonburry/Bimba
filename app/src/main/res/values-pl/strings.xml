@@ -56,4 +56,5 @@
         "Pamiętaj, aby sprawdzić aktualności na\nhttps://www.ztm.poznan.pl.\n\n"
     </string>
     <string name="departure_row_getting_departures">Zbieranie odjazdów…</string>
+    <string name="valid_through">Ważny od %1$s</string>
 </resources>

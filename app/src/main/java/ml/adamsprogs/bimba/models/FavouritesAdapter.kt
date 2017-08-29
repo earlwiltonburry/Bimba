@@ -6,7 +6,6 @@ import android.os.Build
 import android.support.v4.content.res.ResourcesCompat
 import android.support.v7.widget.*
 import android.support.v7.widget.PopupMenu
-import android.util.Log
 import android.view.*
 import android.widget.*
 import ml.adamsprogs.bimba.R
@@ -59,7 +58,6 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, p
             val nextDepartureText: String
             val nextDepartureLineText: String
             if (nextDeparture != null) {
-                Log.i("NEXT DEP", nextDeparture.toString())
                 val interval = nextDeparture.timeTill()
                 if (interval < 0)
                     return@thread

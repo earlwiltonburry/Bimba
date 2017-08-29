@@ -10,7 +10,6 @@ import org.tukaani.xz.XZInputStream
 import java.io.*
 import java.security.MessageDigest
 import kotlin.experimental.and
-import android.util.Log
 import android.app.NotificationManager
 import ml.adamsprogs.bimba.models.Timetable
 
@@ -44,7 +43,6 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 sendResult(RESULT_NO_CONNECTIVITY)
                 return
             }
-            Log.i("Downloader", "Got metadata")
             val reader = BufferedReader(InputStreamReader(httpCon.inputStream))
             val lastModified = reader.readLine()
             val checksum = reader.readLine()
@@ -60,7 +58,6 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 sendResult(RESULT_UP_TO_DATE)
                 return
             }
-            Log.i("Downloader", "timetable is newer ($lastModified > $currentLastModified)")
 
             notify(0)
 
@@ -70,11 +67,9 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 sendResult(RESULT_NO_CONNECTIVITY)
                 return
             }
-            Log.i("Downloader", "connected to db")
             val xzIn = XZInputStream(httpCon.inputStream)
             val file = File(this.filesDir, "new_timetable.db")
             if (copyInputStreamToFile(xzIn, file, checksum)) {
-                Log.i("Downloader", "downloaded")
                 val oldFile = File(this.filesDir, "timetable.db")
                 oldFile.delete()
                 file.renameTo(oldFile)
@@ -83,7 +78,6 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 prefsEditor.apply()
                 sendResult(RESULT_DOWNLOADED)
             } else {
-                Log.i("Downloader", "downloaded but is wrong")
                 sendResult(RESULT_VALIDITY_FAILED)
             }
 
@@ -141,7 +135,6 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
             for (i in 0 until digest.size) {
                 hex += Integer.toString((digest[i] and 0xff.toByte()) + 0x100, 16).padStart(3, '0').substring(1)
             }
-            Log.i("Downloader", "checksum is $checksum, and hex is $hex")
             return checksum == hex
         }
     }

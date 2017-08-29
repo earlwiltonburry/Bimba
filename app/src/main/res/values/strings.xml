@@ -66,4 +66,5 @@
         "Be sure to consult the messages on\nhttps://www.ztm.poznan.pl/en.\n\n"
     </string>
     <string name="departure_row_getting_departures">Getting departures…</string>
+    <string name="valid_through">Valid since: %1$s</string>
 </resources>

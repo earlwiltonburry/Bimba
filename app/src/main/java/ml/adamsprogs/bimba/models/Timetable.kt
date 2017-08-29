@@ -183,4 +183,12 @@ class Timetable private constructor() {
         }
         return false
     }
+
+    fun getValidity(): String {
+        val cursor = db.rawQuery("select value from metadata where key = 'validFrom'", null)
+        cursor.moveToNext()
+        val validity = cursor.getString(0)
+        cursor.close()
+        return "%s-%s-%s".format(validity.substring(0..3), validity.substring(4..5), validity.substring(6..7))
+    }
 }

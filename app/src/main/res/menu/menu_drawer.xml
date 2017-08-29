@@ -16,4 +16,11 @@
             android:icon="@drawable/ic_help"
             android:title="@string/help" />
     </group>
+    <group
+        android:id="@+id/drawer_group_validity"
+        android:enabled="false">
+        <item
+            android:id="@+id/drawer_validity"
+            android:title="" />
+    </group>
 </menu>
