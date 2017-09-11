@@ -3,6 +3,9 @@ Bimba (pronounced BEEM-bah [ˈbiːmbʌ], Poznań subdialect for ‘tram’) is t
 
 With Bimba You can check the public transport timetable in Poznań agglomeration (run by ZTM Poznań), and thanks to the Virtual Monitor You can see when exactly a bus or tram will arrive.
 
+<a href="https://f-droid.org/packages/ml.adamsprogs.bimba/" target="_blank">
+<img src="https://f-droid.org/badge/get-it-on.png" alt="Get it on F-Droid" height="80"/></a>
+
 ## Roadmap
 
 *more important higher*
