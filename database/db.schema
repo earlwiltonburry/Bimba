@@ -1,0 +1,30 @@
+metadata
+--------
+#key
+value
+
+nodes             stops
+-------           ---------
+#symbol <____     #id <_________
+name         |___ symbol        |
+                  number        |
+                  lat           |
+                  lon           |
+                  headsigns     |
+                                |
+lines             timetables    |
+------            ----------    |
+#id <______       #id <________/|\__
+number     |      stop_id ______|   |
+           |_____ line_id           |
+                  headsign          |
+                                    |
+                  departures        |
+                  ----------        |
+                  #id               |
+                  timetable_id _____|
+                  hour
+                  minute
+                  mode
+                  lowFloor
+                  modification
