@@ -12,6 +12,7 @@ import android.support.v7.widget.*
 import android.support.v4.app.*
 import android.support.v4.view.*
 import android.support.v4.content.res.ResourcesCompat
+import android.util.Log
 
 import ml.adamsprogs.bimba.models.*
 import ml.adamsprogs.bimba.*
@@ -61,6 +62,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, null)
         thread {
             sectionsPagerAdapter!!.departures = Departure.createDepartures(stopId)
+            Log.i("Stop", "Deps created")
             runOnUiThread { sectionsPagerAdapter?.notifyDataSetChanged() }
         }
 

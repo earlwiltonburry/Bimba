@@ -2,6 +2,7 @@ package ml.adamsprogs.bimba
 
 import android.app.IntentService
 import android.content.Intent
+import android.util.Log
 import ml.adamsprogs.bimba.models.*
 import okhttp3.*
 import com.google.gson.Gson
@@ -48,6 +49,12 @@ class VmClient : IntentService("VmClient") {
                 sendNullResult(requester)
                 return
             }
+
+            if (responseBody?.get(0) == '<') {
+                sendNullResult(requester)
+                return
+            }
+
             val javaRootMapObject = Gson().fromJson(responseBody, HashMap::class.java)
             val times = (javaRootMapObject["success"] as Map<*, *>)["times"] as List<*>
             val date = Calendar.getInstance()

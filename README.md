@@ -25,7 +25,7 @@ With Bimba You can check the public transport timetable in Poznań agglomeration
 * [ ] stops on map
 * [ ] refreshing on wakeup
 * [ ] VM times immediately if online, not through offline timetable
-* [ ] detecting holiday
+* [x] detecting holiday
 * [ ] ticket machines on map
 * [ ] ever-present searchbar
 * [ ] other things on map

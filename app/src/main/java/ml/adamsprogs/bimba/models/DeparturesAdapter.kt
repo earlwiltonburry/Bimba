@@ -1,8 +1,11 @@
 package ml.adamsprogs.bimba.models
 
+import android.app.AlertDialog
 import android.content.Context
+import android.content.DialogInterface
 import android.support.v4.content.res.ResourcesCompat
 import android.support.v7.widget.RecyclerView
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -67,6 +70,20 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
             icon?.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_vm, context.theme))
         else
             icon?.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_timetable, context.theme))
+        
+        if (departure.lowFloor)
+            holder?.floorIcon?.visibility = View.VISIBLE
+        if (departure.modification != "") {
+            holder?.infoIcon?.visibility = View.VISIBLE
+            holder?.root?.setOnClickListener {
+                AlertDialog.Builder(context)
+                        .setPositiveButton(context.getText(android.R.string.ok),
+                                { dialog: DialogInterface, _: Int -> dialog.cancel() })
+                        .setCancelable(true)
+                        .setMessage(departure.modification)
+                        .create().show()
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolder {
@@ -78,9 +95,13 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        //todo on click -> show dialogue with modification
+        val root = itemView.findViewById(R.id.departureRow)!!
         val lineTextView: TextView = itemView.findViewById(R.id.lineNumber) as TextView
         val timeTextView: TextView = itemView.findViewById(R.id.departureTime) as TextView
         val directionTextView: TextView = itemView.findViewById(R.id.departureDirection) as TextView
         val typeIcon: ImageView = itemView.findViewById(R.id.departureTypeIcon) as ImageView
+        val infoIcon: ImageView = itemView.findViewById(R.id.departureInfoIcon) as ImageView
+        val floorIcon: ImageView = itemView.findViewById(R.id.departureFloorIcon) as ImageView
     }
 }

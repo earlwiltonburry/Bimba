@@ -6,6 +6,8 @@ stops in node: http://www.ztm.poznan.pl/goeuropa-api/node_stops/{node:symbol}
 stops: http://www.ztm.poznan.pl/goeuropa-api/stops-nodes
 bike stations: http://www.ztm.poznan.pl/goeuropa-api/bike-stations
 
+alerts: goeuropa-api/alerts/' + lineId;
+
 """
 import json
 import os
@@ -92,6 +94,23 @@ class TimetableDownloader:
         """
         get timetable
         """
+
+        """ todo get time to next stop:
+            <div class="route-timeline">
+            <ul>
+            <li…>
+            <span class="stop-title">{current node_name} (n/ż)?</span>    --> if not present, return None
+            …
+            </li>
+            <li…>
+            …
+            <span class="time">{time:INT}'</span>
+            </li>
+            </ul>
+            </div>
+
+        """
+
         index = self.__post('https://www.ztm.poznan.pl/goeuropa-api/stop-info/{}/{}'.
                                   format(stop_id, line_id), {'directionId': direction_id})
         soup = BeautifulSoup(index.text, 'html.parser')
@@ -178,7 +197,8 @@ class TimetableDownloader:
                                 headsigns TEXT)')
                 cursor.execute('create table lines(id TEXT PRIMARY KEY, number TEXT)')
                 cursor.execute('create table timetables(id TEXT PRIMARY KEY, stop_id TEXT references \
-                                stop(id), line_id TEXT references line(id), headsign TEXT)')
+                                stop(id), line_id TEXT references line(id), headsign TEXT, \
+                                numberInRoute INTEGER)')
                 cursor.execute('create table departures(id INTEGER PRIMARY KEY, \
                                 timetable_id TEXT references timetable(id), \
                                 hour INTEGER, minute INTEGER, mode TEXT, \
@@ -211,8 +231,8 @@ class TimetableDownloader:
                             if self.verbose:
                                 print("stop {} in route {} in line {}".format(stop_i, route_i, line_i))
                             timetables = self.__get_stop_times(stop['id'], line_id, direction)
-                            cursor.execute('insert into timetables values(?, ?, ?, ?)',
-                                           (timetable_id, stop['id'], line_id, stops[-1]['name']))
+                            cursor.execute('insert into timetables values(?, ?, ?, ?, ?)',
+                                           (timetable_id, stop['id'], line_id, stops[-1]['name'], stop_i))
                             for mode, times in timetables.items():
                                 cursor.executemany('insert into departures values(null, ?, ?, ?, ?, ?, \
                                                     ?)', [(timetable_id, hour, minute, mode, lowfloor, desc)

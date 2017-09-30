@@ -17,6 +17,9 @@ import android.view.*
 import android.view.inputmethod.InputMethodManager
 import ml.adamsprogs.bimba.*
 import java.util.*
+import android.os.Bundle
+
+
 
 class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener,
         FavouritesAdapter.OnMenuItemClickListener {
@@ -272,5 +275,10 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         (favouritesList.adapter as FavouritesAdapter).favourites = favourites.favouritesList
         favouritesList.adapter.notifyDataSetChanged()
         return true
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        //hack below line to be commented to prevent crash on nougat.
+        //super.onSaveInstanceState(outState);
     }
 }

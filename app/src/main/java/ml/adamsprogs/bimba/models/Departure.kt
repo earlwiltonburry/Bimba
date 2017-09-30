@@ -3,8 +3,8 @@ package ml.adamsprogs.bimba.models
 import java.util.*
 import kotlin.collections.ArrayList
 
-data class Departure(val line: String, private val mode: String, val time: String, private val lowFloor: Boolean,
-                     private val modification: String?, val direction: String, val vm: Boolean = false,
+data class Departure(val line: String, private val mode: String, val time: String, val lowFloor: Boolean,
+                     val modification: String?, val direction: String, val vm: Boolean = false,
                      var tomorrow: Boolean = false, val onStop: Boolean = false) {
 
     override fun toString(): String {
@@ -57,7 +57,7 @@ data class Departure(val line: String, private val mode: String, val time: Strin
 
         fun fromString(string: String): Departure {
             val array = string.split("|")
-            return Departure(array[0], array[1], array[2], array[3] == "1", array[4], array[5],
+            return Departure(array[0], array[1], array[2], array[3] == "true", array[4], array[5],
                     array[6] == "true", array[7] == "true", array[8] == "true")
         }
     }
