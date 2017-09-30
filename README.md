@@ -33,3 +33,6 @@ With Bimba You can check the public transport timetable in Poznań agglomeration
 Also
 * efficiency
 
+---
+
+Dachshund for low-floor icon derived from [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Short-haired-Dachshund.jpg), (c) Igor Bredikhin CC-BY.
