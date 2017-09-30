@@ -67,6 +67,6 @@
     </string>
     <string name="departure_row_getting_departures">Getting departures…</string>
     <string name="valid_through">Valid since: %1$s</string>
-    <string name="departure_floor">departure floor type (lowFloor)</string>
-    <string name="departure_info">departure info icon</string>
+    <string name="departure_floor" translatable="false">departure floor type (lowFloor)</string>
+    <string name="departure_info" translatable="false">departure info icon</string>
 </resources>

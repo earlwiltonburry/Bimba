@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.DialogInterface
 import android.support.v4.content.res.ResourcesCompat
 import android.support.v7.widget.RecyclerView
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -70,7 +69,7 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
             icon?.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_vm, context.theme))
         else
             icon?.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_timetable, context.theme))
-        
+
         if (departure.lowFloor)
             holder?.floorIcon?.visibility = View.VISIBLE
         if (departure.modification != "") {
@@ -95,7 +94,6 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        //todo on click -> show dialogue with modification
         val root = itemView.findViewById(R.id.departureRow)!!
         val lineTextView: TextView = itemView.findViewById(R.id.lineNumber) as TextView
         val timeTextView: TextView = itemView.findViewById(R.id.departureTime) as TextView
