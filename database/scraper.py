@@ -83,34 +83,19 @@ class TimetableDownloader:
         routes = {}
         for direction in directions:
             direction_id = direction['data-directionid']
+
             route = [{'id': stop.find('a')['data-stopid'], 'name': stop['data-name'],
-                      'onDemand': re.search('stop-onDemand', str(stop['class'])) != None}
+                      'onDemand': re.search('stop-onDemand', str(stop['class'])) != None,
+                      'variant_type': re.search('variant-type-(in|out)', str(stop['class'])).groups()[0]\
+                              if re.search('variant-type-(in|out)', str(stop['class'])) is not None else None,
+                      'variant_first': re.search('first-variant', str(stop['class'])) is not None,
+                      'variant_last': re.search('last-variant', str(stop['class'])) is not None}
                      for stop in direction.findAll(attrs={'class': re.compile(r'.*\bstop-itm\b.*')})]
             routes[direction_id] = route
         return routes
 
 
     def __get_stop_times(self, stop_id, line_id, direction_id):
-        """
-        get timetable
-        """
-
-        """ todo get time to next stop:
-            <div class="route-timeline">
-            <ul>
-            <li…>
-            <span class="stop-title">{current node_name} (n/ż)?</span>    --> if not present, return None
-            …
-            </li>
-            <li…>
-            …
-            <span class="time">{time:INT}'</span>
-            </li>
-            </ul>
-            </div>
-
-        """
-
         index = self.__post('https://www.ztm.poznan.pl/goeuropa-api/stop-info/{}/{}'.
                                   format(stop_id, line_id), {'directionId': direction_id})
         soup = BeautifulSoup(index.text, 'html.parser')
@@ -171,6 +156,25 @@ class TimetableDownloader:
             return self.session.post(url, data=data, verify='bundle.pem')
 
 
+    # todo take into account parent (and for variant stops it needs synced departure times)
+    @staticmethod
+    def __calculate_time_to_next_stop(times, last_time_of_arrival):
+        times.sort()
+        earliest_departure = times[0]
+        if last_time_of_arrival == "":
+            return None, earliest_departure
+
+        hour = int(earliest_departure[:2])
+        minute = int(earliest_departure[3:])
+        minute = minute + (60 * hour)
+
+        last_hour = int(last_time_of_arrival[:2])
+        last_minute = int(last_time_of_arrival[3:])
+        last_minute = last_minute + (60 * last_hour)
+
+        time_to_next_stop = minute - last_minute
+        return time_to_next_stop, earliest_departure
+
     def download(self):
         """
         main function
@@ -196,9 +200,10 @@ class TimetableDownloader:
                                 references node(symbol), number TEXT, lat REAL, lon REAL, \
                                 headsigns TEXT)')
                 cursor.execute('create table lines(id TEXT PRIMARY KEY, number TEXT)')
-                cursor.execute('create table timetables(id TEXT PRIMARY KEY, stop_id TEXT references \
-                                stop(id), line_id TEXT references line(id), headsign TEXT, \
-                                numberInRoute INTEGER)')
+                cursor.execute('create table timetables(id TEXT PRIMARY KEY, stop_id TEXT \
+                                references stop(id), line_id TEXT references line(id), \
+                                headsign TEXT, parent TEXT references id, \
+                                parent_variant TEXT references id)')
                 cursor.execute('create table departures(id INTEGER PRIMARY KEY, \
                                 timetable_id TEXT references timetable(id), \
                                 hour INTEGER, minute INTEGER, mode TEXT, \
@@ -227,18 +232,56 @@ class TimetableDownloader:
                     route_i = 1
                     for direction, stops in route.items():
                         stop_i = 1
-                        for stop in stops:
+                        parent_stop = None
+                        parent_stop_variant = None
+                        for stop in stops[:-1]:
                             if self.verbose:
                                 print("stop {} in route {} in line {}".format(stop_i, route_i, line_i))
                             timetables = self.__get_stop_times(stop['id'], line_id, direction)
-                            cursor.execute('insert into timetables values(?, ?, ?, ?, ?)',
-                                           (timetable_id, stop['id'], line_id, stops[-1]['name'], stop_i))
+                            
+                            if stop_i == 1 and stop['variant_type'] is None:
+                                if self.verbose:
+                                    print('stop1 & main')
+                                parent = None
+                                parent_variant = None
+                                parent_stop = stop['id']
+                            elif stop['variant_type'] == 'in' and stop['variant_first']:
+                                if self.verbose:
+                                    print('in & first')
+                                parent = None
+                                parent_variant = None
+                                parent_stop_variant = stop['id']
+                            elif stop_i > 1 and stop['variant_type'] is None:
+                                if self.verbose:
+                                    print('stop>1 & main')
+                                parent = parent_stop
+                                parent_variant = parent_stop_variant
+                                parent_stop = stop['id']
+                                parent_stop_variant = None
+                            elif stop['variant_type'] is not None and not stop['variant_first']:
+                                if self.verbose:
+                                    print('variant & not first')
+                                parent = None
+                                parent_variant = parent_stop_variant
+                                parent_stop_variant = stop['id']
+                            elif stop['variant_type'] == 'out' and stop['variant_first']:
+                                if self.verbose:
+                                    print('out & first')
+                                parent = None
+                                parent_variant = parent_stop
+                                parent_stop_variant = stop['id']
+                            if stop['variant_type'] == 'out' and stop['variant_last']:
+                                parent_stop_variant = None
+
+                            cursor.execute('insert into timetables values(?, ?, ?, ?, ?, ?)',
+                                           (timetable_id, stop['id'], line_id, stops[-1]['name'], parent, parent_variant))
                             for mode, times in timetables.items():
                                 cursor.executemany('insert into departures values(null, ?, ?, ?, ?, ?, \
                                                     ?)', [(timetable_id, hour, minute, mode, lowfloor, desc)
                                                           for hour, minute, desc, lowfloor in times])
                             stop_i += 1
                             timetable_id += 1
+
                         route_i += 1
                     line_i += 1
             except KeyboardInterrupt:
