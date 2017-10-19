@@ -72,7 +72,7 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
 
         if (departure.lowFloor)
             holder?.floorIcon?.visibility = View.VISIBLE
-        if (departure.modification != "") {
+        if (departure.isModified) {
             holder?.infoIcon?.visibility = View.VISIBLE
             holder?.root?.setOnClickListener {
                 AlertDialog.Builder(context)

@@ -7,6 +7,11 @@ data class Departure(val line: String, private val mode: String, val time: Strin
                      val modification: String?, val direction: String, val vm: Boolean = false,
                      var tomorrow: Boolean = false, val onStop: Boolean = false) {
 
+    val isModified: Boolean
+        get() {
+            return modification != null && modification != "" && modification != "null"
+        }
+
     override fun toString(): String {
         return "$line|$mode|$time|$lowFloor|$modification|$direction|$vm|$tomorrow|$onStop"
     }
@@ -35,7 +40,7 @@ data class Departure(val line: String, private val mode: String, val time: Strin
             val timetable = Timetable.getTimetable()
             val departures = timetable.getStopDepartures(stopId)
             val moreDepartures = HashMap<String, ArrayList<Departure>>()
-            for ((k,v) in departures) {
+            for ((k, v) in departures) {
                 moreDepartures[k] = ArrayList()
                 for (departure in v)
                     moreDepartures[k]!!.add(departure.copy())
