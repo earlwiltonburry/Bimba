@@ -2,7 +2,6 @@ package ml.adamsprogs.bimba
 
 import android.app.IntentService
 import android.content.Intent
-import android.util.Log
 import ml.adamsprogs.bimba.models.*
 import okhttp3.*
 import com.google.gson.Gson

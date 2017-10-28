@@ -43,8 +43,8 @@ class FavouriteEditRowAdapter(private var favourite: Favourite) :
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val rowTextView = itemView.findViewById(R.id.favourite_edit_row) as TextView
-        val splitButton = itemView.findViewById(R.id.favourite_edit_split) as ImageView
-        val deleteButton = itemView.findViewById(R.id.favourite_edit_delete) as ImageView
+        val rowTextView:TextView = itemView.findViewById(R.id.favourite_edit_row)
+        val splitButton:ImageView = itemView.findViewById(R.id.favourite_edit_split)
+        val deleteButton:ImageView = itemView.findViewById(R.id.favourite_edit_delete)
     }
 }

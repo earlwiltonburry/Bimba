@@ -34,7 +34,7 @@
     <string name="no_next_departure">No next departure</string>
     <string name="action_merge">Merge</string>
     <string name="merge_favourites">Merge favourites</string>
-    <string name="calculating">Calculating…</string>
+    <string name="loading">Loading…</string>
     <string name="departure_in__singular_genitive">In %1$s minute</string>
     <string name="departure_in__plural_genitive">In %1$s minutes</string>
     <string name="departure_in__plural_nominative">In %1$s minutes</string>

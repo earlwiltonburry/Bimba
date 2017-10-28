@@ -4,9 +4,8 @@ import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.content.IntentFilter
-import android.widget.TextView
 import ml.adamsprogs.bimba.*
-
+import kotlinx.android.synthetic.main.activity_nodb.*
 
 class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityChangeListener, MessageReceiver.OnTimetableDownloadListener {
     private val networkStateReceiver = NetworkStateReceiver()
@@ -24,7 +23,7 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
 
         if (!NetworkStateReceiver.isNetworkAvailable(this)) {
             askedForNetwork = true
-            (findViewById(R.id.noDbCaption) as TextView).text = getString(R.string.no_db_connect)
+            no_db_caption.text = getString(R.string.no_db_connect)
             filter = IntentFilter("android.net.conn.CONNECTIVITY_CHANGE")
             registerReceiver(networkStateReceiver, filter)
             networkStateReceiver.addOnConnectivityChangeListener(this)
@@ -39,7 +38,7 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
         registerReceiver(timetableDownloadReceiver, filter)
         if (!NetworkStateReceiver.isNetworkAvailable(this)) {
             askedForNetwork = true
-            (findViewById(R.id.noDbCaption) as TextView).text = getString(R.string.no_db_connect)
+            no_db_caption.text = getString(R.string.no_db_connect)
             filter = IntentFilter("android.net.conn.CONNECTIVITY_CHANGE")
             registerReceiver(networkStateReceiver, filter)
             networkStateReceiver.addOnConnectivityChangeListener(this)
@@ -48,7 +47,7 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
     }
 
     private fun downloadTimetable() {
-        (findViewById(R.id.noDbCaption) as TextView).text = getString(R.string.no_db_downloading)
+        no_db_caption.text = getString(R.string.no_db_downloading)
         serviceRunning = true
         intent = Intent(this, TimetableDownloader::class.java)
         intent.putExtra(TimetableDownloader.EXTRA_FORCE, true)
@@ -70,7 +69,7 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
                 startActivity(Intent(this, DashActivity::class.java))
                 finish()
             }
-            else -> (findViewById(R.id.noDbCaption) as TextView).text = getString(R.string.error_try_later)
+            else -> no_db_caption.text = getString(R.string.error_try_later)
         }
     }
 

@@ -94,6 +94,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
     }
 
     private fun notify(progress: Int) {
+        //todo create channel
         val builder = NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.ic_download)
                 .setContentTitle(getString(R.string.timetable_downloading))

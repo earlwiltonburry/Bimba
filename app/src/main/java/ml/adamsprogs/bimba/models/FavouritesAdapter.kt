@@ -3,6 +3,7 @@ package ml.adamsprogs.bimba.models
 import android.app.Activity
 import android.content.Context
 import android.os.Build
+import android.support.design.widget.AppBarLayout
 import android.support.v4.content.res.ResourcesCompat
 import android.support.v7.widget.*
 import android.support.v7.widget.PopupMenu
@@ -13,6 +14,7 @@ import android.view.LayoutInflater
 import java.util.*
 import kotlin.concurrent.thread
 import android.util.TypedValue
+import com.arlib.floatingsearchview.FloatingSearchView
 import ml.adamsprogs.bimba.Declinator
 import kotlin.collections.ArrayList
 
@@ -139,11 +141,11 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, p
     private fun setSelecting() {
         context as Activity
         if (isSelecting) {
-            context.findViewById(R.id.search_view).visibility = View.INVISIBLE
-            context.findViewById(R.id.appbar).visibility = View.VISIBLE
+            context.findViewById<FloatingSearchView>(R.id.search_view).visibility = View.INVISIBLE
+            context.findViewById<AppBarLayout>(R.id.appbar).visibility = View.VISIBLE
         } else {
-            context.findViewById(R.id.search_view).visibility = View.VISIBLE
-            context.findViewById(R.id.appbar).visibility = View.INVISIBLE
+            context.findViewById<FloatingSearchView>(R.id.search_view).visibility = View.VISIBLE
+            context.findViewById<AppBarLayout>(R.id.appbar).visibility = View.INVISIBLE
         }
     }
 
@@ -166,12 +168,12 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, p
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val root = itemView.findViewById(R.id.favourite_card) as CardView
-        val nameTextView = itemView.findViewById(R.id.favourite_name) as TextView
-        val timeTextView = itemView.findViewById(R.id.favourite_time) as TextView
-        val lineTextView = itemView.findViewById(R.id.favourite_line) as TextView
-        val moreButton = itemView.findViewById(R.id.favourite_more_button) as ImageView
-        val typeIcon = itemView.findViewById(R.id.departureTypeIcon) as ImageView
+        val root:CardView = itemView.findViewById(R.id.favourite_card)
+        val nameTextView:TextView = itemView.findViewById(R.id.favourite_name)
+        val timeTextView:TextView = itemView.findViewById(R.id.favourite_time)
+        val lineTextView:TextView = itemView.findViewById(R.id.favourite_line)
+        val moreButton:ImageView = itemView.findViewById(R.id.favourite_more_button)
+        val typeIcon:ImageView = itemView.findViewById(R.id.departureTypeIcon)
     }
 
     interface OnMenuItemClickListener {

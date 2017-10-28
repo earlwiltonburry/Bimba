@@ -53,7 +53,7 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
     }
 
     override fun describeContents(): Int {
-        return 105
+        return Parcelable.CONTENTS_FILE_DESCRIPTOR
     }
 
     override fun writeToParcel(dest: Parcel?, flags: Int) {
@@ -141,5 +141,13 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
 
         val TAG_STOP = "stop"
         val TAG_LINE = "line"
+    }
+
+    fun allDepartures(): HashMap<String, ArrayList<Departure>>? {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    fun fullTimetable(): HashMap<String, ArrayList<Departure>>? {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

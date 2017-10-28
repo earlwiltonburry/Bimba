@@ -6,12 +6,11 @@ import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
 
 class StopSuggestion(text: String, val id: String, val symbol: String) : SearchSuggestion {
     private val body: String = text
-    private val CONTENTS_SUGGESTION = 0x0105
 
     constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString())
 
     override fun describeContents(): Int {
-        return CONTENTS_SUGGESTION
+        return Parcelable.CONTENTS_FILE_DESCRIPTOR
     }
 
     override fun writeToParcel(dest: Parcel?, flags: Int) {

@@ -50,12 +50,17 @@ class TimetableDownloader:
         index = self.__get('https://www.ztm.poznan.pl/goeuropa-api/node_stops/{}'.format(node))
         stops = []
         for stop in json.loads(index.text):
+            name = stop['stop']['name']
             stop_id = stop['stop']['id']
             number = re.findall("\\d+", stop['stop']['symbol'])[0]
             lat = stop['stop']['lat']
             lon = stop['stop']['lon']
+            # todo test
             directions = ', '.join(['{} → {}'.format(transfer['name'], transfer['headsign'])
-                                    for transfer in stop['transfers']])
+                                    for transfer in stop['transfers']
+                                    if transfer['headsign'] != name])
+            if directions == '':
+                continue
             stops.append((stop_id, node, number, lat, lon, directions))
         return stops
 

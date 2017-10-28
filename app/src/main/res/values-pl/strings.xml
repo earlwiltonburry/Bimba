@@ -28,7 +28,7 @@
     <string name="no_next_departure">Brak następnego odjazdu</string>
     <string name="action_merge">Połącz</string>
     <string name="merge_favourites">Połącz ulubione</string>
-    <string name="calculating">Obliczam…</string>
+    <string name="loading">Ładowanie…</string>
     <string name="departure_in__singular_genitive">Za %1$s minutę</string>
     <string name="departure_in__plural_genitive">Za %1$s minut</string>
     <string name="departure_in__plural_nominative">Za %1$s minuty</string>

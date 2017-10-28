@@ -94,12 +94,12 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val root = itemView.findViewById(R.id.departureRow)!!
-        val lineTextView: TextView = itemView.findViewById(R.id.lineNumber) as TextView
-        val timeTextView: TextView = itemView.findViewById(R.id.departureTime) as TextView
-        val directionTextView: TextView = itemView.findViewById(R.id.departureDirection) as TextView
-        val typeIcon: ImageView = itemView.findViewById(R.id.departureTypeIcon) as ImageView
-        val infoIcon: ImageView = itemView.findViewById(R.id.departureInfoIcon) as ImageView
-        val floorIcon: ImageView = itemView.findViewById(R.id.departureFloorIcon) as ImageView
+        val root = itemView.findViewById<View>(R.id.departureRow)!!
+        val lineTextView: TextView = itemView.findViewById(R.id.lineNumber)
+        val timeTextView: TextView = itemView.findViewById(R.id.departureTime)
+        val directionTextView: TextView = itemView.findViewById(R.id.departureDirection)
+        val typeIcon: ImageView = itemView.findViewById(R.id.departureTypeIcon)
+        val infoIcon: ImageView = itemView.findViewById(R.id.departureInfoIcon)
+        val floorIcon: ImageView = itemView.findViewById(R.id.departureFloorIcon)
     }
 }

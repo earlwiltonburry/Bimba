@@ -1,5 +1,6 @@
 package ml.adamsprogs.bimba.activities
 
+import android.annotation.SuppressLint
 import android.content.*
 import android.os.*
 import android.support.design.widget.Snackbar
@@ -18,8 +19,8 @@ import android.view.inputmethod.InputMethodManager
 import ml.adamsprogs.bimba.*
 import java.util.*
 import android.os.Bundle
-
-
+import android.util.Log
+import kotlinx.android.synthetic.main.activity_dash.*
 
 class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener,
         FavouritesAdapter.OnMenuItemClickListener {
@@ -29,7 +30,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     lateinit var timetable: Timetable
     var stops: ArrayList<StopSuggestion>? = null
     private lateinit var drawerLayout: DrawerLayout
-    private lateinit var drawer: NavigationView
+    private lateinit var drawerView: NavigationView
     lateinit var favouritesList: RecyclerView
     lateinit var searchView: FloatingSearchView
     lateinit var favourites: FavouriteStorage
@@ -40,7 +41,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dash)
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO)
-        val toolbar = findViewById(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
         supportActionBar?.title = getString(R.string.merge_favourites)
 
@@ -55,10 +55,10 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         scheduleRefresh()
 
-        drawerLayout = findViewById(R.id.drawer_layout) as DrawerLayout
-        drawer = findViewById(R.id.drawer) as NavigationView
+        drawerLayout = drawer_layout
+        drawerView = drawer
         //drawer.setCheckedItem(R.id.drawer_home)
-        drawer.setNavigationItemSelectedListener { item ->
+        drawerView.setNavigationItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.drawer_refresh -> {
                     startDownloaderService()
@@ -69,14 +69,14 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 else -> {
                 }
             }
-            drawerLayout.closeDrawer(drawer)
+            drawerLayout.closeDrawer(drawerView)
             super.onOptionsItemSelected(item)
         }
 
         val validity = timetable.getValidity()
-        drawer.menu.findItem(R.id.drawer_validity).title = getString(R.string.valid_through, validity)
+        drawerView.menu.findItem(R.id.drawer_validity).title = getString(R.string.valid_through, validity)
 
-        searchView = findViewById(R.id.search_view) as FloatingSearchView
+        searchView = search_view
 
         searchView.setOnFocusChangeListener(object : FloatingSearchView.OnFocusChangeListener {
             override fun onFocus() {
@@ -111,8 +111,10 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 imm.hideSoftInputFromWindow(view.windowToken, 0)
                 intent = Intent(context, StopActivity::class.java)
                 searchSuggestion as StopSuggestion
+                intent.putExtra(StopActivity.SOURCE_TYPE, StopActivity.SOURCE_TYPE_STOP)
                 intent.putExtra(StopActivity.EXTRA_STOP_ID, searchSuggestion.id)
                 intent.putExtra(StopActivity.EXTRA_STOP_SYMBOL, searchSuggestion.symbol)
+                Log.i("Profiler", "Intent sent")
                 startActivity(intent)
             }
 
@@ -132,13 +134,13 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             }
         }
 
-        searchView.attachNavigationDrawerToMenuButton(findViewById(R.id.drawer_layout) as DrawerLayout)
+        searchView.attachNavigationDrawerToMenuButton(drawer_layout as DrawerLayout)
     }
 
     private fun prepareFavourites() {
         favourites = FavouriteStorage.getFavouriteStorage(context)
         val layoutManager = LinearLayoutManager(context)
-        favouritesList = findViewById(R.id.favouritesList) as RecyclerView
+        favouritesList = favourites_list
         favouritesList.adapter = FavouritesAdapter(context, favourites.favouritesList, this)
         favouritesList.layoutManager = layoutManager
     }
@@ -193,8 +195,8 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     override fun onBackPressed() {
-        if (drawerLayout.isDrawerOpen(drawer)) {
-            drawerLayout.closeDrawer(drawer)
+        if (drawerLayout.isDrawerOpen(drawerView)) {
+            drawerLayout.closeDrawer(drawerView)
             return
         }
         if (!searchView.setSearchFocused(false)) {
@@ -277,6 +279,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         return true
     }
 
+    @SuppressLint("MissingSuperCall")
     override fun onSaveInstanceState(outState: Bundle) {
         //hack below line to be commented to prevent crash on nougat.
         //super.onSaveInstanceState(outState);

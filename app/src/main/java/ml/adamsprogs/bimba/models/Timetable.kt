@@ -125,7 +125,7 @@ class Timetable private constructor() {
         departures.put(MODE_WORKDAYS, ArrayList())
         departures.put(MODE_SATURDAYS, ArrayList())
         departures.put(MODE_SUNDAYS, ArrayList())
-        while (cursor.moveToNext()) {
+        while (cursor.moveToNext()) { //fixme first moveToNext takes 2s, subsequent ones are instant
             departures[cursor.getString(1)]?.add(Departure(cursor.getString(0),
                     cursor.getString(1), cursor.getString(2), cursor.getInt(3) == 1,
                     cursor.getString(4), cursor.getString(5), tomorrow = tomorrow))

@@ -12,23 +12,29 @@ import android.support.v7.widget.*
 import android.support.v4.app.*
 import android.support.v4.view.*
 import android.support.v4.content.res.ResourcesCompat
-import android.util.Log
 
 import ml.adamsprogs.bimba.models.*
 import ml.adamsprogs.bimba.*
 import kotlin.concurrent.thread
+import kotlinx.android.synthetic.main.activity_stop.*
 
+//check does favourites retain onVM after parcelation? Ie. does it refresh?
 
 class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
 
     companion object {
         val EXTRA_STOP_ID = "stopId"
         val EXTRA_STOP_SYMBOL = "stopSymbol"
+        val EXTRA_FAVOURITE = "favourite"
         val REQUESTER_ID = "stopActivity"
+        val SOURCE_TYPE = "sourceType"
+        val SOURCE_TYPE_STOP = "stop"
+        val SOURCE_TYPE_FAV = "favourite"
     }
 
-    private lateinit var stopId: String
-    private lateinit var stopSymbol: String
+    private var stopId: String? = null
+    private var stopSymbol: String? = null
+    private var favourite: Favourite? = null
     private var timetableType = "departure"
     private var sectionsPagerAdapter: SectionsPagerAdapter? = null
     private var viewPager: ViewPager? = null
@@ -40,30 +46,49 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
     private val context = this
     private val receiver = MessageReceiver()
 
+    private lateinit var sourceType: String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stop)
-        stopId = intent.getStringExtra(EXTRA_STOP_ID)
-        stopSymbol = intent.getStringExtra(EXTRA_STOP_SYMBOL)
 
-        val toolbar = findViewById(R.id.toolbar) as Toolbar
+        timetable = Timetable.getTimetable()
+
+        sourceType = intent.getStringExtra(SOURCE_TYPE)
+
+        val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
+
+        when (sourceType) {
+            SOURCE_TYPE_STOP -> {
+                stopId = intent.getStringExtra(EXTRA_STOP_ID)
+                stopSymbol = intent.getStringExtra(EXTRA_STOP_SYMBOL)
+                supportActionBar?.title = timetable.getStopName(stopId!!)
+            }
+            SOURCE_TYPE_FAV -> {
+                favourite = intent.getParcelableExtra(EXTRA_FAVOURITE)
+                supportActionBar?.title = favourite!!.name
+
+            }
+        }
 
         createTimerTask()
 
         prepareOnDownloadListener()
 
-        timetable = Timetable.getTimetable()
-        supportActionBar?.title = timetable.getStopName(stopId)
-
-        viewPager = findViewById(R.id.container) as ViewPager
-        tabLayout = findViewById(R.id.tabs) as TabLayout
+        viewPager = container
+        tabLayout = tabs
 
         sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, null)
         thread {
-            sectionsPagerAdapter!!.departures = Departure.createDepartures(stopId)
-            Log.i("Stop", "Deps created")
-            runOnUiThread { sectionsPagerAdapter?.notifyDataSetChanged() }
+            if (sourceType == SOURCE_TYPE_STOP) {
+                sectionsPagerAdapter!!.departures = Departure.createDepartures(stopId!!)
+            } else {
+                sectionsPagerAdapter!!.departures = favourite!!.allDepartures()
+            }
+            runOnUiThread {
+                sectionsPagerAdapter?.notifyDataSetChanged()
+            }
         }
 
         viewPager!!.adapter = sectionsPagerAdapter
@@ -74,23 +99,28 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
 
         scheduleRefresh()
 
-        val fab = findViewById(R.id.fab) as FloatingActionButton
+        showFab()
+    }
+
+    private fun showFab() {
+        if (sourceType == SOURCE_TYPE_FAV)
+            return
 
         val favourites = FavouriteStorage.getFavouriteStorage(context)
-        if (!favourites.has(stopSymbol)) {
+        if (!favourites.has(stopSymbol!!)) {
             fab.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_favourite_empty, this.theme))
         }
 
         fab.setOnClickListener {
-            if (!favourites.has(stopSymbol)) {
+            if (!favourites.has(stopSymbol!!)) {
                 val items = ArrayList<HashMap<String, String>>()
-                timetable.getLines(stopId).forEach {
+                timetable.getLines(stopId!!).forEach {
                     val o = HashMap<String, String>()
-                    o[Favourite.TAG_STOP] = stopId
+                    o[Favourite.TAG_STOP] = stopId!!
                     o[Favourite.TAG_LINE] = it
                     items.add(o)
                 }
-                favourites.add(stopSymbol, items)
+                favourites.add(stopSymbol as String, items)
                 fab.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_favourite, this.theme))
             } else {
                 Snackbar.make(it, getString(R.string.stop_already_fav), Snackbar.LENGTH_LONG)
@@ -106,6 +136,9 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
                 vmIntent.putExtra(VmClient.EXTRA_STOP_SYMBOL, stopSymbol)
                 vmIntent.putExtra(VmClient.EXTRA_REQUESTER, REQUESTER_ID)
                 startService(vmIntent)
+                runOnUiThread {
+                    sectionsPagerAdapter?.notifyDataSetChanged()
+                }
             }
         }
     }
@@ -119,8 +152,8 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
     }
 
     override fun onVm(vmDepartures: ArrayList<Departure>?, requester: String) {
-        if (timetableType == "departure" && requester == REQUESTER_ID) {
-            val fullDepartures = Departure.createDepartures(stopId)
+        if (timetableType == "departure" && requester == REQUESTER_ID && sourceType == SOURCE_TYPE_STOP) {
+            val fullDepartures = Departure.createDepartures(stopId!!)
             if (vmDepartures != null) {
                 fullDepartures[today.getMode()] = vmDepartures
             }
@@ -156,14 +189,20 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
             if (timetableType == "departure") {
                 timetableType = "full"
                 item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_timetable_departure, this.theme))
-                sectionsPagerAdapter?.departures = timetable.getStopDepartures(stopId)
+                if (sourceType == SOURCE_TYPE_STOP)
+                    sectionsPagerAdapter?.departures = timetable.getStopDepartures(stopId!!)
+                else
+                    sectionsPagerAdapter?.departures = favourite!!.fullTimetable()
                 sectionsPagerAdapter?.relativeTime = false
                 sectionsPagerAdapter?.notifyDataSetChanged()
                 timer.cancel()
             } else {
                 timetableType = "departure"
                 item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_timetable_full, this.theme))
-                sectionsPagerAdapter?.departures = Departure.createDepartures(stopId)
+                if (sourceType == SOURCE_TYPE_STOP)
+                    sectionsPagerAdapter?.departures = Departure.createDepartures(stopId!!)
+                else
+                    sectionsPagerAdapter?.departures = favourite!!.allDepartures()
                 sectionsPagerAdapter?.relativeTime = true
                 sectionsPagerAdapter?.notifyDataSetChanged()
                 scheduleRefresh()
@@ -188,10 +227,10 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
             val rootView = inflater!!.inflate(R.layout.fragment_stop, container, false)
 
             val layoutManager = LinearLayoutManager(activity)
-            val departuresList: RecyclerView = rootView.findViewById(R.id.departuresList) as RecyclerView
+            val departuresList: RecyclerView = rootView.findViewById(R.id.departuresList)
             departuresList.addItemDecoration(DividerItemDecoration(departuresList.context, layoutManager.orientation))
 
-            val departures = arguments.getStringArrayList("departures")?.map{ Departure.fromString(it) }
+            val departures = arguments.getStringArrayList("departures")?.map { Departure.fromString(it) }
             departuresList.adapter = DeparturesAdapter(activity, departures,
                     arguments["relativeTime"] as Boolean)
             departuresList.layoutManager = layoutManager
@@ -201,12 +240,11 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         companion object {
             private val ARG_SECTION_NUMBER = "section_number"
 
-            fun newInstance(sectionNumber: Int, stopId: String, departures: ArrayList<Departure>?, relativeTime: Boolean):
+            fun newInstance(sectionNumber: Int, departures: ArrayList<Departure>?, relativeTime: Boolean):
                     PlaceholderFragment {
                 val fragment = PlaceholderFragment()
                 val args = Bundle()
                 args.putInt(ARG_SECTION_NUMBER, sectionNumber)
-                args.putString("stop", stopId)
                 if (departures != null) {
                     val d = ArrayList<String>()
                     departures.mapTo(d) { it.toString() }
@@ -235,7 +273,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
                 1 -> mode = Timetable.MODE_SATURDAYS
                 2 -> mode = Timetable.MODE_SUNDAYS
             }
-            return PlaceholderFragment.newInstance(position + 1, stopId, departures?.get(mode), relativeTime)
+            return PlaceholderFragment.newInstance(position + 1, departures?.get(mode), relativeTime)
         }
 
         override fun getCount() = 3
