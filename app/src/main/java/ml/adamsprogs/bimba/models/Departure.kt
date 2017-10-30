@@ -1,10 +1,9 @@
 package ml.adamsprogs.bimba.models
 
-import android.util.Log
 import java.util.*
 import kotlin.collections.ArrayList
 
-data class Departure(val line: String, private val mode: String, val time: String, val lowFloor: Boolean,
+data class Departure(val line: String, val mode: String, val time: String, val lowFloor: Boolean,
                      val modification: String?, val direction: String, val vm: Boolean = false,
                      var tomorrow: Boolean = false, val onStop: Boolean = false) {
 
@@ -39,29 +38,23 @@ data class Departure(val line: String, private val mode: String, val time: Strin
 
         fun createDepartures(stopId: String): HashMap<String, ArrayList<Departure>> {
             val timetable = Timetable.getTimetable()
-            Log.i("Profiler/Departure", "Got timetable")
             val departures = timetable.getStopDepartures(stopId)
-            Log.i("Profiler/Departure", "Got departures")
             val moreDepartures = HashMap<String, ArrayList<Departure>>()
             for ((k, v) in departures) {
                 moreDepartures[k] = ArrayList()
                 for (departure in v)
                     moreDepartures[k]!!.add(departure.copy())
             }
-            Log.i("Profiler/Departure", "Duplicated departures")
             val rolledDepartures = HashMap<String, ArrayList<Departure>>()
 
             for ((_, tomorrowDepartures) in moreDepartures) {
                 tomorrowDepartures.forEach { it.tomorrow = true }
             }
-            Log.i("Profiler/Departure", "Set tomorrow")
 
             for ((mode, _) in departures) {
                 rolledDepartures[mode] = (departures[mode] as ArrayList<Departure> +
                         moreDepartures[mode] as ArrayList<Departure>) as ArrayList<Departure>
-                Log.i("Profiler/Departure", "Joined departures for $mode")
                 rolledDepartures[mode] = filterDepartures(rolledDepartures[mode]!!)
-                Log.i("Profiler/Departure", "Filtered departures for $mode")
             }
 
             return rolledDepartures

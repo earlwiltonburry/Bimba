@@ -2,6 +2,7 @@ package ml.adamsprogs.bimba.models
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
@@ -34,13 +35,8 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
         val favouritesString = preferences.getString("favourites", "{}")
         val favouritesMap = Gson().fromJson(favouritesString, JsonObject::class.java)
         for ((name, jsonTimetables) in favouritesMap.entrySet()) {
-            val timetables = ArrayList<HashMap<String, String>>()
-            for (jsonTimetable in jsonTimetables.asJsonArray) {
-                val timetable = HashMap<String, String>()
-                timetable[Favourite.TAG_STOP] = jsonTimetable.asJsonObject[Favourite.TAG_STOP].asString
-                timetable[Favourite.TAG_LINE] = jsonTimetable.asJsonObject[Favourite.TAG_LINE].asString
-                timetables.add(timetable)
-            }
+            val timetables = HashSet<Plate>()
+            jsonTimetables.asJsonArray.mapTo(timetables) { Plate(it.asJsonObject["line"].asString, it.asJsonObject["stop"].asString, null) }
             favourites[name] = Favourite(name, timetables)
         }
     }
@@ -49,7 +45,7 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
 
     fun has(name: String): Boolean = favourites.contains(name)
 
-    fun add(name: String, timetables: ArrayList<HashMap<String, String>>) {
+    fun add(name: String, timetables: HashSet<Plate>) {
         if (favourites[name] == null) {
             favourites[name] = Favourite(name, timetables)
             serialize()
@@ -68,8 +64,8 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
         serialize()
     }
 
-    fun delete(name: String, stop: String, line: String) {
-        favourites[name]?.delete(stop, line)
+    fun delete(name: String, plate: Plate) {
+        favourites[name]?.delete(plate)
         serialize()
     }
 
@@ -79,8 +75,8 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
             val timetables = JsonArray()
             for (timetable in favourite.timetables) {
                 val element = JsonObject()
-                element.addProperty(Favourite.TAG_STOP, timetable[Favourite.TAG_STOP])
-                element.addProperty(Favourite.TAG_LINE, timetable[Favourite.TAG_LINE])
+                element.addProperty("stop", timetable.stop)
+                element.addProperty("line", timetable.line)
                 timetables.add(element)
             }
             rootObject.add(name, timetables)
@@ -89,24 +85,22 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
         val editor = preferences.edit()
         editor.putString("favourites", favouritesString)
         editor.apply()
+
     }
 
-    fun detach(name: String, stop: String, line: String, newName: String) {
-        val element = HashMap<String, String>()
-        element[Favourite.TAG_STOP] = stop
-        element[Favourite.TAG_LINE] = line
-        val array = ArrayList<HashMap<String, String>>()
-        array.add(element)
+    fun detach(name: String, plate: Plate, newName: String) {
+        val array = HashSet<Plate>()
+        array.add(plate)
         favourites[newName] = Favourite(newName, array)
         serialize()
 
-        delete(name, stop, line)
+        delete(name, plate)
     }
 
     fun merge(names: ArrayList<String>) {
         if (names.size < 2)
             return
-        val newFavourite = Favourite(names[0], ArrayList())
+        val newFavourite = Favourite(names[0], HashSet())
         for (name in names) {
             newFavourite.timetables.addAll(favourites[name]!!.timetables)
             favourites.remove(name)

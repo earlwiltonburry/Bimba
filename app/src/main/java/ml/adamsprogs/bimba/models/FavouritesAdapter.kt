@@ -53,7 +53,7 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, p
             val favourite = favourites[position]
             val nextDeparture: Departure?
             try {
-                nextDeparture = favourite.nextDeparture
+                nextDeparture = favourite.nextDeparture()
             } catch (e: ConcurrentModificationException) {
                 return@thread
             }

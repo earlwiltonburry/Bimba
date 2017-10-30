@@ -19,7 +19,6 @@ import android.view.inputmethod.InputMethodManager
 import ml.adamsprogs.bimba.*
 import java.util.*
 import android.os.Bundle
-import android.util.Log
 import kotlinx.android.synthetic.main.activity_dash.*
 
 class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener,
@@ -74,7 +73,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         }
 
         val validity = timetable.getValidity()
-        drawerView.menu.findItem(R.id.drawer_validity).title = getString(R.string.valid_through, validity)
+        drawerView.menu.findItem(R.id.drawer_validity).title = getString(R.string.valid_since, validity)
 
         searchView = search_view
 
@@ -114,7 +113,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 intent.putExtra(StopActivity.SOURCE_TYPE, StopActivity.SOURCE_TYPE_STOP)
                 intent.putExtra(StopActivity.EXTRA_STOP_ID, searchSuggestion.id)
                 intent.putExtra(StopActivity.EXTRA_STOP_SYMBOL, searchSuggestion.symbol)
-                Log.i("Profiler", "Intent sent")
                 startActivity(intent)
             }
 
@@ -158,13 +156,13 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 for (fav in favourites) {
                     fav.registerOnVm(receiver)
                     for (t in fav.timetables) {
-                        val symbol = timetable.getStopSymbol(t[Favourite.TAG_STOP]!!)
-                        val line = timetable.getLineNumber(t[Favourite.TAG_LINE]!!)
+                        val symbol = timetable.getStopSymbol(t.stop)
+                        val line = timetable.getLineNumber(t.line)
                         val intent = Intent(context, VmClient::class.java)
                         intent.putExtra(VmClient.EXTRA_STOP_SYMBOL, symbol)
                         intent.putExtra(VmClient.EXTRA_LINE_NUMBER, line)
                         intent.putExtra(VmClient.EXTRA_REQUESTER,
-                                "${fav.name};${t[Favourite.TAG_STOP]}${t[Favourite.TAG_LINE]}")
+                                "${fav.name};${t.stop}${t.line}")
                         context.startService(intent)
                     }
                 }

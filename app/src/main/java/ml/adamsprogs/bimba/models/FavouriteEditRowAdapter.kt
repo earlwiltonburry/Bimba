@@ -17,18 +17,17 @@ class FavouriteEditRowAdapter(private var favourite: Favourite) :
     override fun onBindViewHolder(holder: ViewHolder?, position: Int) {
         val timetable = Timetable.getTimetable()
         val favourites = FavouriteStorage.getFavouriteStorage()
-        val favouriteElement = timetable.getFavouriteElement(favourite.timetables[position][Favourite.TAG_STOP]!!,
-                favourite.timetables[position][Favourite.TAG_LINE]!!)
+        val plate = Plate(favourite.timetables.sortedBy { "${it.line}${it.stop}" }[position].line,
+                favourite.timetables.sortedBy { "${it.line}${it.stop}" }[position].stop, null)
+        val favouriteElement = timetable.getFavouriteElement(plate)
         holder?.rowTextView?.text = favouriteElement
         holder?.splitButton?.setOnClickListener {
-            favourites.detach(favourite.name, favourite.timetables[position][Favourite.TAG_STOP]!!,
-                    favourite.timetables[position][Favourite.TAG_LINE]!!, favouriteElement)
+            favourites.detach(favourite.name, plate, favouriteElement)
             favourite = favourites.favourites[favourite.name]!!
             notifyDataSetChanged()
         }
         holder?.deleteButton?.setOnClickListener {
-            favourites.delete(favourite.name, favourite.timetables[position][Favourite.TAG_STOP]!!,
-                    favourite.timetables[position][Favourite.TAG_LINE]!!)
+            favourites.delete(favourite.name, plate)
             favourite = favourites.favourites[favourite.name]!!
             notifyDataSetChanged()
         }

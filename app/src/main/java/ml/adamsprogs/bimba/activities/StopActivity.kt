@@ -113,11 +113,9 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
 
         fab.setOnClickListener {
             if (!favourites.has(stopSymbol!!)) {
-                val items = ArrayList<HashMap<String, String>>()
+                val items = HashSet<Plate>()
                 timetable.getLines(stopId!!).forEach {
-                    val o = HashMap<String, String>()
-                    o[Favourite.TAG_STOP] = stopId!!
-                    o[Favourite.TAG_LINE] = it
+                    val o = Plate(it, stopId!!, null)
                     items.add(o)
                 }
                 favourites.add(stopSymbol as String, items)

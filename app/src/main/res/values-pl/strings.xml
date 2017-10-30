@@ -32,7 +32,7 @@
     <string name="departure_in__singular_genitive">Za %1$s minutę</string>
     <string name="departure_in__plural_genitive">Za %1$s minut</string>
     <string name="departure_in__plural_nominative">Za %1$s minuty</string>
-    <string name="home">Dom</string>
+    <string name="home">Strona główna</string>
     <string name="refresh">Odśwież</string>
     <string name="help">Pomoc</string>
     <string name="title_activity_help">Pomoc</string>
@@ -56,5 +56,5 @@
         "Pamiętaj, aby sprawdzić aktualności na\nhttps://www.ztm.poznan.pl.\n\n"
     </string>
     <string name="departure_row_getting_departures">Zbieranie odjazdów…</string>
-    <string name="valid_through">Ważny od %1$s</string>
+    <string name="valid_since">Ważny od %1$s</string>
 </resources>
