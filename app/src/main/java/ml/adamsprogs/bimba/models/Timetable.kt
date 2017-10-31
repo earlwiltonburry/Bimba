@@ -5,7 +5,6 @@ import android.database.CursorIndexOutOfBoundsException
 import android.database.sqlite.SQLiteCantOpenDatabaseException
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteDatabaseCorruptException
-import android.util.Log
 import ml.adamsprogs.bimba.CacheManager
 import java.io.File
 
@@ -61,7 +60,7 @@ class Timetable private constructor() {
         }
         this.db = db
 
-        //todo cacheManager.recreate()
+        cacheManager.recreate(getStopDeparturesByPlates(cacheManager.keys().toSet() as HashSet<Plate>)) //todo optimise
     }
 
     fun getStops(): ArrayList<StopSuggestion> {
@@ -108,28 +107,28 @@ class Timetable private constructor() {
 
     fun getStopDepartures(stopId: String, lineId: String? = null): HashMap<String, ArrayList<Departure>> {
         val plates = HashSet<Plate>()
+        val toGet = HashSet<Plate>()
 
         if (lineId == null) {
-            for (line in getLinesForStop(stopId)) {
-                val plate = Plate(line, stopId, null)
-                if (cacheManager.has(plate))
-                    plates.add(cacheManager.get(plate)!!)
-                else {
-                    val p = Plate(line, stopId, getStopDeparturesByLine(line, stopId)) //fixme to one query
-                    plates.add(p)
-                    cacheManager.push(p)
-                }
-            }
+            getLinesForStop(stopId)
+                    .map { Plate(it, stopId, null) }
+                    .forEach {
+                        if (cacheManager.has(it))
+                            plates.add(cacheManager.get(it)!!)
+                        else {
+                            toGet.add(it)
+                        }
+                    }
         } else {
             val plate = Plate(lineId, stopId, null)
             if (cacheManager.has(plate))
                 plates.add(cacheManager.get(plate)!!)
             else {
-                val p = Plate(lineId, stopId, getStopDeparturesByLine(lineId, stopId))
-                plates.add(p)
-                cacheManager.push(p)
+                toGet.add(plate)
             }
         }
+
+        getStopDeparturesByPlates(toGet).forEach {cacheManager.push(it); plates.add(it)}
 
         return Plate.join(plates)
     }
@@ -145,7 +144,7 @@ class Timetable private constructor() {
                 toGet.add(plate)
         }
 
-        result.addAll(getStopDeparturesByPlates(toGet))
+        getStopDeparturesByPlates(toGet).forEach {cacheManager.push(it); result.add(it)}
 
         return Plate.join(result)
     }
@@ -196,11 +195,6 @@ class Timetable private constructor() {
     }
 
     fun getFavouriteElement(plate: Plate): String {
-        val q = "select name || ' (' || stops.symbol || stops.number || '): \n' " +
-                "|| lines.number || ' → ' || headsign from timetables join stops on (stops.id = stop_id) " +
-                "join lines on(lines.id = line_id) join nodes on(nodes.symbol = stops.symbol) where " +
-                "stop_id = ${plate.stop} and line_id = ${plate.line}"
-
         val cursor = db.rawQuery("select name || ' (' || stops.symbol || stops.number || '): \n' " +
                 "|| lines.number || ' → ' || headsign from timetables join stops on (stops.id = stop_id) " +
                 "join lines on(lines.id = line_id) join nodes on(nodes.symbol = stops.symbol) where " +
