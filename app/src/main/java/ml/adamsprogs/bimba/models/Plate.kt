@@ -1,7 +1,5 @@
 package ml.adamsprogs.bimba.models
 
-import android.util.Log
-
 data class Plate(val line: String, val stop: String, val departures: HashMap<String, HashSet<Departure>>?) {
     override fun toString(): String {
         var result = "$line=$stop={"
@@ -19,14 +17,17 @@ data class Plate(val line: String, val stop: String, val departures: HashMap<Str
         fun fromString(string: String): Plate {
             val s = string.split("=")
             val departures = HashMap<String, HashSet<Departure>>()
-            for (d in s[2].replace("{", "").replace("}", "").split(";")) {
-                if (d == "")
-                    continue
-                val dep = Departure.fromString(d)
-                if (departures[dep.mode] == null)
-                    departures[dep.mode] = HashSet()
-                departures[dep.mode]!!.add(dep)
-            }
+            s[2].replace("{", "").replace("}", "").split(";")
+                    .filter { it != "" }
+                    .forEach {
+                        try {
+                            val dep = Departure.fromString(it)
+                            if (departures[dep.mode] == null)
+                                departures[dep.mode] = HashSet()
+                            departures[dep.mode]!!.add(dep)
+                        } catch (e: IllegalArgumentException) {
+                        }
+                    }
             return Plate(s[0], s[1], departures)
         }
 
@@ -36,8 +37,11 @@ data class Plate(val line: String, val stop: String, val departures: HashMap<Str
                 for ((mode, d) in plate.departures!!) {
                     if (departures[mode] == null)
                         departures[mode] = ArrayList()
-                    departures[mode]!!.addAll(d.sortedBy { it.time })
+                    departures[mode]!!.addAll(d)
                 }
+            }
+            for ((mode, _) in departures) {
+                departures[mode]?.sortBy { it.time }
             }
             return departures
         }

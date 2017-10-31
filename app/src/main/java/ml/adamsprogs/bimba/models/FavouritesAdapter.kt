@@ -2,6 +2,7 @@ package ml.adamsprogs.bimba.models
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.support.design.widget.AppBarLayout
 import android.support.v4.content.res.ResourcesCompat
@@ -16,6 +17,7 @@ import kotlin.concurrent.thread
 import android.util.TypedValue
 import com.arlib.floatingsearchview.FloatingSearchView
 import ml.adamsprogs.bimba.Declinator
+import ml.adamsprogs.bimba.activities.StopActivity
 import kotlin.collections.ArrayList
 
 //todo list to storage
@@ -74,6 +76,12 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, p
                 holder?.root?.setOnLongClickListener {
                     toggleSelected(it as CardView, position)
                     true
+                }
+                holder?.root?.setOnClickListener {
+                    val intent = Intent(context, StopActivity::class.java)
+                    intent.putExtra(StopActivity.SOURCE_TYPE, StopActivity.SOURCE_TYPE_FAV)
+                    intent.putExtra(StopActivity.EXTRA_FAVOURITE, favourite)
+                    context.startActivity(intent)
                 }
                 holder?.nameTextView?.text = favourite.name
                 holder?.timeTextView?.text = nextDepartureText

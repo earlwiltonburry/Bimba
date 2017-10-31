@@ -86,6 +86,17 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
             return vmDepartures.minBy { it.timeTill() }
         }
 
+        val twoDayDepartures = nowDepartures()
+
+        if (twoDayDepartures.isEmpty())
+            return null
+
+        return twoDayDepartures
+                .filter { it.timeTill() >= 0 }
+                .minBy { it.timeTill() }
+    }
+
+    private fun nowDepartures(): ArrayList<Departure> {
         val today = Calendar.getInstance().getMode()
         val tomorrowCal = Calendar.getInstance()
         tomorrowCal.add(Calendar.DAY_OF_MONTH, 1)
@@ -100,21 +111,15 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
 
         todayDepartures.forEach {twoDayDepartures.add(it)}
         tomorrowDepartures.forEach {twoDayDepartures.add(it)}
-
-        if (twoDayDepartures.isEmpty())
-            return null
-
         return twoDayDepartures
-                .filter { it.timeTill() >= 0 }
-                .minBy { it.timeTill() }
     }
 
-    fun allDepartures(): HashMap<String, ArrayList<Departure>>? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    fun allDepartures(): HashMap<String, ArrayList<Departure>> {
+        return Departure.createDepartures(timetable.getStopDepartures(timetables))
     }
 
     fun fullTimetable(): HashMap<String, ArrayList<Departure>>? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return timetable.getStopDepartures(timetables)
     }
 
     override fun onVm(vmDepartures: ArrayList<Departure>?, requester: String) {
