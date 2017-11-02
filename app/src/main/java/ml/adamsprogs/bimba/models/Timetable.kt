@@ -5,6 +5,7 @@ import android.database.CursorIndexOutOfBoundsException
 import android.database.sqlite.SQLiteCantOpenDatabaseException
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteDatabaseCorruptException
+import android.util.Log
 import ml.adamsprogs.bimba.CacheManager
 import java.io.File
 
@@ -60,10 +61,13 @@ class Timetable private constructor() {
         }
         this.db = db
 
-        cacheManager.recreate(getStopDeparturesByPlates(cacheManager.keys().toSet() as HashSet<Plate>)) //todo optimise
+        Log.i("SQL", "from refresh")
+        cacheManager.recreate(getStopDeparturesByPlates(cacheManager.keys().toSet()))
+
+        //todo recreate stops
     }
 
-    fun getStops(): ArrayList<StopSuggestion> {
+    fun getStops(): List<StopSuggestion> {
         if (_stops != null)
             return _stops!!
 
@@ -105,35 +109,43 @@ class Timetable private constructor() {
         return number
     }
 
-    fun getStopDepartures(stopId: String, lineId: String? = null): HashMap<String, ArrayList<Departure>> {
+    fun getStopDepartures(stopId: String): Map<String, List<Departure>> {
         val plates = HashSet<Plate>()
         val toGet = HashSet<Plate>()
 
-        if (lineId == null) {
-            getLinesForStop(stopId)
-                    .map { Plate(it, stopId, null) }
-                    .forEach {
-                        if (cacheManager.has(it))
-                            plates.add(cacheManager.get(it)!!)
-                        else {
-                            toGet.add(it)
-                        }
+        getLinesForStop(stopId)
+                .map { Plate(it, stopId, null) }
+                .forEach {
+                    if (cacheManager.has(it))
+                        plates.add(cacheManager.get(it)!!)
+                    else {
+                        toGet.add(it)
                     }
-        } else {
-            val plate = Plate(lineId, stopId, null)
-            if (cacheManager.has(plate))
-                plates.add(cacheManager.get(plate)!!)
-            else {
-                toGet.add(plate)
-            }
-        }
+                }
 
-        getStopDeparturesByPlates(toGet).forEach {cacheManager.push(it); plates.add(it)}
+        Log.i("SQL", "from (stop)")
+        getStopDeparturesByPlates(toGet).forEach { cacheManager.push(it); plates.add(it) }
 
         return Plate.join(plates)
     }
 
-    fun getStopDepartures(plates: HashSet<Plate>): HashMap<String, ArrayList<Departure>> {
+    fun getStopDepartures(stopId: String, lineId: String): Map<String, List<Departure>> {
+        val plates = HashSet<Plate>()
+        val toGet = HashSet<Plate>()
+
+        val plate = Plate(lineId, stopId, null)
+        if (cacheManager.has(plate))
+            plates.add(cacheManager.get(plate)!!)
+        else {
+            toGet.add(plate)
+        }
+
+        getStopDeparturesByPlates(toGet).forEach { cacheManager.push(it); plates.add(it) }
+
+        return Plate.join(plates)
+    }
+
+    fun getStopDepartures(plates: Set<Plate>): Map<String, ArrayList<Departure>> {
         val result = HashSet<Plate>()
         val toGet = HashSet<Plate>()
 
@@ -143,19 +155,55 @@ class Timetable private constructor() {
             else
                 toGet.add(plate)
         }
+        Log.i("SQL", "from (plates)")
 
-        getStopDeparturesByPlates(toGet).forEach {cacheManager.push(it); result.add(it)}
+        getStopDeparturesByPlates(toGet).forEach { cacheManager.push(it); result.add(it) }
 
         return Plate.join(result)
     }
 
-    private fun getStopDeparturesByPlates(plates: HashSet<Plate>): HashSet<Plate> {
-        val result = HashSet<Plate>()
-        plates.mapTo(result) { Plate(it.line, it.stop, getStopDeparturesByLine(it.line, it.stop)) }  //fixme to one query
-        return result
+    private fun getStopDeparturesByPlates(plates: Set<Plate>): Set<Plate> {
+        if (plates.isEmpty())
+            return emptySet()
+        val result = HashMap<String, Plate>()
+
+        val condition = plates.joinToString(" or ") { "(stop_id = '${it.stop}' and line_id = '${it.line}')" }
+
+        val sql = "select " +
+                "lines.number, mode, substr('0'||hour, -2) || ':' || " +
+                "substr('0'||minute, -2) as time, lowFloor, modification, headsign, stop_id, line_id " +
+                "from " +
+                "departures join timetables on(timetable_id = timetables.id) join lines on(line_id = lines.id) " +
+                "where " +
+                condition +
+                "order by " +
+                "mode, time;"
+        Log.i("SQL", sql)
+        val cursor = db.rawQuery(sql, null)
+
+
+
+        while (cursor.moveToNext()) {
+            val lineId = cursor.getString(7)
+            val stopId = cursor.getString(6)
+
+            if (!result.containsKey("$lineId@$stopId")) {
+                result["$lineId@$stopId"] = Plate(lineId, stopId, HashMap())
+                result["$lineId@$stopId"]?.departures?.put(MODE_WORKDAYS, HashSet())
+                result["$lineId@$stopId"]?.departures?.put(MODE_SATURDAYS, HashSet())
+                result["$lineId@$stopId"]?.departures?.put(MODE_SUNDAYS, HashSet())
+            }
+
+            result["$lineId@$stopId"]?.departures?.get(cursor.getString(1))?.add(
+                    Departure(cursor.getString(0), cursor.getString(1),
+                            cursor.getString(2), cursor.getInt(3) == 1,
+                            cursor.getString(4), cursor.getString(5)))
+        }
+        cursor.close()
+        return result.values.toSet()
     }
 
-    private fun getLinesForStop(stopId: String): HashSet<String> {
+    private fun getLinesForStop(stopId: String): Set<String> {
         val cursor = db.rawQuery("select line_id from timetables where stop_id=?;", listOf(stopId).toTypedArray())
         val lines = HashSet<String>()
         while (cursor.moveToNext())
@@ -164,25 +212,7 @@ class Timetable private constructor() {
         return lines
     }
 
-    private fun getStopDeparturesByLine(lineId: String, stopId: String): HashMap<String, HashSet<Departure>>? {
-        val cursor = db.rawQuery("select lines.number, mode, substr('0'||hour, -2) || ':' || " +
-                "substr('0'||minute, -2) as time, lowFloor, modification, headsign from departures join " +
-                "timetables on(timetable_id = timetables.id) join lines on(line_id = lines.id) where " +
-                "stop_id = ? and line_id = ? order by mode, time;", listOf(stopId, lineId).toTypedArray())
-        val departures = HashMap<String, HashSet<Departure>>()
-        departures.put(MODE_WORKDAYS, HashSet())
-        departures.put(MODE_SATURDAYS, HashSet())
-        departures.put(MODE_SUNDAYS, HashSet())
-        while (cursor.moveToNext()) { //fixme first moveToNext takes 2s, subsequent ones are instant
-            departures[cursor.getString(1)]?.add(Departure(cursor.getString(0),
-                    cursor.getString(1), cursor.getString(2), cursor.getInt(3) == 1,
-                    cursor.getString(4), cursor.getString(5)))
-        }
-        cursor.close()
-        return departures
-    }
-
-    fun getLines(stopId: String): ArrayList<String> {
+    fun getLines(stopId: String): List<String> {
         val cursor = db.rawQuery(" select distinct line_id from timetables join " +
                 "stops on(stop_id = stops.id) where stops.id = ?;",
                 listOf(stopId).toTypedArray())

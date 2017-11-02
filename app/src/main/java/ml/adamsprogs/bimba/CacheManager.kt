@@ -107,7 +107,7 @@ class CacheManager private constructor(context: Context) {
         return cache[key]
     }
 
-    fun recreate(stopDeparturesByPlates: HashSet<Plate>) {
+    fun recreate(stopDeparturesByPlates: Set<Plate>) {
         stopDeparturesByPlates.forEach { cache[key(it)] = it }
     }
 

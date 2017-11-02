@@ -176,7 +176,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     private fun getStops() {
         timetable = Timetable.getTimetable(this)
-        stops = timetable.getStops()
+        stops = timetable.getStops() as ArrayList<StopSuggestion>
     }
 
     private fun prepareOnDownloadListener() {
@@ -256,7 +256,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         }
         if (result == TimetableDownloader.RESULT_DOWNLOADED) {
             timetable.refresh(context)
-            stops = timetable.getStops()
+            stops = timetable.getStops() as ArrayList<StopSuggestion>
         }
         Snackbar.make(findViewById(R.id.drawer_layout), message, Snackbar.LENGTH_LONG).show()
     }

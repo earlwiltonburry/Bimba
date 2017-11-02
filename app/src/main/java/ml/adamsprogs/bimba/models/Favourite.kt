@@ -114,11 +114,11 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         return twoDayDepartures
     }
 
-    fun allDepartures(): HashMap<String, ArrayList<Departure>> {
+    fun allDepartures(): Map<String, List<Departure>> {
         return Departure.createDepartures(timetable.getStopDepartures(timetables))
     }
 
-    fun fullTimetable(): HashMap<String, ArrayList<Departure>>? {
+    fun fullTimetable(): Map<String, List<Departure>>? {
         return timetable.getStopDepartures(timetables)
     }
 

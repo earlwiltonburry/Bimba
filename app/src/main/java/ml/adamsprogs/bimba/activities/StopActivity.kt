@@ -12,6 +12,7 @@ import android.support.v7.widget.*
 import android.support.v4.app.*
 import android.support.v4.view.*
 import android.support.v4.content.res.ResourcesCompat
+import android.util.Log
 
 import ml.adamsprogs.bimba.models.*
 import ml.adamsprogs.bimba.*
@@ -82,9 +83,12 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, null)
         thread {
             if (sourceType == SOURCE_TYPE_STOP) {
-                sectionsPagerAdapter!!.departures = Departure.createDepartures(stopId!!)
+                Log.i("SQL", "from onCreate")
+                @Suppress("UNCHECKED_CAST")
+                sectionsPagerAdapter!!.departures = Departure.createDepartures(stopId!!) as HashMap<String, ArrayList<Departure>>
             } else {
-                sectionsPagerAdapter!!.departures = favourite!!.allDepartures()
+                @Suppress("UNCHECKED_CAST")
+                sectionsPagerAdapter!!.departures = favourite!!.allDepartures() as HashMap<String, ArrayList<Departure>>
             }
             runOnUiThread {
                 sectionsPagerAdapter?.notifyDataSetChanged()
@@ -151,7 +155,9 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
 
     override fun onVm(vmDepartures: ArrayList<Departure>?, requester: String) {
         if (timetableType == "departure" && requester == REQUESTER_ID && sourceType == SOURCE_TYPE_STOP) {
-            val fullDepartures = Departure.createDepartures(stopId!!)
+            Log.i("SQL", "from onVM")
+            @Suppress("UNCHECKED_CAST")
+            val fullDepartures = Departure.createDepartures(stopId!!) as HashMap<String, ArrayList<Departure>>
             if (vmDepartures != null) {
                 fullDepartures[today.getMode()] = vmDepartures
             }
@@ -172,7 +178,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         timer.cancel()
         timer = Timer()
         createTimerTask()
-        timer.scheduleAtFixedRate(timerTask, 0, 15000)
+        timer.scheduleAtFixedRate(timerTask, 15000, 15000)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -187,20 +193,22 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
             if (timetableType == "departure") {
                 timetableType = "full"
                 item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_timetable_departure, this.theme))
+                @Suppress("UNCHECKED_CAST")
                 if (sourceType == SOURCE_TYPE_STOP)
-                    sectionsPagerAdapter?.departures = timetable.getStopDepartures(stopId!!)
+                    sectionsPagerAdapter?.departures = timetable.getStopDepartures(stopId!!) as HashMap<String, ArrayList<Departure>>
                 else
-                    sectionsPagerAdapter?.departures = favourite!!.fullTimetable()
+                    sectionsPagerAdapter?.departures = favourite!!.fullTimetable() as HashMap<String, ArrayList<Departure>>
                 sectionsPagerAdapter?.relativeTime = false
                 sectionsPagerAdapter?.notifyDataSetChanged()
                 timer.cancel()
             } else {
                 timetableType = "departure"
                 item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_timetable_full, this.theme))
+                @Suppress("UNCHECKED_CAST")
                 if (sourceType == SOURCE_TYPE_STOP)
-                    sectionsPagerAdapter?.departures = Departure.createDepartures(stopId!!)
+                    sectionsPagerAdapter?.departures = Departure.createDepartures(stopId!!) as HashMap<String, ArrayList<Departure>>
                 else
-                    sectionsPagerAdapter?.departures = favourite!!.allDepartures()
+                    sectionsPagerAdapter?.departures = favourite!!.allDepartures() as HashMap<String, ArrayList<Departure>>
                 sectionsPagerAdapter?.relativeTime = true
                 sectionsPagerAdapter?.notifyDataSetChanged()
                 scheduleRefresh()

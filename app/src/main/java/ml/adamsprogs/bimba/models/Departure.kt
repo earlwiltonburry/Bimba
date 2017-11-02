@@ -1,8 +1,8 @@
 package ml.adamsprogs.bimba.models
 
-import android.util.Log
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 data class Departure(val line: String, val mode: String, val time: String, val lowFloor: Boolean,
                      val modification: String?, val direction: String, val vm: Boolean = false,
@@ -37,13 +37,13 @@ data class Departure(val line: String, val mode: String, val time: String, val l
             return filtered
         }
 
-        fun createDepartures(stopId: String): HashMap<String, ArrayList<Departure>> {
+        fun createDepartures(stopId: String): Map<String, List<Departure>> {
             val timetable = Timetable.getTimetable()
             val departures = timetable.getStopDepartures(stopId)
             return createDepartures(departures)
         }
 
-        fun createDepartures(departures: HashMap<String, ArrayList<Departure>>): HashMap<String, ArrayList<Departure>> {
+        fun createDepartures(departures: Map<String, List<Departure>>): Map<String, List<Departure>> {
             val moreDepartures = HashMap<String, ArrayList<Departure>>()
             for ((k, v) in departures) {
                 moreDepartures[k] = ArrayList()
