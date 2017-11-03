@@ -29,6 +29,10 @@ class VmClient : IntentService("VmClient") {
             }
 
             val stopSymbol = intent.getStringExtra(EXTRA_STOP_SYMBOL)
+            if (stopSymbol == null) {
+                sendNullResult(requester)
+                return
+            }
             val lineNumber = intent.getStringExtra(EXTRA_LINE_NUMBER)
 
             val client = OkHttpClient()
@@ -41,6 +45,7 @@ class VmClient : IntentService("VmClient") {
                     .url(url)
                     .post(formBody)
                     .build()
+
             val responseBody: String?
             try {
                 responseBody = client.newCall(request).execute().body()?.string()
@@ -64,7 +69,6 @@ class VmClient : IntentService("VmClient") {
                 val t = time as Map<*, *>
                 if (lineNumber == null || t["line"] == lineNumber) {
                     val departureDay = (t["departure"] as String).split("T")[0].split("-")[2]
-
                     val departureTimeRaw = (t["departure"] as String).split("T")[1].split(":")
                     val departureTime = "${departureTimeRaw[0]}:${departureTimeRaw[1]}"
                     val departure = Departure(t["line"] as String, todayMode, departureTime, false,
