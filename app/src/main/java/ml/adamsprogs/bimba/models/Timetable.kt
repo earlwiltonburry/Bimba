@@ -5,7 +5,6 @@ import android.database.CursorIndexOutOfBoundsException
 import android.database.sqlite.SQLiteCantOpenDatabaseException
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteDatabaseCorruptException
-import android.util.Log
 import ml.adamsprogs.bimba.CacheManager
 import java.io.File
 
@@ -61,14 +60,13 @@ class Timetable private constructor() {
         }
         this.db = db
 
-        Log.i("SQL", "from refresh")
         cacheManager.recreate(getStopDeparturesByPlates(cacheManager.keys().toSet()))
 
-        //todo recreate stops
+        getStops(true)
     }
 
-    fun getStops(): List<StopSuggestion> {
-        if (_stops != null)
+    fun getStops(force: Boolean = false): List<StopSuggestion> {
+        if (_stops != null && !force)
             return _stops!!
 
         val stops = ArrayList<StopSuggestion>()
@@ -123,7 +121,6 @@ class Timetable private constructor() {
                     }
                 }
 
-        Log.i("SQL", "from (stop)")
         getStopDeparturesByPlates(toGet).forEach { cacheManager.push(it); plates.add(it) }
 
         return Plate.join(plates)
@@ -155,7 +152,6 @@ class Timetable private constructor() {
             else
                 toGet.add(plate)
         }
-        Log.i("SQL", "from (plates)")
 
         getStopDeparturesByPlates(toGet).forEach { cacheManager.push(it); result.add(it) }
 
@@ -178,10 +174,7 @@ class Timetable private constructor() {
                 condition +
                 "order by " +
                 "mode, time;"
-        Log.i("SQL", sql)
         val cursor = db.rawQuery(sql, null)
-
-
 
         while (cursor.moveToNext()) {
             val lineId = cursor.getString(7)

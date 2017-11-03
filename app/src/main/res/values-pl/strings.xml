@@ -57,4 +57,5 @@
     </string>
     <string name="departure_row_getting_departures">Zbieranie odjazdów…</string>
     <string name="valid_since">Ważny od %1$s</string>
+    <string name="refreshing_cache">Odświeżanie pamięci podręcznej. Może chwilę potrwać…</string>
 </resources>

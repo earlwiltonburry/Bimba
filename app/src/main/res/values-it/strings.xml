@@ -55,4 +55,5 @@
         "(se è martedì, sarà nella scheda «giorni di lavoro»).\n"
         "Assicurati di consultare le notifiche su\nhttps://www.ztm.poznan.pl/en.\n\n"
     </string>
+    <string name="refreshing_cache">Cache sta essendo aggiornato. Può richiedere un certo tempo…</string>
 </resources>

@@ -12,14 +12,11 @@ import android.support.v7.widget.*
 import android.support.v4.app.*
 import android.support.v4.view.*
 import android.support.v4.content.res.ResourcesCompat
-import android.util.Log
 
 import ml.adamsprogs.bimba.models.*
 import ml.adamsprogs.bimba.*
 import kotlin.concurrent.thread
 import kotlinx.android.synthetic.main.activity_stop.*
-
-//check does favourites retain onVM after parcelation? Ie. does it refresh?
 
 class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
 
@@ -83,7 +80,6 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, null)
         thread {
             if (sourceType == SOURCE_TYPE_STOP) {
-                Log.i("SQL", "from onCreate")
                 @Suppress("UNCHECKED_CAST")
                 sectionsPagerAdapter!!.departures = Departure.createDepartures(stopId!!) as HashMap<String, ArrayList<Departure>>
             } else {
@@ -155,7 +151,6 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
 
     override fun onVm(vmDepartures: ArrayList<Departure>?, requester: String) {
         if (timetableType == "departure" && requester == REQUESTER_ID && sourceType == SOURCE_TYPE_STOP) {
-            Log.i("SQL", "from onVM")
             @Suppress("UNCHECKED_CAST")
             val fullDepartures = Departure.createDepartures(stopId!!) as HashMap<String, ArrayList<Departure>>
             if (vmDepartures != null) {

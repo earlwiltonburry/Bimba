@@ -69,4 +69,5 @@
     <string name="valid_since">Valid since %1$s</string>
     <string name="departure_floor" translatable="false">departure floor type (lowFloor)</string>
     <string name="departure_info" translatable="false">departure info icon</string>
+    <string name="refreshing_cache">Refreshing cache. May take some time…</string>
 </resources>

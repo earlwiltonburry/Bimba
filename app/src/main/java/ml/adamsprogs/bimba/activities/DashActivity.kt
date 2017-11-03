@@ -254,11 +254,12 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             TimetableDownloader.RESULT_VALIDITY_FAILED -> getString(R.string.validity_failed)
             else -> getString(R.string.error_try_later)
         }
+        Snackbar.make(findViewById(R.id.drawer_layout), message, Snackbar.LENGTH_LONG).show()
+        Snackbar.make(findViewById(R.id.drawer_layout), getString(R.string.refreshing_cache), Snackbar.LENGTH_LONG).show()
         if (result == TimetableDownloader.RESULT_DOWNLOADED) {
             timetable.refresh(context)
             stops = timetable.getStops() as ArrayList<StopSuggestion>
         }
-        Snackbar.make(findViewById(R.id.drawer_layout), message, Snackbar.LENGTH_LONG).show()
     }
 
     override fun edit(name: String): Boolean {

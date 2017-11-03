@@ -57,4 +57,5 @@
         "heute zeigen (wenn es Dienstag ist, es wird auf „Arbeitstage“ Karte sein).\n"
         "Sei sicher, die Nachrichten auf\nhttps://www.ztm.poznan.pl/en\nkonsultieren.\n\n"
     </string>
+    <string name="refreshing_cache">Cache wird aktualisiert. Es kann einige Zeit dauern…</string>
 </resources>
