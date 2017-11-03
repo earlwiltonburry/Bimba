@@ -1,6 +1,8 @@
 package ml.adamsprogs.bimba
 
+import android.annotation.TargetApi
 import android.app.IntentService
+import android.app.Notification
 import android.content.Context
 import android.content.Intent
 import android.support.v4.app.NotificationCompat
@@ -11,6 +13,7 @@ import java.io.*
 import java.security.MessageDigest
 import kotlin.experimental.and
 import android.app.NotificationManager
+import android.os.Build
 import ml.adamsprogs.bimba.models.Timetable
 
 
@@ -25,6 +28,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
         val RESULT_DOWNLOADED = "downloaded"
         val RESULT_VALIDITY_FAILED = "validity failed"
     }
+
     private lateinit var notificationManager: NotificationManager
     private var size: Int = 0
 
@@ -39,7 +43,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
             }
             val metadataUrl = URL("https://adamsprogs.ml/w/_media/programmes/bimba/timetable.db.meta")
             var httpCon = metadataUrl.openConnection() as HttpURLConnection
-            if (httpCon.responseCode != HttpURLConnection.HTTP_OK){
+            if (httpCon.responseCode != HttpURLConnection.HTTP_OK) {
                 sendResult(RESULT_NO_CONNECTIVITY)
                 return
             }
@@ -63,7 +67,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
 
             val xzDbUrl = URL("https://adamsprogs.ml/w/_media/programmes/bimba/$dbFilename")
             httpCon = xzDbUrl.openConnection() as HttpURLConnection
-            if (httpCon.responseCode != HttpURLConnection.HTTP_OK){
+            if (httpCon.responseCode != HttpURLConnection.HTTP_OK) {
                 sendResult(RESULT_NO_CONNECTIVITY)
                 return
             }
@@ -94,7 +98,14 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
     }
 
     private fun notify(progress: Int) {
-        //todo create channel
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+            notifyCompat(progress)
+        else
+            notifyStandard(progress)
+    }
+
+    @Suppress("DEPRECATION")
+    private fun notifyCompat(progress: Int) {
         val builder = NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.ic_download)
                 .setContentTitle(getString(R.string.timetable_downloading))
@@ -102,7 +113,19 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 .setCategory(NotificationCompat.CATEGORY_PROGRESS)
                 .setOngoing(true)
                 .setProgress(size, progress, false)
+        notificationManager.notify(42, builder.build())
+    }
 
+    @TargetApi(Build.VERSION_CODES.O)
+    private fun notifyStandard(progress: Int) {
+        NotificationChannels.makeChannel(NotificationChannels.CHANNEL_UPDATES, "Updates", notificationManager)
+        val builder = Notification.Builder(this, NotificationChannels.CHANNEL_UPDATES)
+                .setSmallIcon(R.drawable.ic_download)
+                .setContentTitle(getString(R.string.timetable_downloading))
+                .setContentText("$progress KiB/$size KiB")
+                .setCategory(Notification.CATEGORY_PROGRESS)
+                .setOngoing(true)
+                .setProgress(size, progress, false)
         notificationManager.notify(42, builder.build())
     }
 
