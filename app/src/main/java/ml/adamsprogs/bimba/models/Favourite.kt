@@ -132,7 +132,8 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         if (vmDepartures != null && requesterName == name) {
             vmDeparturesMap[requesterTimetable] = vmDepartures
             this.vmDepartures = vmDeparturesMap.flatMap { it.value } as ArrayList<Departure>
-        }
+        } else
+            this.vmDepartures = ArrayList()
         filterVmDepartures()
     }
 }

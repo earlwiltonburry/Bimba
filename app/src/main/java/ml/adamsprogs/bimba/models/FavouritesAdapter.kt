@@ -20,7 +20,6 @@ import ml.adamsprogs.bimba.Declinator
 import ml.adamsprogs.bimba.activities.StopActivity
 import kotlin.collections.ArrayList
 
-//todo list to storage
 class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, private val onMenuItemClickListener: FavouritesAdapter.OnMenuItemClickListener) :
         RecyclerView.Adapter<FavouritesAdapter.ViewHolder>() {
 
@@ -68,7 +67,6 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, p
                 nextDepartureText = context.getString(Declinator.decline(interval), interval.toString())
                 nextDepartureLineText = context.getString(R.string.departure_to_line, nextDeparture.line, nextDeparture.direction)
             } else {
-                //fixme too early ?
                 nextDepartureText = context.getString(R.string.no_next_departure)
                 nextDepartureLineText = ""
             }
