@@ -1,0 +1,7 @@
+- dachshund icon by a departure when the vehicle is low-floor,
+- (i) icon by a departure when it’s non-standard — click reveals content,
+- favourites can be clicked and show more than just next departure
+- optimisation: better caching and faster stops retrieval,
+- optimisation: quicker VM retrieval,
+- translations: German and Italian (that makes 4 languages along with English and Polish),
+- bug fix: VM now switches to timetable after connectivity lost on main screen in favourites.

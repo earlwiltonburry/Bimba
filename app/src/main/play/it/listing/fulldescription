@@ -1,0 +1,6 @@
+Con questa applicazione puoi guardare l'orario dei trasporti pubblici in agglomerato di Poznań (gestito da ZTM Poznań) e grazie al Monitor Virtuale è possibile vedere quando esattamente arriverà un autobus o un tram.
+
+Caratteristiche attuali:
+* guardare delle partenze alla fermata (in base all’orario e Monitor Virtuale)
+* la creazione di favoriti con la partenza successiva visibile sullo schermo principale,
+* guardare dalla favorita

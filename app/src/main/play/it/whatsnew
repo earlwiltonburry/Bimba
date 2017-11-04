@@ -1,0 +1,7 @@
+- icona del bassotto accanto ad una partenza quando il veicolo è a basso piano,
+- (i) icona accanto a una partenza quando non è standard - fa clic su rivela il contenuto,
+- i favoriti possono essere cliccati e mostrano più di una partenza succesiva,
+- ottimizzazione: migliore cache e più rapido recupero delle fermate
+- ottimizzazione: recupero VM più rapido,
+- traduzioni: tedesco e italiano (che fa 4 lingue insieme a inglese e polacco),
+- bug fix: VM ora si passa all’orario dopo la connettività persa sul schermo principale nei favoriti.
