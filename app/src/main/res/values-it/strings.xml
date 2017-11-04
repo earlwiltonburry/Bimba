@@ -5,7 +5,7 @@
     <string name="departure_in__singular_genitive">Tra %1$s minuto</string>
     <string name="departure_in__plural_genitive">Tra %1$s minuti</string>
     <string name="departure_in__plural_nominative">Tra %1$s minuti</string>
-    <string name="home">Homepage</string>
+    <string name="home">Schermo principale</string>
     <string name="help">Aiuto</string>
     <string name="title_activity_help">Aiuto</string>
     <string name="valid_since">Valido da %1$s</string>
