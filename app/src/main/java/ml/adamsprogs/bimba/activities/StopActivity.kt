@@ -42,7 +42,8 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
     private var timer = Timer()
     private lateinit var timerTask: TimerTask
     private val context = this
-    private val receiver = MessageReceiver()
+    private val receiver = MessageReceiver.getMessageReceiver()
+    private var vmRequestId = 0
 
     private lateinit var sourceType: String
 
@@ -76,8 +77,13 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
 
         viewPager = container
         tabLayout = tabs
-
         sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, null)
+
+
+        if (sourceType == SOURCE_TYPE_FAV) {
+            favourite!!.registerOnVm(receiver)
+        }
+
         thread {
             if (sourceType == SOURCE_TYPE_STOP) {
                 @Suppress("UNCHECKED_CAST")
@@ -100,6 +106,16 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         scheduleRefresh()
 
         showFab()
+    }
+
+    private fun getFavouriteDepartures() {
+        thread {
+            @Suppress("UNCHECKED_CAST")
+            sectionsPagerAdapter!!.departures = favourite!!.allDepartures() as HashMap<String, ArrayList<Departure>>
+        }
+        runOnUiThread {
+            sectionsPagerAdapter?.notifyDataSetChanged()
+        }
     }
 
     private fun showFab() {
@@ -133,6 +149,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
                 val vmIntent = Intent(context, VmClient::class.java)
                 vmIntent.putExtra(VmClient.EXTRA_STOP_SYMBOL, stopSymbol)
                 vmIntent.putExtra(VmClient.EXTRA_REQUESTER, REQUESTER_ID)
+                vmIntent.putExtra(VmClient.EXTRA_ID, "stop-${vmRequestId++}")
                 startService(vmIntent)
                 runOnUiThread {
                     sectionsPagerAdapter?.notifyDataSetChanged()
@@ -149,7 +166,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         receiver.addOnVmListener(context as MessageReceiver.OnVmListener)
     }
 
-    override fun onVm(vmDepartures: ArrayList<Departure>?, requester: String) {
+    override fun onVm(vmDepartures: ArrayList<Departure>?, requester: String, id: String, size: Int) {
         if (timetableType == "departure" && requester == REQUESTER_ID && sourceType == SOURCE_TYPE_STOP) {
             @Suppress("UNCHECKED_CAST")
             val fullDepartures = Departure.createDepartures(stopId!!) as HashMap<String, ArrayList<Departure>>
@@ -158,6 +175,9 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
             }
             sectionsPagerAdapter?.departures = fullDepartures
             sectionsPagerAdapter?.notifyDataSetChanged()
+        }
+        if (timetableType == "departure" && requester == REQUESTER_ID && sourceType == SOURCE_TYPE_FAV) {
+            getFavouriteDepartures()
         }
     }
 

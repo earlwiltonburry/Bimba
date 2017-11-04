@@ -9,7 +9,7 @@ import kotlinx.android.synthetic.main.activity_nodb.*
 
 class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityChangeListener, MessageReceiver.OnTimetableDownloadListener {
     private val networkStateReceiver = NetworkStateReceiver()
-    private val timetableDownloadReceiver = MessageReceiver()
+    private val timetableDownloadReceiver = MessageReceiver.getMessageReceiver()
     private var serviceRunning = false
     private var askedForNetwork = false
 

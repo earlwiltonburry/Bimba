@@ -2,6 +2,7 @@ package ml.adamsprogs.bimba.models
 
 import android.os.Parcel
 import android.os.Parcelable
+import android.util.Log
 import ml.adamsprogs.bimba.MessageReceiver
 import ml.adamsprogs.bimba.getMode
 import java.util.*
@@ -20,6 +21,9 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
     val timetable = Timetable.getTimetable()
     val size: Int
         get() = timetables.size
+
+    private val requestValidityNumber = HashMap<String, Int>()
+    private val requestValidity = HashMap<String, Boolean>()
 
     constructor(parcel: Parcel) {
         val array = ArrayList<String>()
@@ -106,34 +110,57 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         val todayDepartures = departures[today]!!
         val tomorrowDepartures = ArrayList<Departure>()
         val twoDayDepartures = ArrayList<Departure>()
-        departures[tomorrow]!!.mapTo(tomorrowDepartures) {it.copy()}
-        tomorrowDepartures.forEach {it.tomorrow = true}
+        departures[tomorrow]!!.mapTo(tomorrowDepartures) { it.copy() }
+        tomorrowDepartures.forEach { it.tomorrow = true }
 
-        todayDepartures.forEach {twoDayDepartures.add(it)}
-        tomorrowDepartures.forEach {twoDayDepartures.add(it)}
+        todayDepartures.forEach { twoDayDepartures.add(it) }
+        tomorrowDepartures.forEach { twoDayDepartures.add(it) }
         return twoDayDepartures
     }
 
     fun allDepartures(): Map<String, List<Departure>> {
-        return Departure.createDepartures(timetable.getStopDepartures(timetables))
+        val departures = timetable.getStopDepartures(timetables) as HashMap<String, ArrayList<Departure>>
+
+        Log.i("Fav", "$vmDepartures")
+        if (vmDepartures.isNotEmpty()) {
+            val today = Calendar.getInstance().getMode()
+            departures[today] = vmDepartures
+        }
+
+        return Departure.createDepartures(departures)
     }
 
     fun fullTimetable(): Map<String, List<Departure>>? {
         return timetable.getStopDepartures(timetables)
     }
 
-    override fun onVm(vmDepartures: ArrayList<Departure>?, requester: String) {
+    override fun onVm(vmDepartures: ArrayList<Departure>?, requester: String, id: String, size: Int) {
         val requesterName = requester.split(";")[0]
         val requesterTimetable: String = try {
             requester.split(";")[1]
         } catch (e: IndexOutOfBoundsException) {
             ""
         }
+
+        if (!requestValidity.containsKey(id)) {
+            requestValidity[id] = false
+            requestValidityNumber[id] = 0
+        }
         if (vmDepartures != null && requesterName == name) {
             vmDeparturesMap[requesterTimetable] = vmDepartures
             this.vmDepartures = vmDeparturesMap.flatMap { it.value } as ArrayList<Departure>
-        } else
-            this.vmDepartures = ArrayList()
+            requestValidity[id] = true
+            requestValidityNumber[id] = requestValidityNumber[id]!! + 1
+        } else if (requesterName == name) {
+            requestValidityNumber[id] = requestValidityNumber[id]!! + 1
+        }
+        if (requestValidityNumber[id] == size) {
+            if (!requestValidity[id]!!) {
+                this.vmDepartures = ArrayList()
+            }
+            requestValidity.remove(id)
+            requestValidityNumber.remove(id)
+        }
         filterVmDepartures()
     }
 }

@@ -43,7 +43,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
             }
             val metadataUrl = URL("https://adamsprogs.ml/w/_media/programmes/bimba/timetable.db.meta")
             var httpCon = metadataUrl.openConnection() as HttpURLConnection
-            if (httpCon.responseCode != HttpURLConnection.HTTP_OK) {
+            if (httpCon.responseCode != HttpURLConnection.HTTP_OK) { //IOEXCEPTION or EOFEXCEPTION or ConnectException
                 sendResult(RESULT_NO_CONNECTIVITY)
                 return
             }

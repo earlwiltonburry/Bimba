@@ -17,20 +17,24 @@ class VmClient : IntentService("VmClient") {
         val EXTRA_LINE_NUMBER = "lineNumber"
         val EXTRA_REQUESTER = "requester"
         val EXTRA_DEPARTURES = "departures"
+        val EXTRA_SIZE = "size"
+        val EXTRA_ID = "id"
     }
 
     override fun onHandleIntent(intent: Intent?) {
         if (intent != null) {
             val requester = intent.getStringExtra(EXTRA_REQUESTER)
+            val id = intent.getStringExtra(EXTRA_ID)
+            val size = intent.getIntExtra(EXTRA_SIZE, -1)
 
             if (!NetworkStateReceiver.isNetworkAvailable(this)) {
-                sendNullResult(requester)
+                sendNullResult(requester, id, size)
                 return
             }
 
             val stopSymbol = intent.getStringExtra(EXTRA_STOP_SYMBOL)
             if (stopSymbol == null) {
-                sendNullResult(requester)
+                sendNullResult(requester, id, size)
                 return
             }
             val lineNumber = intent.getStringExtra(EXTRA_LINE_NUMBER)
@@ -49,20 +53,20 @@ class VmClient : IntentService("VmClient") {
             val responseBody: String?
             try {
                 responseBody = client.newCall(request).execute().body()?.string()
-            } catch(e: IOException) {
-                sendNullResult(requester)
+            } catch (e: IOException) {
+                sendNullResult(requester, id, size)
                 return
             }
 
             if (responseBody?.get(0) == '<') {
-                sendNullResult(requester)
+                sendNullResult(requester, id, size)
                 return
             }
 
             val javaRootMapObject = Gson().fromJson(responseBody, HashMap::class.java)
             val times = (javaRootMapObject["success"] as Map<*, *>)["times"] as List<*>
             val date = Calendar.getInstance()
-            val todayDay = "${date.get(Calendar.DATE)}"
+            val todayDay = "${date.get(Calendar.DATE)}".padStart(2, '0')
             val todayMode = date.getMode()
             val departuresToday = ArrayList<Departure>()
             for (time in times) {
@@ -78,26 +82,30 @@ class VmClient : IntentService("VmClient") {
                 }
             }
             if (departuresToday.isEmpty())
-                sendNullResult(requester)
+                sendNullResult(requester, id, size)
             else
-                sendResult(departuresToday, requester)
+                sendResult(departuresToday, requester, id, size)
         }
     }
 
-    private fun sendNullResult(requester: String) {
+    private fun sendNullResult(requester: String, id: String, size: Int) {
         val broadcastIntent = Intent()
         broadcastIntent.action = ACTION_NO_DEPARTURES
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT)
         broadcastIntent.putExtra(EXTRA_REQUESTER, requester)
+        broadcastIntent.putExtra(EXTRA_ID, id)
+        broadcastIntent.putExtra(EXTRA_SIZE, size)
         sendBroadcast(broadcastIntent)
     }
 
-    private fun sendResult(departures: ArrayList<Departure>, requester: String) {
+    private fun sendResult(departures: ArrayList<Departure>, requester: String, id: String, size: Int) {
         val broadcastIntent = Intent()
         broadcastIntent.action = ACTION_DEPARTURES_CREATED
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT)
         broadcastIntent.putStringArrayListExtra(EXTRA_DEPARTURES, departures.map { it.toString() } as java.util.ArrayList<String>)
         broadcastIntent.putExtra(EXTRA_REQUESTER, requester)
+        broadcastIntent.putExtra(EXTRA_ID, id)
+        broadcastIntent.putExtra(EXTRA_SIZE, size)
         sendBroadcast(broadcastIntent)
     }
 }

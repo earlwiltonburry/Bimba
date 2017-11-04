@@ -5,7 +5,16 @@ import android.content.Context
 import android.content.Intent
 import ml.adamsprogs.bimba.models.Departure
 
-class MessageReceiver : BroadcastReceiver() {
+class MessageReceiver private constructor() : BroadcastReceiver() {
+    companion object {
+        private var receiver:MessageReceiver? = null
+        fun getMessageReceiver(): MessageReceiver {
+            if (receiver == null)
+                receiver = MessageReceiver()
+            return receiver as MessageReceiver
+        }
+    }
+
     private val onTimetableDownloadListeners: HashSet<OnTimetableDownloadListener> = HashSet()
     private val onVmListeners: HashSet<OnVmListener> = HashSet()
 
@@ -19,14 +28,18 @@ class MessageReceiver : BroadcastReceiver() {
         if (intent?.action == VmClient.ACTION_DEPARTURES_CREATED) {
             val departures = intent.getStringArrayListExtra(VmClient.EXTRA_DEPARTURES).map { Departure.fromString(it) } as ArrayList<Departure>
             val requester = intent.getStringExtra(VmClient.EXTRA_REQUESTER)
+            val id = intent.getStringExtra(VmClient.EXTRA_ID)
+            val size = intent.getIntExtra(VmClient.EXTRA_SIZE, -1)
             for (listener in onVmListeners) {
-                listener.onVm(departures, requester)
+                listener.onVm(departures, requester, id, size)
             }
         }
         if (intent?.action == VmClient.ACTION_NO_DEPARTURES) {
             val requester = intent.getStringExtra(VmClient.EXTRA_REQUESTER)
+            val id = intent.getStringExtra(VmClient.EXTRA_ID)
+            val size = intent.getIntExtra(VmClient.EXTRA_SIZE, -1)
             for (listener in onVmListeners) {
-                listener.onVm(null, requester)
+                listener.onVm(null, requester, id, size)
             }
         }
     }
@@ -52,6 +65,6 @@ class MessageReceiver : BroadcastReceiver() {
     }
 
     interface OnVmListener {
-        fun onVm(vmDepartures: ArrayList<Departure>?, requester: String)
+        fun onVm(vmDepartures: ArrayList<Departure>?, requester: String, id: String, size: Int)
     }
 }

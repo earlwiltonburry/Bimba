@@ -25,7 +25,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         FavouritesAdapter.OnMenuItemClickListener {
 
     val context: Context = this
-    val receiver = MessageReceiver()
+    val receiver = MessageReceiver.getMessageReceiver()
     lateinit var timetable: Timetable
     var stops: ArrayList<StopSuggestion>? = null
     private lateinit var drawerLayout: DrawerLayout
@@ -35,6 +35,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     lateinit var favourites: FavouriteStorage
     private var timer = Timer()
     private lateinit var timerTask: TimerTask
+    private var vmRequestId = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -161,10 +162,13 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                         val intent = Intent(context, VmClient::class.java)
                         intent.putExtra(VmClient.EXTRA_STOP_SYMBOL, symbol)
                         intent.putExtra(VmClient.EXTRA_LINE_NUMBER, line)
+                        intent.putExtra(VmClient.EXTRA_ID, "fav-$vmRequestId")
+                        intent.putExtra(VmClient.EXTRA_SIZE, fav.timetables.size)
                         intent.putExtra(VmClient.EXTRA_REQUESTER,
                                 "${fav.name};${t.stop}${t.line}")
                         context.startService(intent)
                     }
+                    vmRequestId++
                 }
 
                 runOnUiThread {
