@@ -3,6 +3,7 @@ package ml.adamsprogs.bimba
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import ml.adamsprogs.bimba.models.Departure
 
 class MessageReceiver private constructor() : BroadcastReceiver() {
@@ -35,6 +36,7 @@ class MessageReceiver private constructor() : BroadcastReceiver() {
             }
         }
         if (intent?.action == VmClient.ACTION_NO_DEPARTURES) {
+            Log.i("VM", "Response received")
             val requester = intent.getStringExtra(VmClient.EXTRA_REQUESTER)
             val id = intent.getStringExtra(VmClient.EXTRA_ID)
             val size = intent.getIntExtra(VmClient.EXTRA_SIZE, -1)

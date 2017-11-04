@@ -2,6 +2,7 @@ package ml.adamsprogs.bimba
 
 import android.app.IntentService
 import android.content.Intent
+import android.util.Log
 import ml.adamsprogs.bimba.models.*
 import okhttp3.*
 import com.google.gson.Gson
@@ -24,6 +25,7 @@ class VmClient : IntentService("VmClient") {
     override fun onHandleIntent(intent: Intent?) {
         if (intent != null) {
             val requester = intent.getStringExtra(EXTRA_REQUESTER)
+            Log.i("VM", "Request for $requester received")
             val id = intent.getStringExtra(EXTRA_ID)
             val size = intent.getIntExtra(EXTRA_SIZE, -1)
 
@@ -50,6 +52,8 @@ class VmClient : IntentService("VmClient") {
                     .post(formBody)
                     .build()
 
+            Log.i("VM", "created http request")
+
             val responseBody: String?
             try {
                 responseBody = client.newCall(request).execute().body()?.string()
@@ -57,6 +61,8 @@ class VmClient : IntentService("VmClient") {
                 sendNullResult(requester, id, size)
                 return
             }
+
+            Log.i("VM", "received http response")
 
             if (responseBody?.get(0) == '<') {
                 sendNullResult(requester, id, size)
@@ -81,6 +87,8 @@ class VmClient : IntentService("VmClient") {
                     departuresToday.add(departure)
                 }
             }
+
+            Log.i("VM", "parsed http response")
             if (departuresToday.isEmpty())
                 sendNullResult(requester, id, size)
             else
@@ -107,5 +115,6 @@ class VmClient : IntentService("VmClient") {
         broadcastIntent.putExtra(EXTRA_ID, id)
         broadcastIntent.putExtra(EXTRA_SIZE, size)
         sendBroadcast(broadcastIntent)
+        Log.i("VM", "sent response")
     }
 }

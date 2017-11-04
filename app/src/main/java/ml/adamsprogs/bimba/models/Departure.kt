@@ -1,6 +1,5 @@
 package ml.adamsprogs.bimba.models
 
-import android.util.Log
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap

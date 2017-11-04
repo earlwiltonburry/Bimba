@@ -25,6 +25,16 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
     private val requestValidityNumber = HashMap<String, Int>()
     private val requestValidity = HashMap<String, Boolean>()
 
+    private val onVmPreparedListeners = HashSet<OnVmPreparedListener>()
+
+    fun addOnVmPreparedListener(listener: OnVmPreparedListener) {
+        onVmPreparedListeners.add(listener)
+    }
+
+    fun removeOnVmPreparedListener(listener: OnVmPreparedListener) {
+        onVmPreparedListeners.remove(listener)
+    }
+
     constructor(parcel: Parcel) {
         val array = ArrayList<String>()
         parcel.readStringList(array)
@@ -121,7 +131,6 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
     fun allDepartures(): Map<String, List<Departure>> {
         val departures = timetable.getStopDepartures(timetables) as HashMap<String, ArrayList<Departure>>
 
-        Log.i("Fav", "$vmDepartures")
         if (vmDepartures.isNotEmpty()) {
             val today = Calendar.getInstance().getMode()
             departures[today] = vmDepartures
@@ -135,6 +144,7 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
     }
 
     override fun onVm(vmDepartures: ArrayList<Departure>?, requester: String, id: String, size: Int) {
+        Log.i("VM", "onVM fired")
         val requesterName = requester.split(";")[0]
         val requesterTimetable: String = try {
             requester.split(";")[1]
@@ -155,6 +165,10 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
             requestValidityNumber[id] = requestValidityNumber[id]!! + 1
         }
         if (requestValidityNumber[id] == size) {
+            Log.i("VM", "All onVm’s collected")
+            for (listener in onVmPreparedListeners) {
+                listener.onVmPrepared()
+            }
             if (!requestValidity[id]!!) {
                 this.vmDepartures = ArrayList()
             }
@@ -162,5 +176,9 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
             requestValidityNumber.remove(id)
         }
         filterVmDepartures()
+    }
+
+    interface OnVmPreparedListener {
+        fun onVmPrepared()
     }
 }

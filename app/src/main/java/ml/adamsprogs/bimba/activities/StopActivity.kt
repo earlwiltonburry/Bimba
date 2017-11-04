@@ -18,8 +18,7 @@ import ml.adamsprogs.bimba.*
 import kotlin.concurrent.thread
 import kotlinx.android.synthetic.main.activity_stop.*
 
-class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
-
+class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener, Favourite.OnVmPreparedListener {
     companion object {
         val EXTRA_STOP_ID = "stopId"
         val EXTRA_STOP_SYMBOL = "stopSymbol"
@@ -67,7 +66,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
             SOURCE_TYPE_FAV -> {
                 favourite = intent.getParcelableExtra(EXTRA_FAVOURITE)
                 supportActionBar?.title = favourite!!.name
-
+                favourite!!.addOnVmPreparedListener(this)
             }
         }
 
@@ -116,6 +115,10 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         runOnUiThread {
             sectionsPagerAdapter?.notifyDataSetChanged()
         }
+    }
+
+    override fun onVmPrepared() {
+        getFavouriteDepartures()
     }
 
     private fun showFab() {
@@ -193,7 +196,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener {
         timer.cancel()
         timer = Timer()
         createTimerTask()
-        timer.scheduleAtFixedRate(timerTask, 15000, 15000)
+        timer.scheduleAtFixedRate(timerTask, 0, 15000)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

@@ -19,11 +19,11 @@ import android.view.inputmethod.InputMethodManager
 import ml.adamsprogs.bimba.*
 import java.util.*
 import android.os.Bundle
+import android.util.Log
 import kotlinx.android.synthetic.main.activity_dash.*
 
 class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener,
-        FavouritesAdapter.OnMenuItemClickListener {
-
+        FavouritesAdapter.OnMenuItemClickListener, Favourite.OnVmPreparedListener {
     val context: Context = this
     val receiver = MessageReceiver.getMessageReceiver()
     lateinit var timetable: Timetable
@@ -156,6 +156,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             override fun run() {
                 for (fav in favourites) {
                     fav.registerOnVm(receiver)
+                    fav.addOnVmPreparedListener(this@DashActivity)
                     for (t in fav.timetables) {
                         val symbol = timetable.getStopSymbol(t.stop)
                         val line = timetable.getLineNumber(t.line)
@@ -169,13 +170,15 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                         context.startService(intent)
                     }
                     vmRequestId++
-                }
-
-                runOnUiThread {
-                    favouritesList.adapter.notifyDataSetChanged()
+                    Log.i("VM", "Sent request for ${fav.name}")
                 }
             }
         }
+    }
+
+    override fun onVmPrepared() {
+        Log.i("VM", "DataSetChange")
+        favouritesList.adapter.notifyDataSetChanged()
     }
 
     private fun getStops() {
@@ -259,8 +262,8 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             else -> getString(R.string.error_try_later)
         }
         Snackbar.make(findViewById(R.id.drawer_layout), message, Snackbar.LENGTH_LONG).show()
-        Snackbar.make(findViewById(R.id.drawer_layout), getString(R.string.refreshing_cache), Snackbar.LENGTH_LONG).show()
         if (result == TimetableDownloader.RESULT_DOWNLOADED) {
+            Snackbar.make(findViewById(R.id.drawer_layout), getString(R.string.refreshing_cache), Snackbar.LENGTH_LONG).show()
             timetable.refresh(context)
             stops = timetable.getStops() as ArrayList<StopSuggestion>
         }
