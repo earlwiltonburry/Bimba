@@ -37,9 +37,7 @@ Also
 
 ### Timetable
 
-* [ ] Line roads
-* [ ] Modification translation
-* [ ] Time between stops
+* [ ] use official GTFS timetable (#3)
 
 ---
 
