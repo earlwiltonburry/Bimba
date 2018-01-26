@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#4caf50</color>
-    <color name="colorPrimaryDark">#087f23</color>
-    <color name="colorAccent">#40c4ff</color>
-    <color name="colorAccentDark">#0094cc</color>
+    <color name="colorPrimary">#3a3a3b</color>
+    <color name="colorPrimaryDark">#141415</color>
+    <color name="colorAccent">#54af39</color>
+    <color name="colorAccentDark">#197f00</color>
+    <color name="colorAccent2">#be7e3e</color>
+
+    <color name="zoneA">#00a650</color>
+    <color name="zoneB">#ed1c24</color>
+    <color name="zoneC">#fff200</color>
+
+    <color name="tram">#00adef</color>
+    <color name="bus">#c4212a</color>
 </resources>
