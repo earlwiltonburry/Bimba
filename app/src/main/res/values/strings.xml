@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">Bimba</string>
+    <string name="app_name" translatable="false">Bimba-dev</string>
     <string name="no_timetable">No timetable found. Connect to the Internet and wait for a timetable to be downloaded</string>
     <string name="timetable_downloaded">New timetable downloaded</string>
     <string name="title_activity_stop" translatable="false">StopActivity</string>
@@ -67,7 +67,18 @@
     </string>
     <string name="departure_row_getting_departures">Getting departures…</string>
     <string name="valid_since">Valid since %1$s</string>
+    <string name="valid_till">Valid till %1$s</string>
     <string name="departure_floor" translatable="false">departure floor type (lowFloor)</string>
     <string name="departure_info" translatable="false">departure info icon</string>
     <string name="refreshing_cache">Refreshing cache. May take some time…</string>
+
+    <string-array name="daysOfWeek">
+        <item>Monday</item>
+        <item>Tuesday</item>
+        <item>Wednesday</item>
+        <item>Thursday</item>
+        <item>Friday</item>
+        <item>Saturday</item>
+        <item>Sunday</item>
+    </string-array>
 </resources>

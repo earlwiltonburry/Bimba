@@ -20,7 +20,10 @@
         android:id="@+id/drawer_group_validity"
         android:enabled="false">
         <item
-            android:id="@+id/drawer_validity"
+            android:id="@+id/drawer_validity_since"
+            android:title="" />
+        <item
+            android:id="@+id/drawer_validity_till"
             android:title="" />
     </group>
 </menu>

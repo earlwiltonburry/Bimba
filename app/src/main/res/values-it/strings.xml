@@ -9,6 +9,7 @@
     <string name="help">Aiuto</string>
     <string name="title_activity_help">Aiuto</string>
     <string name="valid_since">Valido da %1$s</string>
+    <string name="valid_till">Valido a %1$s</string>
     <string name="no_timetable">Nessun orario è stato trovato. Connettiti a Internet e aspetta che un orario venga scaricato</string>
     <string name="timetable_downloaded">Nuovo orario è stato scaricato</string>
     <string name="tab_workday_text">Giorni di lavoro</string>

@@ -10,3 +10,16 @@ internal fun Calendar.getMode(): String {
         else -> Timetable.MODE_WORKDAYS
     }
 }
+
+internal fun String.toPascalCase(): String { //check
+    val builder = StringBuilder(this)
+    var isLastCharSeparator = true
+    builder.forEach {
+        isLastCharSeparator = if ((it in 'a'..'z' || it in 'A'..'Z') && isLastCharSeparator){
+            it.toUpperCase()
+            false
+        } else
+            true
+    }
+    return builder.toString()
+}

@@ -8,25 +8,21 @@ import android.content.Intent
 import android.support.v4.app.NotificationCompat
 import java.net.HttpURLConnection
 import java.net.URL
-import org.tukaani.xz.XZInputStream
 import java.io.*
 import java.security.MessageDigest
-import kotlin.experimental.and
 import android.app.NotificationManager
 import android.os.Build
-import ml.adamsprogs.bimba.models.Timetable
-
+import android.util.Log
+import java.util.*
 
 class TimetableDownloader : IntentService("TimetableDownloader") {
     companion object {
-        val ACTION_DOWNLOADED = "ml.adamsprogs.bimba.timetableDownloaded"
-        val EXTRA_FORCE = "force"
-        val EXTRA_RESULT = "result"
-        val RESULT_NO_CONNECTIVITY = "no connectivity"
-        val RESULT_VERSION_MISMATCH = "version mismatch"
-        val RESULT_UP_TO_DATE = "up-to-date"
-        val RESULT_DOWNLOADED = "downloaded"
-        val RESULT_VALIDITY_FAILED = "validity failed"
+        const val ACTION_DOWNLOADED = "ml.adamsprogs.bimba.timetableDownloaded"
+        const val EXTRA_FORCE = "force"
+        const val EXTRA_RESULT = "result"
+        const val RESULT_NO_CONNECTIVITY = "no connectivity"
+        const val RESULT_UP_TO_DATE = "up-to-date"
+        const val RESULT_DOWNLOADED = "downloaded"
     }
 
     private lateinit var notificationManager: NotificationManager
@@ -41,52 +37,42 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 sendResult(RESULT_NO_CONNECTIVITY)
                 return
             }
-            val metadataUrl = URL("https://adamsprogs.ml/w/_media/programmes/bimba/timetable.db.meta")
-            var httpCon = metadataUrl.openConnection() as HttpURLConnection
+            val url = URL("http://ztm.poznan.pl/pl/dla-deweloperow/getGTFSFile")
+            val httpCon = url.openConnection() as HttpURLConnection
             if (httpCon.responseCode != HttpURLConnection.HTTP_OK) { //IOEXCEPTION or EOFEXCEPTION or ConnectException
                 sendResult(RESULT_NO_CONNECTIVITY)
                 return
             }
-            val reader = BufferedReader(InputStreamReader(httpCon.inputStream))
-            val lastModified = reader.readLine()
-            val checksum = reader.readLine()
-            size = Integer.parseInt(reader.readLine()) / 1024
-            val dbVersion = reader.readLine()
-            if (Integer.parseInt(dbVersion.split(".")[0]) > Timetable.version) {
-                sendResult(RESULT_VERSION_MISMATCH)
-                return
-            }
-            val dbFilename = reader.readLine()
+            val lastModified = httpCon.getHeaderField("Content-Disposition").split("=")[1].trim('\"').split("_")[0]
             val currentLastModified = prefs.getString("timetableLastModified", "19791012")
-            if (lastModified <= currentLastModified && !intent.getBooleanExtra(EXTRA_FORCE, false)) {
+            if (lastModified <= currentLastModified && lastModified <= today()) {
                 sendResult(RESULT_UP_TO_DATE)
                 return
             }
 
             notify(0)
 
-            val xzDbUrl = URL("https://adamsprogs.ml/w/_media/programmes/bimba/$dbFilename")
-            httpCon = xzDbUrl.openConnection() as HttpURLConnection
-            if (httpCon.responseCode != HttpURLConnection.HTTP_OK) {
-                sendResult(RESULT_NO_CONNECTIVITY)
-                return
-            }
-            val xzIn = XZInputStream(httpCon.inputStream)
-            val file = File(this.filesDir, "new_timetable.db")
-            if (copyInputStreamToFile(xzIn, file, checksum)) {
-                val oldFile = File(this.filesDir, "timetable.db")
-                oldFile.delete()
-                file.renameTo(oldFile)
-                val prefsEditor = prefs.edit()
-                prefsEditor.putString("timetableLastModified", lastModified)
-                prefsEditor.apply()
-                sendResult(RESULT_DOWNLOADED)
-            } else {
-                sendResult(RESULT_VALIDITY_FAILED)
-            }
+            val file = File(this.filesDir, "new_timetable.zip")
+            copyInputStreamToFile(httpCon.inputStream, file)
+            val oldFile = File(this.filesDir, "timetable.zip")
+            oldFile.delete()
+            file.renameTo(oldFile)
+            val prefsEditor = prefs.edit()
+            prefsEditor.putString("timetableLastModified", lastModified)
+            prefsEditor.apply()
+            sendResult(RESULT_DOWNLOADED)
 
             cancelNotification()
         }
+    }
+
+    private fun today(): String {
+        val cal = Calendar.getInstance()
+        val d = cal[Calendar.DAY_OF_MONTH]
+        val m = cal[Calendar.MONTH]+1
+        val y = cal[Calendar.YEAR]
+
+        return "%d%02d%02d".format(y, m, d)
     }
 
     private fun sendResult(result: String) {
@@ -133,9 +119,8 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
         notificationManager.cancel(42)
     }
 
-    private fun copyInputStreamToFile(ins: InputStream, file: File, checksum: String): Boolean {
+    private fun copyInputStreamToFile(ins: InputStream, file: File) {
         val md = MessageDigest.getInstance("SHA-512")
-        var hex = ""
         try {
             val out = FileOutputStream(file)
             val buf = ByteArray(5 * 1024)
@@ -155,11 +140,6 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
             e.printStackTrace()
         } finally {
             ins.close()
-            val digest = md.digest()
-            for (i in 0 until digest.size) {
-                hex += Integer.toString((digest[i] and 0xff.toByte()) + 0x100, 16).padStart(3, '0').substring(1)
-            }
-            return checksum == hex
         }
     }
 }

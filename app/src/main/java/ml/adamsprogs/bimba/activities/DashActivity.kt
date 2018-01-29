@@ -73,8 +73,10 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             super.onOptionsItemSelected(item)
         }
 
-        val validity = timetable.getValidity()
-        drawerView.menu.findItem(R.id.drawer_validity).title = getString(R.string.valid_since, validity)
+        val validSince = timetable.getValidSince()
+        val validTill = timetable.getValidTill()
+        drawerView.menu.findItem(R.id.drawer_validity_since).title = getString(R.string.valid_since, validSince)
+        drawerView.menu.findItem(R.id.drawer_validity_till).title = getString(R.string.valid_till, validTill)
 
         searchView = search_view
 
@@ -258,7 +260,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             TimetableDownloader.RESULT_DOWNLOADED -> getString(R.string.timetable_downloaded)
             TimetableDownloader.RESULT_NO_CONNECTIVITY -> getString(R.string.no_connectivity)
             TimetableDownloader.RESULT_UP_TO_DATE -> getString(R.string.timetable_up_to_date)
-            TimetableDownloader.RESULT_VALIDITY_FAILED -> getString(R.string.validity_failed)
             else -> getString(R.string.error_try_later)
         }
         Snackbar.make(findViewById(R.id.drawer_layout), message, Snackbar.LENGTH_LONG).show()

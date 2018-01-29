@@ -1,16 +1,17 @@
 package ml.adamsprogs.bimba.models
 
+import org.onebusaway.gtfs.model.AgencyAndId
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
-data class Departure(val line: String, val mode: String, val time: String, val lowFloor: Boolean,
-                     val modification: String?, val direction: String, val vm: Boolean = false,
+data class Departure(val line: AgencyAndId, val mode: List<Int>, val time: Int, val lowFloor: Boolean, //time in seconds since midnight
+                     val modification: List<String>, val direction: String, val vm: Boolean = false,
                      var tomorrow: Boolean = false, val onStop: Boolean = false) {
 
     val isModified: Boolean
         get() {
-            return modification != null && modification != "" && modification != "null"
+            return modification.isNotEmpty()
         }
 
     override fun toString(): String {

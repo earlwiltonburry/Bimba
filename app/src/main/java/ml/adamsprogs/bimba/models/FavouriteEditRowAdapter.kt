@@ -18,8 +18,8 @@ class FavouriteEditRowAdapter(private var favourite: Favourite) :
         val timetable = Timetable.getTimetable()
         val favourites = FavouriteStorage.getFavouriteStorage()
         val plate = Plate(favourite.timetables.sortedBy { "${it.line}${it.stop}" }[position].line,
-                favourite.timetables.sortedBy { "${it.line}${it.stop}" }[position].stop, null)
-        val favouriteElement = timetable.getFavouriteElement(plate)
+                favourite.timetables.sortedBy { "${it.line}${it.stop}" }[position].stop, "",null)
+        val favouriteElement = "${timetable.getStopName(plate.stop)} ( ${timetable.getStopSymbol(plate.stop)}):\n${timetable.getLineNumber(plate.line)} → ${plate.headsign}"
         holder?.rowTextView?.text = favouriteElement
         holder?.splitButton?.setOnClickListener {
             favourites.detach(favourite.name, plate, favouriteElement)

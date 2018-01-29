@@ -37,6 +37,7 @@
     <string name="help">Hilfe</string>
     <string name="title_activity_help">Hilfe</string>
     <string name="valid_since">Gilt seit %1$s</string>
+    <string name="valid_till">Gilt bis %1$s</string>
     <string name="departure_row_getting_departures">Abfahrten sammeln…</string>
     <string name="help_text">
         "Warum gibt es keinen Fahrplan für Samstag?\n\n"

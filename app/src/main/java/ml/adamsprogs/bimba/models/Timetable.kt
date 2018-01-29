@@ -1,64 +1,51 @@
 package ml.adamsprogs.bimba.models
 
 import android.content.Context
-import android.database.CursorIndexOutOfBoundsException
-import android.database.sqlite.SQLiteCantOpenDatabaseException
-import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteDatabaseCorruptException
 import ml.adamsprogs.bimba.CacheManager
+import ml.adamsprogs.bimba.toPascalCase
 import java.io.File
-
+import org.onebusaway.gtfs.impl.GtfsDaoImpl
+import org.onebusaway.gtfs.model.*
+import org.onebusaway.gtfs.serialization.GtfsReader
+import org.onebusaway.gtfs.services.GtfsDao
+import java.util.*
 
 class Timetable private constructor() {
     companion object {
-        val version = 1
-        val MODE_WORKDAYS = "workdays"
-        val MODE_SATURDAYS = "saturdays"
-        val MODE_SUNDAYS = "sundays"
+        const val MODE_WORKDAYS = "workdays"
+        const val MODE_SATURDAYS = "saturdays"
+        const val MODE_SUNDAYS = "sundays"
         private var timetable: Timetable? = null
 
         fun getTimetable(context: Context? = null, force: Boolean = false): Timetable {
-            if (timetable == null || force)
+            return if (timetable == null || force)
                 if (context != null) {
-                    val db: SQLiteDatabase?
-                    try {
-                        db = SQLiteDatabase.openDatabase(File(context.filesDir, "timetable.db").path,
-                                null, SQLiteDatabase.OPEN_READONLY)
-                    } catch (e: NoSuchFileException) {
-                        throw SQLiteCantOpenDatabaseException("no such file")
-                    } catch (e: SQLiteCantOpenDatabaseException) {
-                        throw SQLiteCantOpenDatabaseException("cannot open db")
-                    } catch (e: SQLiteDatabaseCorruptException) {
-                        throw SQLiteCantOpenDatabaseException("db corrupt")
-                    }
                     timetable = Timetable()
-                    timetable!!.db = db
+                    timetable!!.store = read(context)
                     timetable!!.cacheManager = CacheManager.getCacheManager(context)
-                    return timetable as Timetable
+                    timetable as Timetable
                 } else
                     throw IllegalArgumentException("new timetable requested and no context given")
             else
-                return timetable as Timetable
+                timetable as Timetable
+        }
+
+        private fun read(context: Context): GtfsDao {
+            val reader = GtfsReader()
+            reader.setInputLocation(File(context.filesDir, "timetable.zip"))
+            val store = GtfsDaoImpl()
+            reader.entityStore = store
+            reader.run()
+            return store
         }
     }
 
-    lateinit var db: SQLiteDatabase
+    lateinit var store: GtfsDao
     private lateinit var cacheManager: CacheManager
-    private var _stops: ArrayList<StopSuggestion>? = null
+    private var _stops: ArrayList<StopSuggestion>? = null //todo stops to cache
 
     fun refresh(context: Context) {
-        val db: SQLiteDatabase?
-        try {
-            db = SQLiteDatabase.openDatabase(File(context.filesDir, "timetable.db").path,
-                    null, SQLiteDatabase.OPEN_READONLY)
-        } catch (e: NoSuchFileException) {
-            throw SQLiteCantOpenDatabaseException("no such file")
-        } catch (e: SQLiteCantOpenDatabaseException) {
-            throw SQLiteCantOpenDatabaseException("cannot open db")
-        } catch (e: SQLiteDatabaseCorruptException) {
-            throw SQLiteCantOpenDatabaseException("db corrupt")
-        }
-        this.db = db
+        this.store = read(context)
 
         cacheManager.recreate(getStopDeparturesByPlates(cacheManager.keys().toSet()))
 
@@ -69,50 +56,61 @@ class Timetable private constructor() {
         if (_stops != null && !force)
             return _stops!!
 
-        val stops = ArrayList<StopSuggestion>()
-        val cursor = db.rawQuery("select name ||char(10)|| headsigns as suggestion, id, stops.symbol || number as stopSymbol from stops" +
-                " join nodes on(stops.symbol = nodes.symbol) order by name, id;", null)
-        while (cursor.moveToNext())
-            stops.add(StopSuggestion(cursor.getString(0), cursor.getString(1), cursor.getString(2)))
-        cursor?.close()
-        _stops = stops
-        return stops
+        /*
+        AWF
+        232 → Os. Rusa|8:1435|AWF03
+        AWF
+        232 → Rondo Kaponiera|8:1436|AWF04
+        AWF
+        76 → Pl. Bernardyński, 74 → Os. Sobieskiego, 603 → Pl. Bernardyński|8:1437|AWF02
+        AWF
+        76 → Os. Dębina, 603 → Łęczyca/Dworcowa|8:1634|AWF01
+        AWF
+        29 → Pl. Wiosny Ludów|8:171|AWF42
+        AWF
+        10 → Połabska, 29 → Dębiec, 15 → Budziszyńska, 10 → Dębiec, 15 → Os. Sobieskiego, 12 → Os. Sobieskiego, 6 → Junikowo, 18 → Ogrody, 2 → Ogrody|8:172|AWF41
+        AWF
+        10 → Franowo, 29 → Franowo, 6 → Miłostowo, 5 → Stomil, 18 → Franowo, 15 → Franowo, 12 → Starołęka, 74 → Os. Orła Białego|8:4586|AWF73
+        */
+
+        //trip_id, stop_id from stop_times if drop_off_type in {0,3}
+        //route_id as line, trip_id, headsign from trips
+        //stop_id, stop_code from stops
+
+        val map = HashMap<AgencyAndId, HashSet<String>>()
+
+        store.allStopTimes.filter { it.dropOffType == 0 || it.dropOffType == 3 }.forEach {
+            val trip = it.trip
+            val line = trip.route.shortName
+            val headsign = (trip.tripHeadsign).toPascalCase()
+            val stopId = it.stop.id
+            if (map[stopId] == null)
+                map[stopId] = HashSet()
+            map[stopId]!!.add("$line → $headsign")
+        }
+
+        val stops = map.entries.map { StopSuggestion(it.value, it.key) }.toSet()
+
+
+        _stops = stops.sortedBy { this.getStopSymbol(it.id) } as ArrayList<StopSuggestion>
+        return _stops!!
     }
 
-    fun getStopName(stopId: String): String {
-        val cursor = db.rawQuery("select name from nodes join stops on(stops.symbol = nodes.symbol) where id = ?;",
-                listOf(stopId).toTypedArray())
-        val name: String
-        cursor.moveToNext()
-        name = cursor.getString(0)
-        cursor.close()
-        return name
-    }
+    fun getStopName(stopId: AgencyAndId) = store.getStopForId(stopId).name!!
 
-    fun getStopSymbol(stopId: String): String {
-        val cursor = db.rawQuery("select symbol||number from stops where id = ?", listOf(stopId).toTypedArray())
-        val symbol: String
-        cursor.moveToNext()
-        symbol = cursor.getString(0)
-        cursor.close()
-        return symbol
-    }
+    fun getStopSymbol(stopId: AgencyAndId) = store.getStopForId(stopId).code!!
 
-    fun getLineNumber(lineId: String): String {
-        val cursor = db.rawQuery("select number from lines where id = ?", listOf(lineId).toTypedArray())
-        val number: String
-        cursor.moveToNext()
-        number = cursor.getString(0)
-        cursor.close()
-        return number
-    }
+    fun getLineNumber(lineId: AgencyAndId) = store.getRouteForId(lineId).shortName!!
 
-    fun getStopDepartures(stopId: String): Map<String, List<Departure>> {
+    fun getStopDepartures(stopId: AgencyAndId): Map<String, List<Departure>> {
         val plates = HashSet<Plate>()
         val toGet = HashSet<Plate>()
 
-        getLinesForStop(stopId)
-                .map { Plate(it, stopId, null) }
+        getTripsForStop(stopId)
+                .map {
+                    it.tripHeadsign
+                    Plate(it.route.id, stopId, it.tripHeadsign, null)
+                }
                 .forEach {
                     if (cacheManager.has(it))
                         plates.add(cacheManager.get(it)!!)
@@ -120,22 +118,6 @@ class Timetable private constructor() {
                         toGet.add(it)
                     }
                 }
-
-        getStopDeparturesByPlates(toGet).forEach { cacheManager.push(it); plates.add(it) }
-
-        return Plate.join(plates)
-    }
-
-    fun getStopDepartures(stopId: String, lineId: String): Map<String, List<Departure>> {
-        val plates = HashSet<Plate>()
-        val toGet = HashSet<Plate>()
-
-        val plate = Plate(lineId, stopId, null)
-        if (cacheManager.has(plate))
-            plates.add(cacheManager.get(plate)!!)
-        else {
-            toGet.add(plate)
-        }
 
         getStopDeparturesByPlates(toGet).forEach { cacheManager.push(it); plates.add(it) }
 
@@ -161,93 +143,87 @@ class Timetable private constructor() {
     private fun getStopDeparturesByPlates(plates: Set<Plate>): Set<Plate> {
         if (plates.isEmpty())
             return emptySet()
-        val result = HashMap<String, Plate>()
 
-        val condition = plates.joinToString(" or ") { "(stop_id = '${it.stop}' and line_id = '${it.line}')" }
+        return plates.map { getStopDeparturesByPlate(it) }.toSet()
+    }
 
-        val sql = "select " +
-                "lines.number, mode, substr('0'||hour, -2) || ':' || " +
-                "substr('0'||minute, -2) as time, lowFloor, modification, headsign, stop_id, line_id " +
-                "from " +
-                "departures join timetables on(timetable_id = timetables.id) join lines on(line_id = lines.id) " +
-                "where " +
-                condition +
-                "order by " +
-                "mode, time;"
-        val cursor = db.rawQuery(sql, null)
+    private fun getStopDeparturesByPlate(plate: Plate): Plate {
+        val p = Plate(plate.line, plate.stop, plate.headsign, HashMap())
+        store.allStopTimes
+                .filter { it.stop.id == plate.stop }
+                .filter { it.trip.route.id == plate.line }
+                .filter { it.trip.tripHeadsign.toLowerCase() == plate.headsign.toLowerCase() }
+                .forEach {
+                    val time = it.departureTime
+                    val serviceId = it.trip.serviceId
+                    val mode = calendarToMode(serviceId.id.toInt())
+                    val lowFloor = it.trip.wheelchairAccessible == 1
+                    val mod = explainModification(it.trip, it.trip.id.id.split("^")[1], it.stopSequence)
 
-        while (cursor.moveToNext()) {
-            val lineId = cursor.getString(7)
-            val stopId = cursor.getString(6)
+                    val dep = Departure(plate.line, mode, time, lowFloor, mod, plate.headsign)
+                    if (p.departures!![serviceId] == null)
+                        p.departures[serviceId] = HashSet()
+                    p.departures[serviceId]!!.add(dep)
+                }
+        return p
+    }
 
-            if (!result.containsKey("$lineId@$stopId")) {
-                result["$lineId@$stopId"] = Plate(lineId, stopId, HashMap())
-                result["$lineId@$stopId"]?.departures?.put(MODE_WORKDAYS, HashSet())
-                result["$lineId@$stopId"]?.departures?.put(MODE_SATURDAYS, HashSet())
-                result["$lineId@$stopId"]?.departures?.put(MODE_SUNDAYS, HashSet())
+    private fun calendarToMode(serviceId: Int): List<Int> {
+        val calendar = store.getCalendarForId(serviceId)
+        val days = ArrayList<Int>()
+        if (calendar.monday == 1) days.add(0)
+        if (calendar.tuesday == 1) days.add(1)
+        if (calendar.wednesday == 1) days.add(2)
+        if (calendar.thursday == 1) days.add(3)
+        if (calendar.friday == 1) days.add(4)
+        if (calendar.saturday == 1) days.add(5)
+        if (calendar.sunday == 1) days.add(6)
+        return days
+    }
+
+    private fun explainModification(trip: Trip, modifications: String, stopSequence: Int): List<String> {
+        val mods = modifications.replace("+", "").split(",")
+        var definitions = trip.route.desc.split("^")
+        definitions = definitions.slice(2..definitions.size)
+
+        val definitionsMap = HashMap<String, String>()
+
+        definitions.forEach {
+            val (key, definition) = it.split(" - ")
+            definitionsMap[key] = definition
+        }
+
+        val explanations = ArrayList<String>()
+
+        mods.forEach {
+            if (it.contains(":")) {
+                val (key, start, stop) = it.split(":")
+                if (stopSequence in start.toInt()..stop.toInt())
+                    explanations.add(definitionsMap[key]!!)
+            } else {
+                explanations.add(definitionsMap[it]!!)
             }
-
-            result["$lineId@$stopId"]?.departures?.get(cursor.getString(1))?.add(
-                    Departure(cursor.getString(0), cursor.getString(1),
-                            cursor.getString(2), cursor.getInt(3) == 1,
-                            cursor.getString(4), cursor.getString(5)))
         }
-        cursor.close()
-        return result.values.toSet()
+
+        return explanations
     }
 
-    private fun getLinesForStop(stopId: String): Set<String> {
-        val cursor = db.rawQuery("select line_id from timetables where stop_id=?;", listOf(stopId).toTypedArray())
-        val lines = HashSet<String>()
-        while (cursor.moveToNext())
-            lines.add(cursor.getString(0))
-        cursor.close()
+    fun getLinesForStop(stopId: AgencyAndId): Set<AgencyAndId> {
+        val lines = HashSet<AgencyAndId>()
+        store.allStopTimes.filter { it.stop.id == stopId }.forEach { lines.add(it.trip.route.id) }
         return lines
     }
 
-    fun getLines(stopId: String): List<String> {
-        val cursor = db.rawQuery(" select distinct line_id from timetables join " +
-                "stops on(stop_id = stops.id) where stops.id = ?;",
-                listOf(stopId).toTypedArray())
-        val lines = ArrayList<String>()
-        while (cursor.moveToNext()) {
-            lines.add(cursor.getString(0))
-        }
-        cursor.close()
+    private fun getTripsForStop(stopId: AgencyAndId): Set<Trip> {
+        val lines = HashSet<Trip>()
+        store.allStopTimes.filter { it.stop.id == stopId }.forEach { lines.add(it.trip) }
         return lines
     }
 
-    fun getFavouriteElement(plate: Plate): String {
-        val cursor = db.rawQuery("select name || ' (' || stops.symbol || stops.number || '): \n' " +
-                "|| lines.number || ' → ' || headsign from timetables join stops on (stops.id = stop_id) " +
-                "join lines on(lines.id = line_id) join nodes on(nodes.symbol = stops.symbol) where " +
-                "stop_id = ? and line_id = ?",
-                listOf(plate.stop, plate.line).toTypedArray())
-        val element: String
-        cursor.moveToNext()
-        element = cursor.getString(0)
-        cursor.close()
-        return element
-    }
+    fun isEmpty() = store.allFeedInfos.isEmpty()
 
-    fun isEmpty(): Boolean {
-        val cursor = db.rawQuery("select * from metadata;", null)
-        try {
-            cursor.moveToNext()
-            cursor.getString(0)
-            cursor.close()
-        } catch (e: CursorIndexOutOfBoundsException) {
-            return true
-        }
-        return false
-    }
+    fun getValidSince() = store.allFeedInfos.toTypedArray()[0].startDate.asString!!
 
-    fun getValidity(): String {
-        val cursor = db.rawQuery("select value from metadata where key = 'validFrom'", null)
-        cursor.moveToNext()
-        val validity = cursor.getString(0)
-        cursor.close()
-        return "%s-%s-%s".format(validity.substring(0..3), validity.substring(4..5), validity.substring(6..7))
-    }
+    fun getValidTill() = store.allFeedInfos.toTypedArray()[0].endDate.asString!!
 }
 

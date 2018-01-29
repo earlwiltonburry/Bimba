@@ -3,24 +3,24 @@ package ml.adamsprogs.bimba.models
 import android.os.Parcel
 import android.os.Parcelable
 import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
+import org.onebusaway.gtfs.model.AgencyAndId
 
-class StopSuggestion(text: String, val id: String, val symbol: String) : SearchSuggestion {
-    private val body: String = text
+class StopSuggestion(private val directions: HashSet<String>, val id: AgencyAndId) : SearchSuggestion {
 
-    constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString())
+    @Suppress("UNCHECKED_CAST")
+    constructor(parcel: Parcel) : this(parcel.readSerializable() as HashSet<String>, parcel.readSerializable() as AgencyAndId)
 
     override fun describeContents(): Int {
         return Parcelable.CONTENTS_FILE_DESCRIPTOR
     }
 
     override fun writeToParcel(dest: Parcel?, flags: Int) {
-        dest?.writeString(body)
-        dest?.writeString(id)
-        dest?.writeString(symbol)
+        dest?.writeSerializable(directions)
+        dest?.writeSerializable(id)
     }
 
     override fun getBody(): String {
-        return body
+        return "${Timetable.getTimetable().getStopName(id)}\n${directions.sortedBy{it}.joinToString()}"
     }
 
     companion object CREATOR : Parcelable.Creator<StopSuggestion> {

@@ -17,6 +17,7 @@ import ml.adamsprogs.bimba.models.*
 import ml.adamsprogs.bimba.*
 import kotlin.concurrent.thread
 import kotlinx.android.synthetic.main.activity_stop.*
+import org.onebusaway.gtfs.model.AgencyAndId
 
 class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener, Favourite.OnVmPreparedListener {
     companion object {
@@ -29,7 +30,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener, Favourit
         val SOURCE_TYPE_FAV = "favourite"
     }
 
-    private var stopId: String? = null
+    private var stopId: AgencyAndId? = null
     private var stopSymbol: String? = null
     private var favourite: Favourite? = null
     private var timetableType = "departure"
@@ -59,7 +60,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener, Favourit
 
         when (sourceType) {
             SOURCE_TYPE_STOP -> {
-                stopId = intent.getStringExtra(EXTRA_STOP_ID)
+                stopId = intent.getSerializableExtra(EXTRA_STOP_ID) as AgencyAndId
                 stopSymbol = intent.getStringExtra(EXTRA_STOP_SYMBOL)
                 supportActionBar?.title = timetable.getStopName(stopId!!)
             }
@@ -133,7 +134,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener, Favourit
         fab.setOnClickListener {
             if (!favourites.has(stopSymbol!!)) {
                 val items = HashSet<Plate>()
-                timetable.getLines(stopId!!).forEach {
+                timetable.getLinesForStop(stopId!!).forEach {
                     val o = Plate(it, stopId!!, null)
                     items.add(o)
                 }
@@ -246,23 +247,22 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener, Favourit
 
     class PlaceholderFragment : Fragment() {
 
-        override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
-                                  savedInstanceState: Bundle?): View? {
-            val rootView = inflater!!.inflate(R.layout.fragment_stop, container, false)
+        override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+            val rootView = inflater.inflate(R.layout.fragment_stop, container, false)
 
             val layoutManager = LinearLayoutManager(activity)
             val departuresList: RecyclerView = rootView.findViewById(R.id.departuresList)
             departuresList.addItemDecoration(DividerItemDecoration(departuresList.context, layoutManager.orientation))
 
-            val departures = arguments.getStringArrayList("departures")?.map { Departure.fromString(it) }
-            departuresList.adapter = DeparturesAdapter(activity, departures,
-                    arguments["relativeTime"] as Boolean)
+            val departures = arguments?.getStringArrayList("departures")?.map { Departure.fromString(it) }
+            departuresList.adapter = DeparturesAdapter(activity as Context, departures,
+                    arguments?.get("relativeTime") as Boolean)
             departuresList.layoutManager = layoutManager
             return rootView
         }
 
         companion object {
-            private val ARG_SECTION_NUMBER = "section_number"
+            private const val ARG_SECTION_NUMBER = "section_number"
 
             fun newInstance(sectionNumber: Int, departures: ArrayList<Departure>?, relativeTime: Boolean):
                     PlaceholderFragment {
@@ -286,7 +286,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener, Favourit
 
         var relativeTime = true
 
-        override fun getItemPosition(obj: Any?): Int {
+        override fun getItemPosition(obj: Any): Int {
             return PagerAdapter.POSITION_NONE
         }
 
