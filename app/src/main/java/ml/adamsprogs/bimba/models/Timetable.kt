@@ -21,7 +21,7 @@ class Timetable private constructor() {
             return if (timetable == null || force)
                 if (context != null) {
                     timetable = Timetable()
-                    timetable!!.store = read(context)
+                    timetable!!.store = read(context) as GtfsDaoImpl
                     timetable!!.cacheManager = CacheManager.getCacheManager(context)
                     timetable as Timetable
                 } else
@@ -40,12 +40,12 @@ class Timetable private constructor() {
         }
     }
 
-    lateinit var store: GtfsDao
+    lateinit var store: GtfsDaoImpl
     private lateinit var cacheManager: CacheManager
     private var _stops: ArrayList<StopSuggestion>? = null //todo stops to cache
 
     fun refresh(context: Context) {
-        this.store = read(context)
+        this.store = read(context) as GtfsDaoImpl
 
         cacheManager.recreate(getStopDeparturesByPlates(cacheManager.keys().toSet()))
 
@@ -102,7 +102,7 @@ class Timetable private constructor() {
 
     fun getLineNumber(lineId: AgencyAndId) = store.getRouteForId(lineId).shortName!!
 
-    fun getStopDepartures(stopId: AgencyAndId): Map<String, List<Departure>> {
+    fun getStopDepartures(stopId: AgencyAndId): Map<AgencyAndId, List<Departure>> {
         val plates = HashSet<Plate>()
         val toGet = HashSet<Plate>()
 
@@ -124,7 +124,7 @@ class Timetable private constructor() {
         return Plate.join(plates)
     }
 
-    fun getStopDepartures(plates: Set<Plate>): Map<String, ArrayList<Departure>> {
+    fun getStopDepartures(plates: Set<Plate>): Map<AgencyAndId, ArrayList<Departure>> {
         val result = HashSet<Plate>()
         val toGet = HashSet<Plate>()
 
@@ -225,5 +225,30 @@ class Timetable private constructor() {
     fun getValidSince() = store.allFeedInfos.toTypedArray()[0].startDate.asString!!
 
     fun getValidTill() = store.allFeedInfos.toTypedArray()[0].endDate.asString!!
+
+    fun getServiceForToday(): AgencyAndId {
+        val today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
+        return getServiceFor(today)
+    }
+
+    fun getServiceForTomorrow(): AgencyAndId {
+        val tomorrow = Calendar.getInstance()
+        tomorrow.add(Calendar.DAY_OF_MONTH, 1)
+        val tomorrowDoW = tomorrow.get(Calendar.DAY_OF_WEEK)
+        return getServiceFor(tomorrowDoW)
+    }
+
+    private fun getServiceFor(day: Int): AgencyAndId {
+        store.allCalendars.forEach {
+            if (it.monday == 1 && day == Calendar.MONDAY) return it.serviceId
+            if (it.tuesday == 1 && day == Calendar.TUESDAY) return it.serviceId
+            if (it.wednesday == 1 && day == Calendar.WEDNESDAY) return it.serviceId
+            if (it.thursday == 1 && day == Calendar.THURSDAY) return it.serviceId
+            if (it.friday == 1 && day == Calendar.FRIDAY) return it.serviceId
+            if (it.saturday == 1 && day == Calendar.SATURDAY) return it.serviceId
+            if (it.sunday == 1 && day == Calendar.SUNDAY) return it.serviceId
+        }
+        throw IllegalArgumentException()
+    }
 }
 

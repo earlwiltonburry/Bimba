@@ -4,7 +4,7 @@ import android.os.Parcel
 import android.os.Parcelable
 import android.util.Log
 import ml.adamsprogs.bimba.MessageReceiver
-import ml.adamsprogs.bimba.getMode
+import org.onebusaway.gtfs.model.AgencyAndId
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
@@ -111,10 +111,10 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
     }
 
     private fun nowDepartures(): ArrayList<Departure> {
-        val today = Calendar.getInstance().getMode()
+        val today = timetable.getServiceForToday()
         val tomorrowCal = Calendar.getInstance()
         tomorrowCal.add(Calendar.DAY_OF_MONTH, 1)
-        val tomorrow = tomorrowCal.getMode()
+        val tomorrow = timetable.getServiceForTomorrow()
 
         val departures = timetable.getStopDepartures(timetables)
         val todayDepartures = departures[today]!!
@@ -128,18 +128,18 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         return twoDayDepartures
     }
 
-    fun allDepartures(): Map<String, List<Departure>> {
-        val departures = timetable.getStopDepartures(timetables) as HashMap<String, ArrayList<Departure>>
+    fun allDepartures(): Map<AgencyAndId, List<Departure>> {
+        val departures = timetable.getStopDepartures(timetables) as HashMap<AgencyAndId, ArrayList<Departure>>
 
         if (vmDepartures.isNotEmpty()) {
-            val today = Calendar.getInstance().getMode()
+            val today = timetable.getServiceForToday()
             departures[today] = vmDepartures
         }
 
         return Departure.createDepartures(departures)
     }
 
-    fun fullTimetable(): Map<String, List<Departure>>? {
+    fun fullTimetable(): Map<AgencyAndId, List<Departure>>? {
         return timetable.getStopDepartures(timetables)
     }
 

@@ -12,6 +12,7 @@ import android.widget.TextView
 import ml.adamsprogs.bimba.R
 import android.view.LayoutInflater
 import ml.adamsprogs.bimba.Declinator
+import ml.adamsprogs.bimba.rollTime
 import java.util.*
 
 class DeparturesAdapter(val context: Context, private val departures: List<Departure>?, private val relativeTime: Boolean) :
@@ -42,9 +43,7 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
         }
         val departure = departures[position]
         val now = Calendar.getInstance()
-        val departureTime = Calendar.getInstance()
-        departureTime.set(Calendar.HOUR_OF_DAY, Integer.parseInt(departure.time.split(":")[0]))
-        departureTime.set(Calendar.MINUTE, Integer.parseInt(departure.time.split(":")[1]))
+        val departureTime = Calendar.getInstance().rollTime(departure.time)
         if (departure.tomorrow)
             departureTime.add(Calendar.DAY_OF_MONTH, 1)
 
@@ -52,14 +51,14 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
         val timeString: String
 
         timeString = if (departureIn > 60 || departureIn < 0 || !relativeTime)
-            context.getString(R.string.departure_at, departure.time)
+            context.getString(R.string.departure_at, "${departureTime.get(Calendar.HOUR_OF_DAY)}:${departureTime.get(Calendar.MINUTE)}")
         else if (departureIn > 0 && !departure.onStop)
             context.getString(Declinator.decline(departureIn), departureIn.toString())
         else
             context.getString(R.string.now)
 
         val line = holder?.lineTextView
-        line?.text = departure.line
+        line?.text = departure.lineText
         val time = holder?.timeTextView
         time?.text = timeString
         val direction = holder?.directionTextView
@@ -79,7 +78,7 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
                         .setPositiveButton(context.getText(android.R.string.ok),
                                 { dialog: DialogInterface, _: Int -> dialog.cancel() })
                         .setCancelable(true)
-                        .setMessage(departure.modification)
+                        .setMessage(departure.modification.joinToString("; "))
                         .create().show()
             }
         }

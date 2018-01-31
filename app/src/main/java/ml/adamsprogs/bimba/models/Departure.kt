@@ -1,5 +1,6 @@
 package ml.adamsprogs.bimba.models
 
+import ml.adamsprogs.bimba.rollTime
 import org.onebusaway.gtfs.model.AgencyAndId
 import java.util.*
 import kotlin.collections.ArrayList
@@ -15,7 +16,7 @@ data class Departure(val line: AgencyAndId, val mode: List<Int>, val time: Int, 
         }
 
     override fun toString(): String {
-        return "$line|$mode|$time|$lowFloor|$modification|$direction|$vm|$tomorrow|$onStop"
+        return "$line|${mode.joinToString(";")}|$time|$lowFloor|${modification.joinToString(";")}|$direction|$vm|$tomorrow|$onStop"
     }
 
     fun copy(): Departure {
@@ -25,7 +26,7 @@ data class Departure(val line: AgencyAndId, val mode: List<Int>, val time: Int, 
     companion object {
         private fun filterDepartures(departures: List<Departure>): ArrayList<Departure> {
             val filtered = ArrayList<Departure>()
-            val lines = HashMap<String, Int>()
+            val lines = HashMap<AgencyAndId, Int>()
             val sortedDepartures = departures.sortedBy { it.timeTill() }
             for (departure in sortedDepartures) {
                 var lineExistedTimes = lines[departure.line]
@@ -38,20 +39,20 @@ data class Departure(val line: AgencyAndId, val mode: List<Int>, val time: Int, 
             return filtered
         }
 
-        fun createDepartures(stopId: String): Map<String, List<Departure>> {
+        fun createDepartures(stopId: AgencyAndId): Map<AgencyAndId, List<Departure>> {
             val timetable = Timetable.getTimetable()
             val departures = timetable.getStopDepartures(stopId)
             return createDepartures(departures)
         }
 
-        fun createDepartures(departures: Map<String, List<Departure>>): Map<String, List<Departure>> { //todo if departure.timeTill < 0 -> show ‘just departed’
-            val moreDepartures = HashMap<String, ArrayList<Departure>>()
+        fun createDepartures(departures: Map<AgencyAndId, List<Departure>>): Map<AgencyAndId, List<Departure>> { //todo if departure.timeTill < 0 -> show ‘just departed’
+            val moreDepartures = HashMap<AgencyAndId, ArrayList<Departure>>()
             for ((k, v) in departures) {
                 moreDepartures[k] = ArrayList()
                 for (departure in v)
                     moreDepartures[k]!!.add(departure.copy())
             }
-            val rolledDepartures = HashMap<String, ArrayList<Departure>>()
+            val rolledDepartures = HashMap<AgencyAndId, ArrayList<Departure>>()
 
             for ((_, tomorrowDepartures) in moreDepartures) {
                 tomorrowDepartures.forEach { it.tomorrow = true }
@@ -70,20 +71,21 @@ data class Departure(val line: AgencyAndId, val mode: List<Int>, val time: Int, 
             val array = string.split("|")
             if (array.size != 9)
                 throw IllegalArgumentException()
-            return Departure(array[0], array[1], array[2], array[3] == "true", array[4], array[5],
-                    array[6] == "true", array[7] == "true", array[8] == "true")
+            return Departure(AgencyAndId.convertFromString(array[0]),
+                    array[1].split(";").map { Integer.parseInt(it) },
+                    Integer.parseInt(array[2]), array[3] == "true",
+                    array[4].split(";"), array[5], array[6] == "true",
+                    array[7] == "true", array[8] == "true")
         }
     }
 
     fun timeTill(): Long {
-        val time = Calendar.getInstance()
-        time.set(Calendar.HOUR_OF_DAY, Integer.parseInt(this.time.split(":")[0]))
-        time.set(Calendar.MINUTE, Integer.parseInt(this.time.split(":")[1]))
-        time.set(Calendar.SECOND, 0)
-        time.set(Calendar.MILLISECOND, 0)
+        val time = Calendar.getInstance().rollTime(this.time)
         val now = Calendar.getInstance()
         if (this.tomorrow)
             time.add(Calendar.DAY_OF_MONTH, 1)
         return (time.timeInMillis - now.timeInMillis) / (1000 * 60)
     }
+
+    val lineText: String = Timetable.getTimetable().getLineNumber(line)
 }

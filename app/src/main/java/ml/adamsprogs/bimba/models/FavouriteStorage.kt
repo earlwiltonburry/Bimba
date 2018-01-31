@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import org.onebusaway.gtfs.model.AgencyAndId
 
 
 class FavouriteStorage private constructor(context: Context) : Iterable<Favourite> {
@@ -35,7 +36,11 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
         val favouritesMap = Gson().fromJson(favouritesString, JsonObject::class.java)
         for ((name, jsonTimetables) in favouritesMap.entrySet()) {
             val timetables = HashSet<Plate>()
-            jsonTimetables.asJsonArray.mapTo(timetables) { Plate(it.asJsonObject["line"].asString, it.asJsonObject["stop"].asString, null) }
+            jsonTimetables.asJsonArray.mapTo(timetables) {
+                Plate(AgencyAndId.convertFromString(it.asJsonObject["line"].asString),
+                        AgencyAndId.convertFromString(it.asJsonObject["stop"].asString),
+                        it.asJsonObject["headsign"].asString, null)
+            }
             favourites[name] = Favourite(name, timetables)
         }
     }
@@ -74,8 +79,9 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
             val timetables = JsonArray()
             for (timetable in favourite.timetables) {
                 val element = JsonObject()
-                element.addProperty("stop", timetable.stop)
-                element.addProperty("line", timetable.line)
+                element.addProperty("stop", timetable.stop.toString())
+                element.addProperty("line", timetable.line.toString())
+                element.addProperty("headsign", timetable.headsign)
                 timetables.add(element)
             }
             rootObject.add(name, timetables)
