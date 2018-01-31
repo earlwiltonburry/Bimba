@@ -168,7 +168,7 @@ class Timetable private constructor() {
         return p
     }
 
-    private fun calendarToMode(serviceId: Int): List<Int> {
+    fun calendarToMode(serviceId: Int): List<Int> {
         val calendar = store.getCalendarForId(serviceId)
         val days = ArrayList<Int>()
         if (calendar.monday == 1) days.add(0)
@@ -249,6 +249,10 @@ class Timetable private constructor() {
             if (it.sunday == 1 && day == Calendar.SUNDAY) return it.serviceId
         }
         throw IllegalArgumentException()
+    }
+
+    fun getLineForNumber(number: String): AgencyAndId? {
+            return store.allRoutes.find { it.shortName == number }?.id
     }
 }
 

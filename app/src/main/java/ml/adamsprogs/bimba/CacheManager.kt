@@ -3,6 +3,7 @@ package ml.adamsprogs.bimba
 import android.content.Context
 import android.content.SharedPreferences
 import ml.adamsprogs.bimba.models.Plate
+import org.onebusaway.gtfs.model.AgencyAndId
 
 class CacheManager private constructor(context: Context) {
     companion object {
@@ -25,7 +26,13 @@ class CacheManager private constructor(context: Context) {
     private var cacheHits: HashMap<String, Int> = HashMap()
 
     fun keys(): List<Plate> {
-        return cache.map { Plate(it.key.split("@")[0], it.key.split("@")[1], null) }
+        return cache.map {
+            Plate(
+                    AgencyAndId.convertFromString(it.key.split("@")[0]),
+                    AgencyAndId.convertFromString(it.key.split("@")[1].split(">")[0]),
+                    it.key.split(">")[1],
+                    null)
+        }
     }
 
     fun hasAll(plates: HashSet<Plate>): Boolean {
@@ -125,5 +132,5 @@ class CacheManager private constructor(context: Context) {
         return result
     }
 
-    private fun key(plate: Plate) = "${plate.line}@${plate.stop}"
+    private fun key(plate: Plate) = "${plate.line}@${plate.stop}>${plate.headsign}"
 }

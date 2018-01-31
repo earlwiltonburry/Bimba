@@ -1,6 +1,7 @@
 package ml.adamsprogs.bimba
 
 import ml.adamsprogs.bimba.models.Timetable
+import java.text.SimpleDateFormat
 import java.util.*
 
 internal fun Calendar.getMode(): String {
@@ -33,4 +34,22 @@ internal fun Calendar.rollTime(seconds: Int): Calendar {
     this.set(Calendar.SECOND, second)
     this.set(Calendar.MILLISECOND, 0)
     return this
+}
+
+internal fun Calendar.secondsAfterMidnight(): Int {
+    val hour = this.get(Calendar.HOUR_OF_DAY)
+    val minute = this.get(Calendar.MINUTE)
+    val second = this.get(Calendar.SECOND)
+    return hour * 3600 + minute * 60 + second
+}
+
+const val ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+
+fun calendarFromIso(iso: String): Calendar { // check
+    val calendar = Calendar.getInstance()
+    val dateFormat = SimpleDateFormat(ISO_8601_DATE_FORMAT)
+    val date = dateFormat.parse(iso)
+    //date.hours = date.getHours() - 1 //fixme why?
+    calendar.time = date
+    return calendar
 }

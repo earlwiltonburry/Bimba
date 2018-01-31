@@ -6,20 +6,21 @@ import android.util.Log
 import ml.adamsprogs.bimba.models.*
 import okhttp3.*
 import com.google.gson.Gson
+import org.onebusaway.gtfs.model.AgencyAndId
 import java.io.IOException
 import java.util.*
 
 
 class VmClient : IntentService("VmClient") {
     companion object {
-        val ACTION_DEPARTURES_CREATED = "ml.adamsprogs.bimba.departuresCreated"
-        val ACTION_NO_DEPARTURES = "ml.adamsprogs.bimba.noVM"
-        val EXTRA_STOP_SYMBOL = "stopSymbol"
-        val EXTRA_LINE_NUMBER = "lineNumber"
-        val EXTRA_REQUESTER = "requester"
-        val EXTRA_DEPARTURES = "departures"
-        val EXTRA_SIZE = "size"
-        val EXTRA_ID = "id"
+        const val ACTION_DEPARTURES_CREATED = "ml.adamsprogs.bimba.departuresCreated"
+        const val ACTION_NO_DEPARTURES = "ml.adamsprogs.bimba.noVM"
+        const val EXTRA_STOP_SYMBOL = "stopSymbol"
+        const val EXTRA_LINE_NUMBER = "lineNumber"
+        const val EXTRA_REQUESTER = "requester"
+        const val EXTRA_DEPARTURES = "departures"
+        const val EXTRA_SIZE = "size"
+        const val EXTRA_ID = "id"
     }
 
     override fun onHandleIntent(intent: Intent?) {
@@ -39,7 +40,7 @@ class VmClient : IntentService("VmClient") {
                 sendNullResult(requester, id, size)
                 return
             }
-            val lineNumber = intent.getStringExtra(EXTRA_LINE_NUMBER)
+            val lineId = intent.getSerializableExtra(EXTRA_LINE_NUMBER) as AgencyAndId?
 
             val client = OkHttpClient()
             val url = "http://www.peka.poznan.pl/vm/method.vm?ts=${Calendar.getInstance().timeInMillis}"
@@ -73,16 +74,18 @@ class VmClient : IntentService("VmClient") {
             val times = (javaRootMapObject["success"] as Map<*, *>)["times"] as List<*>
             val date = Calendar.getInstance()
             val todayDay = "${date.get(Calendar.DATE)}".padStart(2, '0')
-            val todayMode = date.getMode()
+            val timetable = Timetable.getTimetable()
+            val todayMode = timetable.calendarToMode(timetable.getServiceForToday().id.toInt())
             val departuresToday = ArrayList<Departure>()
+            val lineNumber = if (lineId != null) timetable.getLineNumber(lineId) else null
             for (time in times) {
                 val t = time as Map<*, *>
-                if (lineNumber == null || t["line"] == lineNumber) {
+                if (lineId == null || t["line"] == lineNumber) {
                     val departureDay = (t["departure"] as String).split("T")[0].split("-")[2]
-                    val departureTimeRaw = (t["departure"] as String).split("T")[1].split(":")
-                    val departureTime = "${departureTimeRaw[0]}:${departureTimeRaw[1]}"
-                    val departure = Departure(t["line"] as String, todayMode, departureTime, false,
-                            null, t["direction"] as String, t["realTime"] as Boolean,
+                    val departureTime = calendarFromIso(t["departure"] as String).secondsAfterMidnight()
+                    val departure = Departure(lineId?: timetable.getLineForNumber(t["line"] as String)!!
+                            , todayMode, departureTime, false,
+                            ArrayList(), t["direction"] as String, t["realTime"] as Boolean,
                             departureDay != todayDay, t["onStopPoint"] as Boolean)
                     departuresToday.add(departure)
                 }
