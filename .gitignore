@@ -45,5 +45,5 @@ captures/
 .externalNativeBuild
 
 app/release/
-research/
+research/localonly
 database/timetable*

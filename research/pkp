@@ -1,0 +1,37 @@
+https://github.com/bartekmp/infopasazer
+
+stacja:
+curl 'https://portalpasazera.pl/WyszukiwaniePolaczen/StacjeFiltrRead?wprowadzonyTekst=Warszawa' \
+-XGET \
+-H '387693: 764f49' \
+-H 'Referer: https://portalpasazera.pl/WyszukiwaniePolaczen/' \
+-H 'Accept: */*' \
+-H 'Connection: Keep-Alive' \
+-H 'Accept-Encoding: gzip, deflate' \
+-H 'Accept-Language: en-gb, en;q=0.90' \
+-H 'DNT: 1' \
+-H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/605.1 (KHTML, like Gecko) Version/11.0 Safari/605.1 Epiphany/3.26.5.1' \
+-H 'Cookie: ASP.NET_SessionId=d4pkbz3xwzewshdm5dqvjxyi; __RequestVerificationToken=XiuyWQvHFRmudTBK2Ke_484x-LZC91Q-1fOwP_AzGT3szmmvdCUVDmNJNpMP6z_HrxjXBy_duOm1l1FP2Asg6Tz1DttmvE8rJc_X0XwOtfY1' \
+-H 'aa7cbb: 7d52cc' \
+-H 'X-Requested-With: XMLHttpRequest' \
+-H 'X-Kendo-Ui-Version: r3-2016-sp2'
+
+połączenie:
+curl 'https://portalpasazera.pl/WyszukiwaniePolaczen/WyszukajPolaczenia' \
+-XPOST \
+-H 'Referer: https://portalpasazera.pl/WyszukiwaniePolaczen/' \
+-H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' \
+-H 'Origin: https://portalpasazera.pl' \
+-H 'Accept: */*' \
+-H 'Connection: Keep-Alive' \
+-H 'Accept-Encoding: gzip, deflate' \
+-H 'Accept-Language: en-gb, en;q=0.90' \
+-H 'DNT: 1' \
+-H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/605.1 (KHTML, like Gecko) Version/11.0 Safari/605.1 Epiphany/3.26.5.1' \
+-H 'Cookie: Section_WP_ThroughStations=1; ASP.NET_SessionId=q43u4zrurf2oh12fcy2td1no; __RequestVerificationToken=6V9CETnBIOhA61_KpfNlmxazzjfjEqk1ZHTKpZQkjn24rtLDqnFpJbCVNi7ariHdA38gslZhTpziDp6kC9EcLLZnHj0vn9BcA1WIEdjGrsk1; cookie=true' \               # Proste do uzyskania Podaje przy dowolnym połączeniu (można zrobić GET / >/dev/null)
+-H 'Content-Length: 1058' \
+-H 'c2e09f: 44952b' \                       # to i następna linia musi się zgadzać ze stacjami (jest deterministyczne, zależne od stacji można sprawdzić wszystkie interesujące stacje i zahardcodować (nie wiem, może to się jakoś ma do wyniku StacjeFiltrRead?)
+-H 'aa7cbb: 7d52cc' \                       # To jest poznań Główny
+-H 'X-Requested-With: XMLHttpRequest' \
+-H 'X-Kendo-Ui-Version: r3-2016-sp2' \
+--data 'sort=&group=&filter=&kryteria=%7B%22IdStacjiPoczatkowej%22%3A%22356503%22%2C%22NazwaStacjiPoczatkowej%22%3A%22Lubo%C5%84+ko%C5%82o+Poznania%22%2C%22StacjePosrednie%22%3A%5B%5D%2C%22IdStacjiKoncowej%22%3A%22356701%22%2C%22NazwaStacjiKoncowej%22%3A%22Pozna%C5%84+G%C5%82%C3%B3wny%22%2C%22KategorieSzybkosci%22%3A%5B%22SZ%22%2C%22DA%22%2C%22LO%22%2C%22AG%22%5D%2C%22Uslugi%22%3A%5B%5D%2C%22PolaczenieBezposrednie%22%3Afalse%2C%22GlobalneParametryPolaczenia%22%3Atrue%2C%22Data%22%3A%222018-02-07%22%2C%22Czas%22%3A%2220%3A51%22%2C%22PociagCzynnosc%22%3A%22Odjazd%22%2C%22Przewoznicy%22%3A%5B%22KM%22%2C%22PR%22%2C%22KM%C5%81%22%2C%22%C5%81KA%22%2C%22IC%22%2C%22AR%22%2C%22KD%22%2C%22KS%22%2C%22KW%22%2C%22LEO%22%2C%22ODEG%22%2C%22CARGO%22%2C%22SKMT%22%2C%22SKPL%22%2C%22SKM%22%5D%2C%22MinimalnyCzasNaPrzesiadke%22%3A%2200%3A10%22%2C%22grc%22%3A%22%22%2C%22p%22%3A%22ok%22%7D&rodzaj=NoweWyszukiwanie&zapamietanePolaczenia=null&__RequestVerificationToken=arWI_CJhi7iighRQMaB7eWLKYMUMvW5kA2ObVpS0KjEslYMd1fSBSkrY4Ipi978ZUEktfFvHurtV6XWxk5zF0PORcxv_q0XZp3K6SGYKOnM1'
