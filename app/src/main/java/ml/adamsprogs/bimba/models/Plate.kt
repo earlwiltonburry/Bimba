@@ -1,10 +1,11 @@
 package ml.adamsprogs.bimba.models
 
-import org.onebusaway.gtfs.model.AgencyAndId
+import ml.adamsprogs.bimba.gtfs.AgencyAndId
+import java.io.Serializable
 
-data class Plate(val line: AgencyAndId, val stop: AgencyAndId, val headsign: String, val departures: HashMap<AgencyAndId, HashSet<Departure>>?) {
+data class Plate(val id: ID, val departures: HashMap<AgencyAndId, HashSet<Departure>>?) {
     override fun toString(): String {
-        var result = "$line=$stop=$headsign={"
+        var result = "${id.line}=${id.stop}=${id.headsign}={"
         if (departures != null) {
             for ((service, column) in departures) {
                 result += service.toString() + ":"
@@ -36,7 +37,7 @@ data class Plate(val line: AgencyAndId, val stop: AgencyAndId, val headsign: Str
                         } catch (e: IllegalArgumentException) {
                         }
                     }
-            return Plate(line, stop, headsign, departures)
+            return Plate(ID(line, stop, headsign), departures)
         }
 
         fun join(set: Set<Plate>): HashMap<AgencyAndId, ArrayList<Departure>> {
@@ -53,5 +54,34 @@ data class Plate(val line: AgencyAndId, val stop: AgencyAndId, val headsign: Str
             }
             return departures
         }
+    }
+
+    data class ID(val line: AgencyAndId, val stop: AgencyAndId, val headsign: String) : Serializable {
+        companion object {
+            fun fromString(string: String): ID {
+                val (line, stop, headsign) = string.split("|")
+                return ID(AgencyAndId.convertFromString(line),
+                        AgencyAndId.convertFromString(stop), headsign)
+            }
+        }
+
+        override fun equals(other: Any?): Boolean {
+            if (other !is ID)
+                return false
+            return line == other.line && stop == other.stop && headsign.toLowerCase() == other.headsign.toLowerCase()
+        }
+
+        override fun toString(): String {
+            return "$line|$stop$headsign"
+        }
+
+        override fun hashCode(): Int {
+            var result = line.hashCode()
+            result = 31 * result + stop.hashCode()
+            result = 31 * result + headsign.hashCode()
+            return result
+        }
+
+        constructor(other: Plate.ID) : this(other.line, other.stop, other.headsign)
     }
 }

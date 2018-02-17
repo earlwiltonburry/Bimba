@@ -15,7 +15,7 @@ import ml.adamsprogs.bimba.Declinator
 import ml.adamsprogs.bimba.rollTime
 import java.util.*
 
-class DeparturesAdapter(val context: Context, private val departures: List<Departure>?, private val relativeTime: Boolean) :
+class DeparturesAdapter(val context: Context, private val departures: List<Departure>, private val relativeTime: Boolean) :
         RecyclerView.Adapter<DeparturesAdapter.ViewHolder>() {
 
     companion object {
@@ -24,21 +24,20 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
     }
 
     override fun getItemCount(): Int {
-
-        if (departures == null)
+        if (departures.isEmpty())
             return 1
         return departures.size
     }
 
     override fun getItemViewType(position: Int): Int {
-        return if (departures == null)
+        return if (departures.isEmpty())
             VIEW_TYPE_LOADING
         else
             VIEW_TYPE_CONTENT
     }
 
     override fun onBindViewHolder(holder: ViewHolder?, position: Int) {
-        if (departures == null) {
+        if (departures.isEmpty()) {
             return
         }
         val departure = departures[position]

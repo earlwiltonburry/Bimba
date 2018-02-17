@@ -59,4 +59,13 @@
         "Sei sicher, die Nachrichten auf\nhttps://www.ztm.poznan.pl/en\nkonsultieren.\n\n"
     </string>
     <string name="refreshing_cache">Cache wird aktualisiert. Es kann einige Zeit dauern…</string>
+    <string-array name="daysOfWeek">
+        <item>Montag</item>
+        <item>Dienstag</item>
+        <item>Mittwoch</item>
+        <item>Donerstag</item>
+        <item>Freitag</item>
+        <item>Samstag</item>
+        <item>Sontag</item>
+    </string-array>
 </resources>

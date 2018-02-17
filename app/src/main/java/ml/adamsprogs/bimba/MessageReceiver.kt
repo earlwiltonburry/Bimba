@@ -3,8 +3,8 @@ package ml.adamsprogs.bimba
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import ml.adamsprogs.bimba.models.Departure
+import ml.adamsprogs.bimba.models.Plate
 
 class MessageReceiver private constructor() : BroadcastReceiver() {
     companion object {
@@ -26,22 +26,11 @@ class MessageReceiver private constructor() : BroadcastReceiver() {
                 listener.onTimetableDownload(result)
             }
         }
-        if (intent?.action == VmClient.ACTION_DEPARTURES_CREATED) {
-            val departures = intent.getStringArrayListExtra(VmClient.EXTRA_DEPARTURES).map { Departure.fromString(it) } as ArrayList<Departure>
-            val requester = intent.getStringExtra(VmClient.EXTRA_REQUESTER)
-            val id = intent.getStringExtra(VmClient.EXTRA_ID)
-            val size = intent.getIntExtra(VmClient.EXTRA_SIZE, -1)
+        if (intent?.action == VmClient.ACTION_READY) {
+            val departures = intent.getStringArrayListExtra(VmClient.EXTRA_DEPARTURES)?.map { Departure.fromString(it) }?.toSet() as HashSet<Departure>?
+            val plateId = intent.getSerializableExtra(VmClient.EXTRA_PLATE_ID) as Plate.ID
             for (listener in onVmListeners) {
-                listener.onVm(departures, requester, id, size)
-            }
-        }
-        if (intent?.action == VmClient.ACTION_NO_DEPARTURES) {
-            Log.i("VM", "Response received")
-            val requester = intent.getStringExtra(VmClient.EXTRA_REQUESTER)
-            val id = intent.getStringExtra(VmClient.EXTRA_ID)
-            val size = intent.getIntExtra(VmClient.EXTRA_SIZE, -1)
-            for (listener in onVmListeners) {
-                listener.onVm(null, requester, id, size)
+                listener.onVm(departures, plateId)
             }
         }
     }
@@ -67,6 +56,6 @@ class MessageReceiver private constructor() : BroadcastReceiver() {
     }
 
     interface OnVmListener {
-        fun onVm(vmDepartures: ArrayList<Departure>?, requester: String, id: String, size: Int)
+        fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID)
     }
 }

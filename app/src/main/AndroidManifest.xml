@@ -32,15 +32,16 @@
         </activity>
         <activity android:name=".activities.NoDbActivity" />
 
-        <service
-            android:name=".VmClient"
-            android:exported="false" />
-
         <activity android:name=".activities.EditFavouriteActivity" />
         <activity
             android:name=".activities.HelpActivity"
             android:label="@string/title_activity_help"
             android:theme="@style/AppTheme" />
+
+        <service
+            android:name=".VmClient"
+            android:enabled="true"
+            android:exported="false" />
     </application>
 
 </manifest>

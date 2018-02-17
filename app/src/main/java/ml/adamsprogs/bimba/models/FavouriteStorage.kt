@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import org.onebusaway.gtfs.model.AgencyAndId
+import ml.adamsprogs.bimba.gtfs.AgencyAndId
 
 
 class FavouriteStorage private constructor(context: Context) : Iterable<Favourite> {
@@ -28,7 +28,7 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
     private val preferences: SharedPreferences = context.getSharedPreferences("ml.adamsprogs.bimba.prefs", Context.MODE_PRIVATE)
     val favouritesList: List<Favourite>
         get() {
-            return favourites.values.toList()
+            return favourites.values.toList().sortedBy { it.name }
         }
 
     init {
@@ -37,9 +37,9 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
         for ((name, jsonTimetables) in favouritesMap.entrySet()) {
             val timetables = HashSet<Plate>()
             jsonTimetables.asJsonArray.mapTo(timetables) {
-                Plate(AgencyAndId.convertFromString(it.asJsonObject["line"].asString),
+                Plate(Plate.ID(AgencyAndId.convertFromString(it.asJsonObject["line"].asString),
                         AgencyAndId.convertFromString(it.asJsonObject["stop"].asString),
-                        it.asJsonObject["headsign"].asString, null)
+                        it.asJsonObject["headsign"].asString), null)
             }
             favourites[name] = Favourite(name, timetables)
         }
@@ -79,9 +79,9 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
             val timetables = JsonArray()
             for (timetable in favourite.timetables) {
                 val element = JsonObject()
-                element.addProperty("stop", timetable.stop.toString())
-                element.addProperty("line", timetable.line.toString())
-                element.addProperty("headsign", timetable.headsign)
+                element.addProperty("stop", timetable.id.stop.toString())
+                element.addProperty("line", timetable.id.line.toString())
+                element.addProperty("headsign", timetable.id.headsign)
                 timetables.add(element)
             }
             rootObject.add(name, timetables)

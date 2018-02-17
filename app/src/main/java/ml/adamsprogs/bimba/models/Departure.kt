@@ -1,7 +1,7 @@
 package ml.adamsprogs.bimba.models
 
 import ml.adamsprogs.bimba.rollTime
-import org.onebusaway.gtfs.model.AgencyAndId
+import ml.adamsprogs.bimba.gtfs.AgencyAndId
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap

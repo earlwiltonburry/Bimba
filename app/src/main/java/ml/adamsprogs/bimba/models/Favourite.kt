@@ -1,10 +1,12 @@
 package ml.adamsprogs.bimba.models
 
+import android.content.Context
+import android.content.Intent
 import android.os.Parcel
 import android.os.Parcelable
-import android.util.Log
 import ml.adamsprogs.bimba.MessageReceiver
-import org.onebusaway.gtfs.model.AgencyAndId
+import ml.adamsprogs.bimba.VmClient
+import ml.adamsprogs.bimba.gtfs.AgencyAndId
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
@@ -16,14 +18,11 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         private set
     var timetables: HashSet<Plate>
         private set
-    private val vmDeparturesMap = HashMap<String, ArrayList<Departure>>()
-    private var vmDepartures = ArrayList<Departure>()
+    private var vmDepartures = HashMap<Plate.ID, Set<Departure>>()
     val timetable = Timetable.getTimetable()
-    val size: Int
-        get() = timetables.size
 
-    private val requestValidityNumber = HashMap<String, Int>()
-    private val requestValidity = HashMap<String, Boolean>()
+    val size
+        get() = this.timetables.size
 
     private val onVmPreparedListeners = HashSet<OnVmPreparedListener>()
 
@@ -61,19 +60,56 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
     }
 
     private fun filterVmDepartures() {
-        this.vmDepartures
-                .filter { it.timeTill() < 0 }
-                .forEach { this.vmDepartures.remove(it) }
+        this.vmDepartures.forEach {
+            val newSet = it.value
+                    .filter { it.timeTill() >= 0 }.toSet()
+            this.vmDepartures[it.key] = newSet
+        }
     }
 
     fun delete(plate: Plate) {
-        timetables.remove(timetables.find { it.stop == plate.stop && it.line == plate.line })
+        timetables.remove(timetables.find { it.id == plate.id })
     }
 
-    fun registerOnVm(receiver: MessageReceiver) {
+    fun registerOnVm(receiver: MessageReceiver, context: Context) {
         if (!isRegisteredOnVmListener) {
             receiver.addOnVmListener(this)
             isRegisteredOnVmListener = true
+
+            val segments = HashMap<AgencyAndId, StopSegment>()
+            timetables.forEach {
+                if (segments[it.id.stop] == null)
+                    segments[it.id.stop] = StopSegment(it.id.stop, HashSet())
+                segments[it.id.stop]!!.plates = segments[it.id.stop]!!.plates!!.plus(it.id)
+            }
+
+            segments.forEach {
+                val intent = Intent(context, VmClient::class.java)
+                intent.putExtra("stop", it.value)
+                intent.action = "request"
+                context.startService(intent)
+            }
+        }
+    }
+
+    fun deregisterOnVm(receiver: MessageReceiver, context: Context) {
+        if (isRegisteredOnVmListener) {
+            receiver.removeOnVmListener(this)
+            isRegisteredOnVmListener = false
+
+            val segments = HashMap<AgencyAndId, StopSegment>()
+            timetables.forEach {
+                if (segments[it.id.stop] == null)
+                    segments[it.id.stop] = StopSegment(it.id.stop, HashSet())
+                segments[it.id.stop]!!.plates = segments[it.id.stop]!!.plates!!.plus(it.id)
+            }
+
+            segments.forEach {
+                val intent = Intent(context, VmClient::class.java)
+                intent.putExtra("stop", it.value)
+                intent.action = "remove"
+                context.startService(intent)
+            }
         }
     }
 
@@ -97,7 +133,10 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
             return null
 
         if (vmDepartures.isNotEmpty()) {
-            return vmDepartures.minBy { it.timeTill() }
+            return vmDepartures.flatMap { it.value }
+                    .minBy {
+                        it.timeTill()
+                    }
         }
 
         val twoDayDepartures = nowDepartures()
@@ -133,47 +172,22 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
 
         if (vmDepartures.isNotEmpty()) {
             val today = timetable.getServiceForToday()
-            departures[today] = vmDepartures
+            departures[today] = vmDepartures.flatMap { it.value } as ArrayList<Departure>
         }
 
         return Departure.createDepartures(departures)
     }
 
-    fun fullTimetable(): Map<AgencyAndId, List<Departure>>? {
+    fun fullTimetable(): Map<AgencyAndId, List<Departure>> {
         return timetable.getStopDepartures(timetables)
     }
 
-    override fun onVm(vmDepartures: ArrayList<Departure>?, requester: String, id: String, size: Int) {
-        Log.i("VM", "onVM fired")
-        val requesterName = requester.split(";")[0]
-        val requesterTimetable: String = try {
-            requester.split(";")[1]
-        } catch (e: IndexOutOfBoundsException) {
-            ""
-        }
-
-        if (!requestValidity.containsKey(id)) {
-            requestValidity[id] = false
-            requestValidityNumber[id] = 0
-        }
-        if (vmDepartures != null && requesterName == name) {
-            vmDeparturesMap[requesterTimetable] = vmDepartures
-            this.vmDepartures = vmDeparturesMap.flatMap { it.value } as ArrayList<Departure>
-            requestValidity[id] = true
-            requestValidityNumber[id] = requestValidityNumber[id]!! + 1
-        } else if (requesterName == name) {
-            requestValidityNumber[id] = requestValidityNumber[id]!! + 1
-        }
-        if (requestValidityNumber[id] == size) {
-            Log.i("VM", "All onVm’s collected")
-            for (listener in onVmPreparedListeners) {
-                listener.onVmPrepared()
-            }
-            if (!requestValidity[id]!!) {
-                this.vmDepartures = ArrayList()
-            }
-            requestValidity.remove(id)
-            requestValidityNumber.remove(id)
+    override fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID) {
+        if (timetables.any { it.id == plateId }) {
+            if (vmDepartures == null)
+                this.vmDepartures.remove(plateId)
+            else
+                this.vmDepartures[plateId] = vmDepartures
         }
         filterVmDepartures()
     }

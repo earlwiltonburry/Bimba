@@ -3,7 +3,7 @@ package ml.adamsprogs.bimba.models
 import android.os.Parcel
 import android.os.Parcelable
 import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
-import org.onebusaway.gtfs.model.AgencyAndId
+import ml.adamsprogs.bimba.gtfs.AgencyAndId
 
 class StopSuggestion(private val directions: HashSet<String>, val id: AgencyAndId) : SearchSuggestion {
 

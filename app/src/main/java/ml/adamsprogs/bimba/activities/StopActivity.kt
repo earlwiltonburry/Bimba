@@ -17,33 +17,28 @@ import ml.adamsprogs.bimba.models.*
 import ml.adamsprogs.bimba.*
 import kotlin.concurrent.thread
 import kotlinx.android.synthetic.main.activity_stop.*
-import org.onebusaway.gtfs.model.AgencyAndId
+import ml.adamsprogs.bimba.gtfs.AgencyAndId
 
-class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener, Favourite.OnVmPreparedListener {
+class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, MessageReceiver.OnVmListener, Favourite.OnVmPreparedListener {
     companion object {
-        val EXTRA_STOP_ID = "stopId"
-        val EXTRA_STOP_SYMBOL = "stopSymbol"
-        val EXTRA_FAVOURITE = "favourite"
-        val REQUESTER_ID = "stopActivity"
-        val SOURCE_TYPE = "sourceType"
-        val SOURCE_TYPE_STOP = "stop"
-        val SOURCE_TYPE_FAV = "favourite"
+        const val EXTRA_STOP_ID = "stopId"
+        const val EXTRA_FAVOURITE = "favourite"
+        const val SOURCE_TYPE = "sourceType"
+        const val SOURCE_TYPE_STOP = "stop"
+        const val SOURCE_TYPE_FAV = "favourite"
     }
 
-    private var stopId: AgencyAndId? = null
-    private var stopSymbol: String? = null
+
+    private var stopSegment: StopSegment? = null
     private var favourite: Favourite? = null
     private var timetableType = "departure"
     private var sectionsPagerAdapter: SectionsPagerAdapter? = null
     private var viewPager: ViewPager? = null
     private lateinit var timetable: Timetable
-    private val today = Calendar.getInstance()
     private lateinit var tabLayout: TabLayout
-    private var timer = Timer()
-    private lateinit var timerTask: TimerTask
     private val context = this
     private val receiver = MessageReceiver.getMessageReceiver()
-    private var vmRequestId = 0
+    private val vmDepartures = HashMap<Plate.ID, Set<Departure>>()
 
     private lateinit var sourceType: String
 
@@ -60,9 +55,9 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener, Favourit
 
         when (sourceType) {
             SOURCE_TYPE_STOP -> {
-                stopId = intent.getSerializableExtra(EXTRA_STOP_ID) as AgencyAndId
-                stopSymbol = intent.getStringExtra(EXTRA_STOP_SYMBOL)
-                supportActionBar?.title = timetable.getStopName(stopId!!)
+                stopSegment = StopSegment(intent.getSerializableExtra(EXTRA_STOP_ID) as AgencyAndId, null)
+                stopSegment!!.fillPlates()
+                supportActionBar?.title = timetable.getStopName(stopSegment!!.stop)
             }
             SOURCE_TYPE_FAV -> {
                 favourite = intent.getParcelableExtra(EXTRA_FAVOURITE)
@@ -71,31 +66,22 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener, Favourit
             }
         }
 
-        createTimerTask()
-
         prepareOnDownloadListener()
 
         viewPager = container
         tabLayout = tabs
-        sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, null)
+        sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, HashMap<AgencyAndId, ArrayList<Departure>>())
 
-
-        if (sourceType == SOURCE_TYPE_FAV) {
-            favourite!!.registerOnVm(receiver)
-        }
-
-        thread {
+        /*thread {
             if (sourceType == SOURCE_TYPE_STOP) {
-                @Suppress("UNCHECKED_CAST")
-                sectionsPagerAdapter!!.departures = Departure.createDepartures(stopId!!) as HashMap<String, ArrayList<Departure>>
+                sectionsPagerAdapter!!.departures = Departure.createDepartures(stopSegment!!.stop)
             } else {
-                @Suppress("UNCHECKED_CAST")
-                sectionsPagerAdapter!!.departures = favourite!!.allDepartures() as HashMap<String, ArrayList<Departure>>
+                sectionsPagerAdapter!!.departures = favourite!!.allDepartures()
             }
             runOnUiThread {
                 sectionsPagerAdapter?.notifyDataSetChanged()
             }
-        }
+        }*/
 
         viewPager!!.adapter = sectionsPagerAdapter
         viewPager!!.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tabLayout))
@@ -103,15 +89,12 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener, Favourit
 
         selectTodayPage()
 
-        scheduleRefresh()
-
         showFab()
     }
 
     private fun getFavouriteDepartures() {
         thread {
-            @Suppress("UNCHECKED_CAST")
-            sectionsPagerAdapter!!.departures = favourite!!.allDepartures() as HashMap<String, ArrayList<Departure>>
+            sectionsPagerAdapter!!.departures = favourite!!.allDepartures()
         }
         runOnUiThread {
             sectionsPagerAdapter?.notifyDataSetChanged()
@@ -126,19 +109,21 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener, Favourit
         if (sourceType == SOURCE_TYPE_FAV)
             return
 
+        val stopSymbol = timetable.getStopCode(stopSegment!!.stop)
+
         val favourites = FavouriteStorage.getFavouriteStorage(context)
-        if (!favourites.has(stopSymbol!!)) {
+        if (!favourites.has(stopSymbol)) {
             fab.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_favourite_empty, this.theme))
         }
 
         fab.setOnClickListener {
-            if (!favourites.has(stopSymbol!!)) {
+            if (!favourites.has(stopSymbol)) {
                 val items = HashSet<Plate>()
-                timetable.getLinesForStop(stopId!!).forEach {
-                    val o = Plate(it, stopId!!, null)
+                timetable.getTripsForStop(stopSegment!!.stop).forEach {
+                    val o = Plate(Plate.ID(it.routeId, stopSegment!!.stop, it.headsign), null)
                     items.add(o)
                 }
-                favourites.add(stopSymbol as String, items)
+                favourites.add(stopSymbol, items)
                 fab.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_favourite, this.theme))
             } else {
                 Snackbar.make(it, getString(R.string.stop_already_fav), Snackbar.LENGTH_LONG)
@@ -147,57 +132,49 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener, Favourit
         }
     }
 
-    private fun createTimerTask() {
-        timerTask = object : TimerTask() {
-            override fun run() {
-                val vmIntent = Intent(context, VmClient::class.java)
-                vmIntent.putExtra(VmClient.EXTRA_STOP_SYMBOL, stopSymbol)
-                vmIntent.putExtra(VmClient.EXTRA_REQUESTER, REQUESTER_ID)
-                vmIntent.putExtra(VmClient.EXTRA_ID, "stop-${vmRequestId++}")
-                startService(vmIntent)
-                runOnUiThread {
-                    sectionsPagerAdapter?.notifyDataSetChanged()
-                }
-            }
-        }
-    }
-
     private fun prepareOnDownloadListener() {
-        val filter = IntentFilter(VmClient.ACTION_DEPARTURES_CREATED)
-        filter.addAction(VmClient.ACTION_NO_DEPARTURES)
+        val filter = IntentFilter(TimetableDownloader.ACTION_DOWNLOADED)
+        filter.addAction(VmClient.ACTION_READY)
         filter.addCategory(Intent.CATEGORY_DEFAULT)
         registerReceiver(receiver, filter)
-        receiver.addOnVmListener(context as MessageReceiver.OnVmListener)
+        receiver.addOnTimetableDownloadListener(context)
+        if (sourceType == SOURCE_TYPE_STOP) {
+            receiver.addOnVmListener(context)
+            val intent = Intent(this, VmClient::class.java)
+            intent.putExtra("stop", stopSegment)
+            intent.action = "request"
+            startService(intent)
+        } else
+            favourite!!.registerOnVm(receiver, context)
     }
 
-    override fun onVm(vmDepartures: ArrayList<Departure>?, requester: String, id: String, size: Int) {
-        if (timetableType == "departure" && requester == REQUESTER_ID && sourceType == SOURCE_TYPE_STOP) {
-            @Suppress("UNCHECKED_CAST")
-            val fullDepartures = Departure.createDepartures(stopId!!) as HashMap<String, ArrayList<Departure>>
-            if (vmDepartures != null) {
-                fullDepartures[today.getMode()] = vmDepartures
-            }
-            sectionsPagerAdapter?.departures = fullDepartures
+    override fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID) {
+        if (timetableType == "departure" && stopSegment!!.contains(plateId)) {
+            if (vmDepartures != null)
+                this.vmDepartures[plateId] = vmDepartures
+            else
+                this.vmDepartures.remove(plateId)
+            val departures = HashMap<AgencyAndId, List<Departure>>()
+            if (this.vmDepartures.isNotEmpty()) {
+                departures[timetable.getServiceForToday()] = this.vmDepartures.flatMap { it.value }.sortedBy { it.timeTill() }
+                sectionsPagerAdapter?.departures = departures
+            } else
+                sectionsPagerAdapter?.departures = Departure.createDepartures(stopSegment!!.stop)
             sectionsPagerAdapter?.notifyDataSetChanged()
         }
-        if (timetableType == "departure" && requester == REQUESTER_ID && sourceType == SOURCE_TYPE_FAV) {
-            getFavouriteDepartures()
-        }
     }
 
-    private fun selectTodayPage() {
+    override fun onTimetableDownload(result: String?) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    private fun selectTodayPage() { //todo Services
+        val today = Calendar.getInstance()
         when (today.get(Calendar.DAY_OF_WEEK)) {
             Calendar.SATURDAY -> tabLayout.getTabAt(1)?.select()
             Calendar.SUNDAY -> tabLayout.getTabAt(2)?.select()
             else -> tabLayout.getTabAt(0)?.select()
         }
-    }
-
-    private fun scheduleRefresh() {
-        timer.cancel()
-        timer = Timer()
-        createTimerTask()
-        timer.scheduleAtFixedRate(timerTask, 0, 15000)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -212,25 +189,21 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener, Favourit
             if (timetableType == "departure") {
                 timetableType = "full"
                 item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_timetable_departure, this.theme))
-                @Suppress("UNCHECKED_CAST")
                 if (sourceType == SOURCE_TYPE_STOP)
-                    sectionsPagerAdapter?.departures = timetable.getStopDepartures(stopId!!) as HashMap<String, ArrayList<Departure>>
+                    sectionsPagerAdapter?.departures = timetable.getStopDepartures(stopSegment!!.stop)
                 else
-                    sectionsPagerAdapter?.departures = favourite!!.fullTimetable() as HashMap<String, ArrayList<Departure>>
+                    sectionsPagerAdapter?.departures = favourite!!.fullTimetable()
                 sectionsPagerAdapter?.relativeTime = false
                 sectionsPagerAdapter?.notifyDataSetChanged()
-                timer.cancel()
             } else {
                 timetableType = "departure"
                 item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_timetable_full, this.theme))
-                @Suppress("UNCHECKED_CAST")
                 if (sourceType == SOURCE_TYPE_STOP)
-                    sectionsPagerAdapter?.departures = Departure.createDepartures(stopId!!) as HashMap<String, ArrayList<Departure>>
+                    sectionsPagerAdapter?.departures = Departure.createDepartures(stopSegment!!.stop)
                 else
-                    sectionsPagerAdapter?.departures = favourite!!.allDepartures() as HashMap<String, ArrayList<Departure>>
+                    sectionsPagerAdapter?.departures = favourite!!.allDepartures()
                 sectionsPagerAdapter?.relativeTime = true
                 sectionsPagerAdapter?.notifyDataSetChanged()
-                scheduleRefresh()
             }
             return true
         }
@@ -240,9 +213,16 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener, Favourit
 
     override fun onDestroy() {
         super.onDestroy()
-        receiver.removeOnVmListener(context as MessageReceiver.OnVmListener)
+        receiver.removeOnTimetableDownloadListener(context)
+        if (sourceType == SOURCE_TYPE_STOP) {
+            receiver.removeOnVmListener(context)
+            val intent = Intent(this, VmClient::class.java)
+            intent.putExtra("stop", stopSegment)
+            intent.action = "remove"
+            startService(intent)
+        } else
+            favourite!!.deregisterOnVm(receiver, context)
         unregisterReceiver(receiver)
-        timer.cancel()
     }
 
     class PlaceholderFragment : Fragment() {
@@ -254,7 +234,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener, Favourit
             val departuresList: RecyclerView = rootView.findViewById(R.id.departuresList)
             departuresList.addItemDecoration(DividerItemDecoration(departuresList.context, layoutManager.orientation))
 
-            val departures = arguments?.getStringArrayList("departures")?.map { Departure.fromString(it) }
+            val departures = arguments?.getStringArrayList("departures")!!.map { Departure.fromString(it) }
             departuresList.adapter = DeparturesAdapter(activity as Context, departures,
                     arguments?.get("relativeTime") as Boolean)
             departuresList.layoutManager = layoutManager
@@ -264,17 +244,17 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener, Favourit
         companion object {
             private const val ARG_SECTION_NUMBER = "section_number"
 
-            fun newInstance(sectionNumber: Int, departures: ArrayList<Departure>?, relativeTime: Boolean):
+            fun newInstance(sectionNumber: Int, departures: List<Departure>, relativeTime: Boolean):
                     PlaceholderFragment {
                 val fragment = PlaceholderFragment()
                 val args = Bundle()
                 args.putInt(ARG_SECTION_NUMBER, sectionNumber)
-                if (departures != null) {
+                if (departures.isEmpty()) {
                     val d = ArrayList<String>()
                     departures.mapTo(d) { it.toString() }
                     args.putStringArrayList("departures", d)
                 } else
-                    args.putStringArrayList("departures", null)
+                    args.putStringArrayList("departures", ArrayList<String>())
                 args.putBoolean("relativeTime", relativeTime)
                 fragment.arguments = args
                 return fragment
@@ -282,7 +262,11 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener, Favourit
         }
     }
 
-    inner class SectionsPagerAdapter(fm: FragmentManager, var departures: HashMap<String, ArrayList<Departure>>?) : FragmentStatePagerAdapter(fm) {
+    inner class SectionsPagerAdapter(fm: FragmentManager, var departures: Map<AgencyAndId, List<Departure>>) : FragmentStatePagerAdapter(fm) {
+
+        private val modes = departures.keys.sortedBy {
+            timetable.calendarToMode(AgencyAndId(it.id)).sorted()[0]
+        }
 
         var relativeTime = true
 
@@ -291,15 +275,13 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnVmListener, Favourit
         }
 
         override fun getItem(position: Int): Fragment {
-            var mode: String? = null
-            when (position) {
-                0 -> mode = Timetable.MODE_WORKDAYS
-                1 -> mode = Timetable.MODE_SATURDAYS
-                2 -> mode = Timetable.MODE_SUNDAYS
-            }
-            return PlaceholderFragment.newInstance(position + 1, departures?.get(mode), relativeTime)
+            val list = if (departures.isEmpty())
+                ArrayList()
+            else
+                departures[modes[position]]!!
+            return PlaceholderFragment.newInstance(position + 1, list, relativeTime)
         }
 
-        override fun getCount() = 3
+        override fun getCount() = if (departures.isEmpty()) 1 else modes.size
     }
 }

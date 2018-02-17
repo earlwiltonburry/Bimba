@@ -12,7 +12,6 @@ import java.io.*
 import java.security.MessageDigest
 import android.app.NotificationManager
 import android.os.Build
-import android.util.Log
 import java.util.*
 
 class TimetableDownloader : IntentService("TimetableDownloader") {
@@ -28,7 +27,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
     private lateinit var notificationManager: NotificationManager
     private var size: Int = 0
 
-    override fun onHandleIntent(intent: Intent?) {
+    override fun onHandleIntent(intent: Intent?) { //fixme throws something
 
         if (intent != null) {
             notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

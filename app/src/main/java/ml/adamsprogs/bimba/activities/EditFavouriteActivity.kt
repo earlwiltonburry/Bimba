@@ -13,7 +13,7 @@ import kotlinx.android.synthetic.main.activity_edit_favourite.*
 
 class EditFavouriteActivity : AppCompatActivity() {
     companion object {
-        val EXTRA_FAVOURITE = "favourite"
+        const val EXTRA_FAVOURITE = "favourite"
     }
 
     private lateinit var favourites: FavouriteStorage

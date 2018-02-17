@@ -31,7 +31,7 @@
     <string name="done">Pronto</string>
     <string name="favourite_edit">Modifica il favorito</string>
     <string name="favourite_name">Il nome del favorito</string>
-    <string name="edit_favourite_title">Modifica «$1$s»</string>
+    <string name="edit_favourite_title">Modifica «%1$s»</string>
     <string name="no_next_departure">Nessuna partenza successiva</string>
     <string name="action_merge">Unisci</string>
     <string name="merge_favourites">Unisci le favorite</string>
@@ -57,4 +57,13 @@
         "Assicurati di consultare le notifiche su\nhttps://www.ztm.poznan.pl/en.\n\n"
     </string>
     <string name="refreshing_cache">Cache sta essendo aggiornato. Può richiedere un certo tempo…</string>
+    <string-array name="daysOfWeek">
+        <item>Lunedi</item>
+        <item>Martedi</item>
+        <item>Mercoledi</item>
+        <item>Giovedi</item>
+        <item>Venerdi</item>
+        <item>Sabato</item>
+        <item>Domenica</item>
+    </string-array>
 </resources>

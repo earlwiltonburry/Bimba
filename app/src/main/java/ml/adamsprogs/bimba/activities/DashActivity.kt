@@ -22,20 +22,18 @@ import android.os.Bundle
 import android.util.Log
 import kotlinx.android.synthetic.main.activity_dash.*
 
+//todo cards
 class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener,
         FavouritesAdapter.OnMenuItemClickListener, Favourite.OnVmPreparedListener {
     val context: Context = this
-    val receiver = MessageReceiver.getMessageReceiver()
+    private val receiver = MessageReceiver.getMessageReceiver()
     lateinit var timetable: Timetable
     var stops: ArrayList<StopSuggestion>? = null
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var drawerView: NavigationView
     lateinit var favouritesList: RecyclerView
     lateinit var searchView: FloatingSearchView
-    lateinit var favourites: FavouriteStorage
-    private var timer = Timer()
-    private lateinit var timerTask: TimerTask
-    private var vmRequestId = 0
+    private lateinit var favourites: FavouriteStorage
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,16 +42,12 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         setSupportActionBar(toolbar)
         supportActionBar?.title = getString(R.string.merge_favourites)
 
-        createTimerTask()
-
-        prepareOnDownloadListener()
-        startDownloaderService()
-
         getStops()
 
         prepareFavourites()
 
-        scheduleRefresh()
+        prepareListeners()
+        startDownloaderService()
 
         drawerLayout = drawer_layout
         drawerView = drawer
@@ -115,7 +109,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 searchSuggestion as StopSuggestion
                 intent.putExtra(StopActivity.SOURCE_TYPE, StopActivity.SOURCE_TYPE_STOP)
                 intent.putExtra(StopActivity.EXTRA_STOP_ID, searchSuggestion.id)
-                intent.putExtra(StopActivity.EXTRA_STOP_SYMBOL, searchSuggestion.symbol)
                 startActivity(intent)
             }
 
@@ -146,38 +139,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         favouritesList.layoutManager = layoutManager
     }
 
-    private fun scheduleRefresh() {
-        timer.cancel()
-        timer = Timer()
-        createTimerTask()
-        timer.scheduleAtFixedRate(timerTask, 0, 15000)
-    }
-
-    private fun createTimerTask() {
-        timerTask = object : TimerTask() {
-            override fun run() {
-                for (fav in favourites) {
-                    fav.registerOnVm(receiver)
-                    fav.addOnVmPreparedListener(this@DashActivity)
-                    for (t in fav.timetables) {
-                        val symbol = timetable.getStopSymbol(t.stop)
-                        val line = timetable.getLineNumber(t.line)
-                        val intent = Intent(context, VmClient::class.java)
-                        intent.putExtra(VmClient.EXTRA_STOP_SYMBOL, symbol)
-                        intent.putExtra(VmClient.EXTRA_LINE_NUMBER, line)
-                        intent.putExtra(VmClient.EXTRA_ID, "fav-$vmRequestId")
-                        intent.putExtra(VmClient.EXTRA_SIZE, fav.timetables.size)
-                        intent.putExtra(VmClient.EXTRA_REQUESTER,
-                                "${fav.name};${t.stop}${t.line}")
-                        context.startService(intent)
-                    }
-                    vmRequestId++
-                    Log.i("VM", "Sent request for ${fav.name}")
-                }
-            }
-        }
-    }
-
     override fun onVmPrepared() {
         Log.i("VM", "DataSetChange")
         favouritesList.adapter.notifyDataSetChanged()
@@ -188,13 +149,15 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         stops = timetable.getStops() as ArrayList<StopSuggestion>
     }
 
-    private fun prepareOnDownloadListener() {
+    private fun prepareListeners() {
         val filter = IntentFilter(TimetableDownloader.ACTION_DOWNLOADED)
-        filter.addAction(VmClient.ACTION_DEPARTURES_CREATED)
-        filter.addAction(VmClient.ACTION_NO_DEPARTURES)
+        filter.addAction(VmClient.ACTION_READY)
         filter.addCategory(Intent.CATEGORY_DEFAULT)
         registerReceiver(receiver, filter)
         receiver.addOnTimetableDownloadListener(context as MessageReceiver.OnTimetableDownloadListener)
+        favourites.favouritesList.forEach {
+            it.registerOnVm(receiver, context)
+        }
     }
 
     private fun startDownloaderService() {
@@ -220,6 +183,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     override fun onDestroy() {
         super.onDestroy()
         receiver.removeOnTimetableDownloadListener(context as MessageReceiver.OnTimetableDownloadListener)
+        favourites.favouritesList.forEach {
+            it.deregisterOnVm(receiver, context)
+        }
         unregisterReceiver(receiver)
     }
 
@@ -248,9 +214,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         result = result.replace('ą', 'a')
         result = result.replace('ś', 's')
         result = result.replace('ł', 'l')
-        result = result.replace('ż', 'ż')
-        result = result.replace('ź', 'ź')
-        result = result.replace('ć', 'ć')
+        result = result.replace('ż', 'z')
+        result = result.replace('ź', 'z')
+        result = result.replace('ć', 'c')
         result = result.replace('ń', 'n')
         return result
     }
@@ -267,6 +233,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             Snackbar.make(findViewById(R.id.drawer_layout), getString(R.string.refreshing_cache), Snackbar.LENGTH_LONG).show()
             timetable.refresh(context)
             stops = timetable.getStops() as ArrayList<StopSuggestion>
+
+            drawerView.menu.findItem(R.id.drawer_validity_since).title = getString(R.string.valid_since, timetable.getValidSince())
+            drawerView.menu.findItem(R.id.drawer_validity_till).title = getString(R.string.valid_since, timetable.getValidTill())
         }
     }
 
