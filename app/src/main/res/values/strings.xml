@@ -71,6 +71,7 @@
     <string name="departure_floor" translatable="false">departure floor type (lowFloor)</string>
     <string name="departure_info" translatable="false">departure info icon</string>
     <string name="refreshing_cache">Refreshing cache. May take some time…</string>
+    <string name="timetable_converting">Converting timetable…</string>
 
     <string-array name="daysOfWeek">
         <item>Monday</item>

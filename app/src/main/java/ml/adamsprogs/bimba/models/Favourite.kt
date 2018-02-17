@@ -5,7 +5,7 @@ import android.content.Intent
 import android.os.Parcel
 import android.os.Parcelable
 import ml.adamsprogs.bimba.MessageReceiver
-import ml.adamsprogs.bimba.VmClient
+import ml.adamsprogs.bimba.datasources.VmClient
 import ml.adamsprogs.bimba.gtfs.AgencyAndId
 import java.util.*
 import kotlin.collections.ArrayList

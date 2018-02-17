@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.content.IntentFilter
 import ml.adamsprogs.bimba.*
 import kotlinx.android.synthetic.main.activity_nodb.*
+import ml.adamsprogs.bimba.datasources.TimetableDownloader
 
 class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityChangeListener, MessageReceiver.OnTimetableDownloadListener {
     private val networkStateReceiver = NetworkStateReceiver()
@@ -63,12 +64,14 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
 
     override fun onTimetableDownload(result: String?) {
         when (result) {
-            TimetableDownloader.RESULT_DOWNLOADED -> {
+            TimetableDownloader.RESULT_FINISHED -> {
                 timetableDownloadReceiver.removeOnTimetableDownloadListener(this)
                 networkStateReceiver.removeOnConnectivityChangeListener(this)
                 startActivity(Intent(this, DashActivity::class.java))
                 finish()
             }
+            TimetableDownloader.RESULT_DOWNLOADED ->
+                no_db_caption.text = getString(R.string.timetable_converting)
             else -> no_db_caption.text = getString(R.string.error_try_later)
         }
     }

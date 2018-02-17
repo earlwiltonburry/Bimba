@@ -14,7 +14,7 @@
         <activity android:name=".activities.DashActivity" />
 
         <service
-            android:name=".TimetableDownloader"
+            android:name=".datasources.TimetableDownloader"
             android:exported="false" />
 
         <activity
@@ -39,7 +39,7 @@
             android:theme="@style/AppTheme" />
 
         <service
-            android:name=".VmClient"
+            android:name=".datasources.VmClient"
             android:enabled="true"
             android:exported="false" />
     </application>

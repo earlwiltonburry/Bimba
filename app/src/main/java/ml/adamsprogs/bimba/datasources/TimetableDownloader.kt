@@ -1,4 +1,4 @@
-package ml.adamsprogs.bimba
+package ml.adamsprogs.bimba.datasources
 
 import android.annotation.TargetApi
 import android.app.IntentService
@@ -12,6 +12,10 @@ import java.io.*
 import java.security.MessageDigest
 import android.app.NotificationManager
 import android.os.Build
+import ml.adamsprogs.bimba.NetworkStateReceiver
+import ml.adamsprogs.bimba.NotificationChannels
+import ml.adamsprogs.bimba.R
+import ml.adamsprogs.bimba.models.Timetable
 import java.util.*
 
 class TimetableDownloader : IntentService("TimetableDownloader") {
@@ -22,6 +26,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
         const val RESULT_NO_CONNECTIVITY = "no connectivity"
         const val RESULT_UP_TO_DATE = "up-to-date"
         const val RESULT_DOWNLOADED = "downloaded"
+        const val RESULT_FINISHED = "finished"
     }
 
     private lateinit var notificationManager: NotificationManager
@@ -43,25 +48,33 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 return
             }
             val lastModified = httpCon.getHeaderField("Content-Disposition").split("=")[1].trim('\"').split("_")[0]
+            //todo size
             val currentLastModified = prefs.getString("timetableLastModified", "19791012")
             if (lastModified <= currentLastModified && lastModified <= today()) {
                 sendResult(RESULT_UP_TO_DATE)
                 return
             }
 
-            notify(0)
+            notifyDownloading(0)
 
-            val file = File(this.filesDir, "new_timetable.zip")
-            copyInputStreamToFile(httpCon.inputStream, file)
-            val oldFile = File(this.filesDir, "timetable.zip")
-            oldFile.delete()
-            file.renameTo(oldFile)
+            val gtfs = File(this.filesDir, "timetable.zip")
+            val db = File(this.filesDir, "timetable.db")
+            copyInputStreamToFile(httpCon.inputStream, gtfs)
             val prefsEditor = prefs.edit()
             prefsEditor.putString("timetableLastModified", lastModified)
             prefsEditor.apply()
             sendResult(RESULT_DOWNLOADED)
 
+            notifyConverting()
+
+            db.delete()
+            TimetableConverter(gtfs, File(this.filesDir, "timetable.db"), this)
+            gtfs.delete()
+            Timetable.getTimetable().refresh(this)
+
             cancelNotification()
+
+            sendResult(RESULT_FINISHED)
         }
     }
 
@@ -82,7 +95,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
         sendBroadcast(broadcastIntent)
     }
 
-    private fun notify(progress: Int) {
+    private fun notifyDownloading(progress: Int) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
             notifyCompat(progress)
         else
@@ -114,6 +127,39 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
         notificationManager.notify(42, builder.build())
     }
 
+    private fun notifyConverting() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+            notifyCompatConverting()
+        else
+            notifyStandardConverting()
+
+    }
+
+    @Suppress("DEPRECATION")
+    private fun notifyCompatConverting() {
+        val builder = NotificationCompat.Builder(this)
+                .setSmallIcon(R.drawable.ic_download)
+                .setContentTitle(getString(R.string.timetable_converting))
+                .setContentText("")
+                .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+                .setOngoing(true)
+                .setProgress(0, 0, true)
+        notificationManager.notify(42, builder.build())
+    }
+
+    @TargetApi(Build.VERSION_CODES.O)
+    private fun notifyStandardConverting() {
+        NotificationChannels.makeChannel(NotificationChannels.CHANNEL_UPDATES, "Updates", notificationManager)
+        val builder = Notification.Builder(this, NotificationChannels.CHANNEL_UPDATES)
+                .setSmallIcon(R.drawable.ic_download)
+                .setContentTitle(getString(R.string.timetable_converting))
+                .setContentText("")
+                .setCategory(Notification.CATEGORY_PROGRESS)
+                .setOngoing(true)
+                .setProgress(0, 0, true)
+        notificationManager.notify(42, builder.build())
+    }
+
     private fun cancelNotification() {
         notificationManager.cancel(42)
     }
@@ -132,7 +178,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 md.update(buf, 0, len)
                 out.write(buf, 0, len)
                 lenSum += len.toFloat() / 1024.0f
-                notify(lenSum.toInt())
+                notifyDownloading(lenSum.toInt())
             }
             out.close()
         } catch (e: Exception) {

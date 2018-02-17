@@ -36,10 +36,12 @@ dependencies {
     implementation 'com.github.arimorty:floatingsearchview:2.1.1'
     implementation 'com.google.code.gson:gson:2.8.1'
     implementation 'com.squareup.okhttp3:okhttp:3.8.1'
+    implementation 'de.siegmar:fastcsv:1.0.2'
+    implementation 'com.github.ghost1372:Mzip-Android:0.4.0'
 }
 repositories {
     maven { url "https://maven.google.com" }
-    maven { url 'http://nexus.onebusaway.org/content/groups/public/' }
+    maven { url 'https://jitpack.io' }
     mavenCentral()
 }
 

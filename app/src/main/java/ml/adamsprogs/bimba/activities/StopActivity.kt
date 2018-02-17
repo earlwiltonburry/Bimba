@@ -17,6 +17,8 @@ import ml.adamsprogs.bimba.models.*
 import ml.adamsprogs.bimba.*
 import kotlin.concurrent.thread
 import kotlinx.android.synthetic.main.activity_stop.*
+import ml.adamsprogs.bimba.datasources.TimetableDownloader
+import ml.adamsprogs.bimba.datasources.VmClient
 import ml.adamsprogs.bimba.gtfs.AgencyAndId
 
 class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, MessageReceiver.OnVmListener, Favourite.OnVmPreparedListener {
@@ -165,7 +167,15 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     override fun onTimetableDownload(result: String?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val message: String = when (result) {
+            TimetableDownloader.RESULT_DOWNLOADED -> getString(R.string.refreshing_cache)
+            TimetableDownloader.RESULT_NO_CONNECTIVITY -> getString(R.string.no_connectivity)
+            TimetableDownloader.RESULT_UP_TO_DATE -> getString(R.string.timetable_up_to_date)
+            TimetableDownloader.RESULT_FINISHED -> getString(R.string.timetable_downloaded)
+            else -> getString(R.string.error_try_later)
+        }
+        Snackbar.make(findViewById(R.id.drawer_layout), message, Snackbar.LENGTH_LONG).show()
+        //todo refresh
     }
 
     private fun selectTodayPage() { //todo Services

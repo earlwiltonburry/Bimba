@@ -68,4 +68,5 @@
         <item>Sobota</item>
         <item>Niedziela</item>
     </string-array>
+    <string name="timetable_converting">Konwertowanie rozkładu</string>
 </resources>

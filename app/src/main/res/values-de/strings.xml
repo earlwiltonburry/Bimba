@@ -68,4 +68,5 @@
         <item>Samstag</item>
         <item>Sontag</item>
     </string-array>
+    <string name="timetable_converting">Fahrplan wird umgewandelt…</string>
 </resources>

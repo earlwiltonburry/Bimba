@@ -1,4 +1,4 @@
-package ml.adamsprogs.bimba
+package ml.adamsprogs.bimba.datasources
 
 import android.app.Service
 import android.content.Intent
@@ -8,10 +8,13 @@ import android.os.IBinder
 import android.os.Process.THREAD_PRIORITY_BACKGROUND
 import android.util.Log
 import com.google.gson.Gson
+import ml.adamsprogs.bimba.NetworkStateReceiver
+import ml.adamsprogs.bimba.calendarFromIso
 import ml.adamsprogs.bimba.models.*
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import ml.adamsprogs.bimba.gtfs.AgencyAndId
+import ml.adamsprogs.bimba.secondsAfterMidnight
 import java.io.IOException
 import java.util.*
 import kotlin.collections.HashMap

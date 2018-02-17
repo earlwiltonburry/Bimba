@@ -66,4 +66,5 @@
         <item>Sabato</item>
         <item>Domenica</item>
     </string-array>
+    <string name="timetable_converting">L’orario e stando convertito</string>
 </resources>

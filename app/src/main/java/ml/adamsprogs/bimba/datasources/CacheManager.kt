@@ -1,4 +1,4 @@
-package ml.adamsprogs.bimba
+package ml.adamsprogs.bimba.datasources
 
 import android.content.Context
 import android.content.SharedPreferences

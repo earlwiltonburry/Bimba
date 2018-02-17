@@ -2,7 +2,7 @@ package ml.adamsprogs.bimba.models
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
-import ml.adamsprogs.bimba.CacheManager
+import ml.adamsprogs.bimba.datasources.CacheManager
 import ml.adamsprogs.bimba.gtfs.AgencyAndId
 import ml.adamsprogs.bimba.gtfs.Route
 import ml.adamsprogs.bimba.gtfs.Trip
@@ -245,8 +245,8 @@ class Timetable private constructor() {
         val longName = cursor.getString(3)
         val desc = cursor.getString(4)
         val type = cursor.getInt(5)
-        val colour = cursor.getInt(6)
-        val textColour = cursor.getInt(7)
+        val colour = Integer.parseInt(cursor.getString(6), 16)
+        val textColour = Integer.parseInt(cursor.getString(7), 16)
         val (to, from) = desc.split("|")
         val toSplit = to.split("^")
         val fromSplit = from.split("^")

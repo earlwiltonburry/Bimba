@@ -3,6 +3,8 @@ package ml.adamsprogs.bimba
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import ml.adamsprogs.bimba.datasources.TimetableDownloader
+import ml.adamsprogs.bimba.datasources.VmClient
 import ml.adamsprogs.bimba.models.Departure
 import ml.adamsprogs.bimba.models.Plate
 
