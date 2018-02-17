@@ -40,11 +40,15 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dash)
+
+        println("view set")
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO)
         setSupportActionBar(toolbar)
         supportActionBar?.title = getString(R.string.merge_favourites)
+        println("getting stops")
 
         getStops()
+        println("stops got")
 
         prepareFavourites()
 

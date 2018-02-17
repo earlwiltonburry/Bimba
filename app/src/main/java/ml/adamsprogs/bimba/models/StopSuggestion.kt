@@ -5,7 +5,7 @@ import android.os.Parcelable
 import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
 import ml.adamsprogs.bimba.gtfs.AgencyAndId
 
-class StopSuggestion(private val directions: HashSet<String>, val id: AgencyAndId) : SearchSuggestion {
+class StopSuggestion(private val directions: Set<String>, val id: AgencyAndId) : SearchSuggestion {
 
     @Suppress("UNCHECKED_CAST")
     constructor(parcel: Parcel) : this(parcel.readSerializable() as HashSet<String>, parcel.readSerializable() as AgencyAndId)
@@ -15,7 +15,7 @@ class StopSuggestion(private val directions: HashSet<String>, val id: AgencyAndI
     }
 
     override fun writeToParcel(dest: Parcel?, flags: Int) {
-        dest?.writeSerializable(directions)
+        dest?.writeSerializable(directions as HashSet)
         dest?.writeSerializable(id)
     }
 

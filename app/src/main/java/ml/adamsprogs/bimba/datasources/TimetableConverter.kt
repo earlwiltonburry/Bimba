@@ -1,44 +1,69 @@
 package ml.adamsprogs.bimba.datasources
 
+import android.content.ContentValues
 import android.content.Context
-import android.database.sqlite.SQLiteDatabase
+import io.requery.android.database.sqlite.SQLiteDatabase
 import java.io.File
-import de.siegmar.fastcsv.reader.CsvRow
-import de.siegmar.fastcsv.reader.CsvReader
 import ir.mahdi.mzip.zip.ZipArchive
-import java.nio.charset.StandardCharsets
+import org.supercsv.cellprocessor.ift.CellProcessor
+import org.supercsv.prefs.CsvPreference
+import org.supercsv.io.CsvMapReader
+import org.supercsv.io.ICsvMapReader
+import java.io.FileReader
+import java.util.*
 
-
-class TimetableConverter(from: File, to: File, context: Context) {
-    private val db: SQLiteDatabase = SQLiteDatabase.openOrCreateDatabase(to, null)
-
+//todo faster csv: http://simpleflatmapper.org/0101-getting-started-csv.html
+//todo faster csv: https://github.com/uniVocity/univocity-parsers
+class TimetableConverter(from: File, context: Context) {
     init {
+       // println(Calendar.getInstance())
         val target = File(context.filesDir, "gtfs_files")
         target.mkdir()
         ZipArchive.unzip(from.path, target.path, "")
+        /*println("tables…")
         createTables()
+        println(" done")
+        println("agency…")
         insertAgency(context)
+        println(" done")
+        println("calendar…")
         insertCalendar(context)
+        println(" done")
+        println("dates…")
         insertCalendarDates(context)
+        println(" done")
+        println("feed…")
         insertFeedInfo(context)
+        println(" done")
+        println("routes…")
         insertRoutes(context)
+        println(" done")
+        println("shapes…")
         insertShapes(context)
+        println(" done")
+        println("stops…")
         insertStops(context)
+        println(" done")
+        println("times…")
         insertStopTimes(context)
+        println(" done")
+        println("trips…")
         insertTrips(context)
+        println(" done")
         target.deleteRecursively()
-    }
+        println(Calendar.getInstance())*/
+    } /*
 
     private fun createTables() {
-        db.rawQuery("create table agency(" +
+        db.execSQL("create table agency(" +
                 "agency_id TEXT PRIMARY KEY," +
                 "agency_name TEXT," +
                 "agency_url TEXT," +
                 "agency_timezone TEXT," +
                 "agency_phone TEXT," +
                 "agency_lang TEXT" +
-                ")", null)
-        db.rawQuery("create table calendar(" +
+                ")")
+        db.execSQL("create table calendar(" +
                 "service_id TEXT PRIMARY KEY," +
                 "monday INT," +
                 "tuesday INT," +
@@ -49,21 +74,21 @@ class TimetableConverter(from: File, to: File, context: Context) {
                 "sunday INT," +
                 "start_date TEXT," +
                 "end_date TEXT" +
-                ")", null)
-        db.rawQuery("create table calendar_dates(" +
+                ")")
+        db.execSQL("create table calendar_dates(" +
                 "service_id TEXT," +
                 "date TEXT," +
                 "exception_type INT," +
                 "FOREIGN KEY(service_id) REFERENCES calendar(service_id)" +
-                ")", null)
-        db.rawQuery("create table feed_info(" +
+                ")")
+        db.execSQL("create table feed_info(" +
                 "feed_publisher_name TEXT PRIMARY KEY," +
                 "feed_publisher_url TEXT," +
                 "feed_lang TEXT," +
                 "feed_start_date TEXT," +
                 "feed_end_date TEXT" +
-                ")", null)
-        db.rawQuery("create table routes(" +
+                ")")
+        db.execSQL("create table routes(" +
                 "route_id TEXT PRIMARY KEY," +
                 "agency_id TEXT," +
                 "route_short_name TEXT," +
@@ -73,23 +98,23 @@ class TimetableConverter(from: File, to: File, context: Context) {
                 "route_color TEXT," +
                 "route_text_color TEXT," +
                 "FOREIGN KEY(agency_id) REFERENCES agency(agency_id)" +
-                ")", null)
-        db.rawQuery("create table shapes(" +
-                "shape_id TEXT PRIMARY KEY," +
+                ")")
+        db.execSQL("create table shapes(" +
+                "shape_id TEXT," +
                 "shape_pt_lat DOUBLE," +
                 "shape_pt_lon DOUBLE," +
                 "shape_pt_sequence INT" +
-                ")", null)
-        db.rawQuery("create table stops" +
+                ")")
+        db.execSQL("create table stops(" +
                 "stop_id TEXT PRIMARY KEY," +
                 "stop_code TEXT," +
                 "stop_name TEXT," +
                 "stop_lat DOUBLE," +
                 "stop_lon DOUBLE," +
                 "zone_id TEXT" +
-                ")", null)
-        db.rawQuery("create table stop_times(" +
-                "trip_id TEXT PRIMARY KEY," +
+                ")")
+        db.execSQL("create table stop_times(" +
+                "trip_id TEXT," +
                 "arrival_time TEXT," +
                 "departure_time TEXT," +
                 "stop_id TEXT," +
@@ -98,8 +123,8 @@ class TimetableConverter(from: File, to: File, context: Context) {
                 "pickup_type INT," +
                 "drop_off_type INT," +
                 "FOREIGN KEY(stop_id) REFERENCES stops(stop_id)" +
-                ")", null)
-        db.rawQuery("create table trips(" +
+                ")")
+        db.execSQL("create table trips(" +
                 "route_id TEXT," +
                 "service_id TEXT," +
                 "trip_id TEXT PRIMARY KEY," +
@@ -109,191 +134,286 @@ class TimetableConverter(from: File, to: File, context: Context) {
                 "wheelchair_accessible INT," +
                 "FOREIGN KEY(route_id) REFERENCES routes(route_id)," +
                 "FOREIGN KEY(service_id) REFERENCES calendar(service_id)," +
-                "FOREIGN KEY(shape_id) REFERENCE shapes(shape_id)" +
-                ")", null)
+                "FOREIGN KEY(shape_id) REFERENCES shapes(shape_id)" +
+                ")")
     }
 
     private fun insertAgency(context: Context) {
         val file = File(context.filesDir, "gtfs_files/agency.txt")
-        val csvReader = CsvReader()
-        csvReader.setContainsHeader(true)
+        var mapReader: ICsvMapReader? = null
+        try {
+            db.beginTransaction()
+            mapReader = CsvMapReader(FileReader(file), CsvPreference.STANDARD_PREFERENCE)
+            val header = mapReader.getHeader(true)
 
-        csvReader.parse(file, StandardCharsets.UTF_8).use {
-            var row: CsvRow? = null
-            while ({ row = it.nextRow(); row }() != null) {
-                val id = row!!.getField("agency_id")
-                val name = row!!.getField("agency_name")
-                val url = row!!.getField("agency_url")
-                val timezone = row!!.getField("agency_timezone")
-                val phone = row!!.getField("agency_phone")
-                val lang = row!!.getField("agency_lang")
-                db.rawQuery("insert into agency values(?, ?, ?, ?, ?, ?)",
-                        arrayOf(id, name, url, timezone, phone, lang))
+            var customerMap: Map<String, Any>? = null
+            val processors = Array<CellProcessor?>(header.size, { null })
+            while ({ customerMap = mapReader.read(header, processors); customerMap }() != null) {
+                val values = ContentValues().apply {
+                    put("agency_id", customerMap!!["agency_id"] as String)
+                    put("agency_name", customerMap!!["agency_name"] as String)
+                    put("agency_url", customerMap!!["agency_url"] as String)
+                    put("agency_timezone", customerMap!!["agency_timezone"] as String)
+                    put("agency_phone", customerMap!!["agency_phone"] as String)
+                    put("agency_lang", customerMap!!["agency_lang"] as String)
+                }
+                db.insert("agency", null, values)
+            }
+            db.setTransactionSuccessful()
+            db.endTransaction()
+        } finally {
+            if (mapReader != null) {
+                mapReader.close()
             }
         }
     }
 
     private fun insertCalendar(context: Context) {
         val file = File(context.filesDir, "gtfs_files/calendar.txt")
-        val csvReader = CsvReader()
-        csvReader.setContainsHeader(true)
+        var mapReader: ICsvMapReader? = null
+        try {
+            db.beginTransaction()
+            mapReader = CsvMapReader(FileReader(file), CsvPreference.STANDARD_PREFERENCE)
+            val header = mapReader.getHeader(true)
 
-        csvReader.parse(file, StandardCharsets.UTF_8).use {
-            var row: CsvRow? = null
-            while ({ row = it.nextRow(); row }() != null) {
-                val serviceId = row!!.getField("service_id")
-                val monday = row!!.getField("monday")
-                val tuesday = row!!.getField("tuesday")
-                val wednesday = row!!.getField("wednesday")
-                val thursday = row!!.getField("thursday")
-                val friday = row!!.getField("friday")
-                val saturday = row!!.getField("saturday")
-                val sunday = row!!.getField("sunday")
-                val startDate = row!!.getField("start_date")
-                val endDate = row!!.getField("end_date")
-                db.rawQuery("insert into calendar values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        arrayOf(serviceId, monday, tuesday, wednesday, thursday, friday, saturday,
-                                sunday, startDate, endDate))
+            var customerMap: Map<String, Any>? = null
+            val processors = Array<CellProcessor?>(header.size, { null })
+            while ({ customerMap = mapReader.read(header, processors); customerMap }() != null) {
+                val values = ContentValues().apply {
+                    put("service_id", customerMap!!["service_id"] as String)
+                    put("monday", customerMap!!["monday"] as String)
+                    put("tuesday", customerMap!!["tuesday"] as String)
+                    put("wednesday", customerMap!!["wednesday"] as String)
+                    put("thursday", customerMap!!["thursday"] as String)
+                    put("friday", customerMap!!["friday"] as String)
+                    put("saturday", customerMap!!["saturday"] as String)
+                    put("sunday", customerMap!!["sunday"] as String)
+                    put("start_date", customerMap!!["start_date"] as String)
+                    put("end_date", customerMap!!["end_date"] as String)
+                }
+
+                db.insert("calendar", null, values)
+            }
+            db.setTransactionSuccessful()
+            db.endTransaction()
+        } finally {
+            if (mapReader != null) {
+                mapReader.close()
             }
         }
     }
 
     private fun insertCalendarDates(context: Context) {
         val file = File(context.filesDir, "gtfs_files/calendar_dates.txt")
-        val csvReader = CsvReader()
-        csvReader.setContainsHeader(true)
 
-        csvReader.parse(file, StandardCharsets.UTF_8).use {
-            var row: CsvRow? = null
-            while ({ row = it.nextRow(); row }() != null) {
-                val serviceId = row!!.getField("service_id")
-                val date = row!!.getField("date")
-                val exceptionType = row!!.getField("exceptionType")
-                db.rawQuery("insert into calendar_dates values(?, ?, ?)",
-                        arrayOf(serviceId, date, exceptionType))
+        var mapReader: ICsvMapReader? = null
+        try {
+            db.beginTransaction()
+            mapReader = CsvMapReader(FileReader(file), CsvPreference.STANDARD_PREFERENCE)
+            val header = mapReader.getHeader(true)
+
+            var customerMap: Map<String, Any>? = null
+            val processors = Array<CellProcessor?>(header.size, { null })
+            while ({ customerMap = mapReader.read(header, processors); customerMap }() != null) {
+                val values = ContentValues().apply {
+                    put("service_id", customerMap!!["service_id"] as String)
+                    put("date", customerMap!!["date"] as String)
+                    put("exceptionType", customerMap!!["exceptionType"] as String)
+                }
+                db.insert("calendar_dates", null, values)
+            }
+            db.setTransactionSuccessful()
+            db.endTransaction()
+        } finally {
+            if (mapReader != null) {
+                mapReader.close()
             }
         }
     }
 
     private fun insertFeedInfo(context: Context) {
         val file = File(context.filesDir, "gtfs_files/feed_info.txt")
-        val csvReader = CsvReader()
-        csvReader.setContainsHeader(true)
+        var mapReader: ICsvMapReader? = null
+        try {
+            db.beginTransaction()
+            mapReader = CsvMapReader(FileReader(file), CsvPreference.STANDARD_PREFERENCE)
+            val header = mapReader.getHeader(true)
 
-        csvReader.parse(file, StandardCharsets.UTF_8).use {
-            var row: CsvRow? = null
-            while ({ row = it.nextRow(); row }() != null) {
-                val name = row!!.getField("feed_publisher_name")
-                val url = row!!.getField("feed_publisher_url")
-                val lang = row!!.getField("feed_lang")
-                val startDate = row!!.getField("feed_start_date")
-                val endDate = row!!.getField("feed_end_date")
-                db.rawQuery("insert into feed_info values(?, ?, ?, ?, ?)",
-                        arrayOf(name, url, lang, startDate, endDate))
+            var customerMap: Map<String, Any>? = null
+            val processors = Array<CellProcessor?>(header.size, { null })
+            while ({ customerMap = mapReader.read(header, processors); customerMap }() != null) {
+                val values = ContentValues().apply {
+                    put("feed_publisher_name", customerMap!!["feed_publisher_name"] as String)
+                    put("feed_publisher_url", customerMap!!["feed_publisher_url"] as String)
+                    put("feed_lang", customerMap!!["feed_lang"] as String)
+                    put("feed_start_date", customerMap!!["feed_start_date"] as String)
+                    put("feed_end_date", customerMap!!["feed_end_date"] as String)
+                }
+                db.insert("feed_info", null, values)
+            }
+            db.setTransactionSuccessful()
+            db.endTransaction()
+        } finally {
+            if (mapReader != null) {
+                mapReader.close()
             }
         }
     }
 
     private fun insertRoutes(context: Context) {
         val file = File(context.filesDir, "gtfs_files/routes.txt")
-        val csvReader = CsvReader()
-        csvReader.setContainsHeader(true)
+        var mapReader: ICsvMapReader? = null
+        try {
+            db.beginTransaction()
+            mapReader = CsvMapReader(FileReader(file), CsvPreference.STANDARD_PREFERENCE)
+            val header = mapReader.getHeader(true)
 
-        csvReader.parse(file, StandardCharsets.UTF_8).use {
-            var row: CsvRow? = null
-            while ({ row = it.nextRow(); row }() != null) {
-                val id = row!!.getField("route_id")
-                val agencyId = row!!.getField("agency_id")
-                val shortName = row!!.getField("route_short_name")
-                val longName = row!!.getField("route_long_name")
-                val description = row!!.getField("route_desc")
-                val type = row!!.getField("route_type")
-                val colour = row!!.getField("route_color")
-                val textColour = row!!.getField("route_text_color")
-                db.rawQuery("insert into routes values(?, ?, ?, ?, ?, ?, ?, ?)",
-                        arrayOf(id, agencyId, shortName, longName, description, type, colour,
-                                textColour))
+            var customerMap: Map<String, Any>? = null
+            val processors = Array<CellProcessor?>(header.size, { null })
+            while ({ customerMap = mapReader.read(header, processors); customerMap }() != null) {
+                val values = ContentValues().apply {
+                    put("route_id", customerMap!!["route_id"] as String)
+                    put("agency_id", customerMap!!["agency_id"] as String)
+                    put("route_short_name", customerMap!!["route_short_name"] as String)
+                    put("route_long_name", customerMap!!["route_long_name"] as String)
+                    put("route_desc", customerMap!!["route_desc"] as String)
+                    put("route_type", customerMap!!["route_type"] as String)
+                    put("route_color", customerMap!!["route_color"] as String)
+                    put("route_text_color", customerMap!!["route_text_color"] as String)
+                }
+                db.insert("routes", null, values)
+            }
+            db.setTransactionSuccessful()
+            db.endTransaction()
+        } finally {
+            if (mapReader != null) {
+                mapReader.close()
             }
         }
     }
 
     private fun insertShapes(context: Context) {
         val file = File(context.filesDir, "gtfs_files/shapes.txt")
-        val csvReader = CsvReader()
-        csvReader.setContainsHeader(true)
+        var mapReader: ICsvMapReader? = null
+        try {
+            db.beginTransaction()
+            mapReader = CsvMapReader(FileReader(file), CsvPreference.STANDARD_PREFERENCE)
+            val header = mapReader.getHeader(true)
 
-        csvReader.parse(file, StandardCharsets.UTF_8).use {
-            var row: CsvRow? = null
-            while ({ row = it.nextRow(); row }() != null) {
-                val id = row!!.getField("shape_id")
-                val latitude = row!!.getField("shape_pt_lat")
-                val longitude = row!!.getField("shape_pt_lon")
-                val sequence = row!!.getField("shape_pt_sequence")
-                db.rawQuery("insert into shapes values(?, ?, ?, ?, ?)",
-                        arrayOf(id, latitude, longitude, sequence))
+            var customerMap: Map<String, Any>? = null
+            val processors = Array<CellProcessor?>(header.size, { null })
+            while ({ customerMap = mapReader.read(header, processors); customerMap }() != null) {
+                val values = ContentValues().apply {
+                    put("shape_id", customerMap!!["shape_id"] as String)
+                    put("shape_pt_lat", customerMap!!["shape_pt_lat"] as String)
+                    put("shape_pt_lon", customerMap!!["shape_pt_lon"] as String)
+                    put("shape_pt_sequence", customerMap!!["shape_pt_sequence"] as String)
+                }
+                db.insert("shapes", null, values)
+                if (mapReader.rowNumber % 1000 == 0)
+                    println(mapReader.rowNumber)
+            }
+            db.setTransactionSuccessful()
+            db.endTransaction()
+        } finally {
+            if (mapReader != null) {
+                mapReader.close()
             }
         }
     }
 
     private fun insertStops(context: Context) {
         val file = File(context.filesDir, "gtfs_files/stops.txt")
-        val csvReader = CsvReader()
-        csvReader.setContainsHeader(true)
+        var mapReader: ICsvMapReader? = null
+        try {
+            db.beginTransaction()
+            mapReader = CsvMapReader(FileReader(file), CsvPreference.STANDARD_PREFERENCE)
+            val header = mapReader.getHeader(true)
 
-        csvReader.parse(file, StandardCharsets.UTF_8).use {
-            var row: CsvRow? = null
-            while ({ row = it.nextRow(); row }() != null) {
-                val id = row!!.getField("stop_id")
-                val code = row!!.getField("stop_code")
-                val name = row!!.getField("stop_name")
-                val latitude = row!!.getField("stop_lat")
-                val longitude = row!!.getField("stop_lon")
-                val zone = row!!.getField("zone_id")
-                db.rawQuery("insert into stops values(?, ?, ?, ?, ?, ?)",
-                        arrayOf(id, code, name, latitude, longitude, zone))
+            var customerMap: Map<String, Any>? = null
+            val processors = Array<CellProcessor?>(header.size, { null })
+            while ({ customerMap = mapReader.read(header, processors); customerMap }() != null) {
+                val values = ContentValues().apply {
+                    put("stop_id", customerMap!!["stop_id"] as String)
+                    put("stop_code", customerMap!!["stop_code"] as String)
+                    put("stop_name", customerMap!!["stop_name"] as String)
+                    put("stop_lat", customerMap!!["stop_lat"] as String)
+                    put("stop_lon", customerMap!!["stop_lon"] as String)
+                    put("zone_id", customerMap!!["zone_id"] as String)
+                }
+                db.insert("stops", null, values)
+            }
+            db.setTransactionSuccessful()
+            db.endTransaction()
+        } finally {
+            if (mapReader != null) {
+                mapReader.close()
             }
         }
     }
 
     private fun insertStopTimes(context: Context) {
         val file = File(context.filesDir, "gtfs_files/stop_times.txt")
-        val csvReader = CsvReader()
-        csvReader.setContainsHeader(true)
+        var mapReader: ICsvMapReader? = null
+        try {
+            db.beginTransaction()
+            mapReader = CsvMapReader(FileReader(file), CsvPreference.STANDARD_PREFERENCE)
+            val header = mapReader.getHeader(true)
 
-        csvReader.parse(file, StandardCharsets.UTF_8).use {
-            var row: CsvRow? = null
-            while ({ row = it.nextRow(); row }() != null) {
-                val id = row!!.getField("trip_id")
-                val arrival = row!!.getField("arrival_time")
-                val departure = row!!.getField("departure_time")
-                val stop = row!!.getField("stop_id")
-                val sequence = row!!.getField("stop_sequence")
-                val headsign = row!!.getField("stop_headsign")
-                val pickup = row!!.getField("pickup_type")
-                val dropOff = row!!.getField("drop_off_type")
-                db.rawQuery("insert into stop_times values(?, ?, ?, ?, ?, ?, ?, ?)",
-                        arrayOf(id, arrival, departure, stop, sequence, headsign, pickup, dropOff))
+            var customerMap: Map<String, Any>? = null
+            val processors = Array<CellProcessor?>(header.size, { null })
+            while ({ customerMap = mapReader.read(header, processors); customerMap }() != null) {
+                val values = ContentValues().apply {
+                    put("trip_id", customerMap!!["trip_id"] as String)
+                    put("arrival_time", customerMap!!["arrival_time"] as String)
+                    put("departure_time", customerMap!!["departure_time"] as String)
+                    put("stop_id", customerMap!!["stop_id"] as String)
+                    put("stop_sequence", customerMap!!["stop_sequence"] as String)
+                    put("stop_headsign", customerMap!!["stop_headsign"] as String)
+                    put("pickup_type", customerMap!!["pickup_type"] as String)
+                    put("drop_off_type", customerMap!!["drop_off_type"] as String)
+                }
+                db.insert("stop_times", null, values)
+                if (mapReader.rowNumber % 10000 == 0)
+                    println(mapReader.rowNumber)
+            }
+            db.setTransactionSuccessful()
+            db.endTransaction()
+        } finally {
+            if (mapReader != null) {
+                mapReader.close()
             }
         }
     }
 
     private fun insertTrips(context: Context) {
         val file = File(context.filesDir, "gtfs_files/trips.txt")
-        val csvReader = CsvReader()
-        csvReader.setContainsHeader(true)
+        var mapReader: ICsvMapReader? = null
+        try {
+            db.beginTransaction()
+            mapReader = CsvMapReader(FileReader(file), CsvPreference.STANDARD_PREFERENCE)
+            val header = mapReader.getHeader(true)
 
-        csvReader.parse(file, StandardCharsets.UTF_8).use {
-            var row: CsvRow? = null
-            while ({ row = it.nextRow(); row }() != null) {
-                val route = row!!.getField("route_id")
-                val service = row!!.getField("service_id")
-                val id = row!!.getField("trip_id")
-                val headsign = row!!.getField("headsign")
-                val direction = row!!.getField("direction")
-                val shape = row!!.getField("shape")
-                db.rawQuery("insert into trpis values(?, ?, ?, ?, ?, ?)",
-                        arrayOf(route, service, id, headsign, direction, shape))
+            var customerMap: Map<String, Any>? = null
+            val processors = Array<CellProcessor?>(header.size, { null })
+            while ({ customerMap = mapReader.read(header, processors); customerMap }() != null) {
+                val values = ContentValues().apply {
+                    put("route_id", customerMap!!["route_id"] as String)
+                    put("service_id", customerMap!!["service_id"] as String)
+                    put("trip_id", customerMap!!["trip_id"] as String)
+                    put("trip_headsign", customerMap!!["trip_headsign"] as String)
+                    put("direction_id", customerMap!!["direction_id"] as String)
+                    put("shape_id", customerMap!!["shape_id"] as String)
+                    put("wheelchair_accessible", customerMap!!["wheelchair_accessible"] as String)
+                }
+                db.insert("trips", null, values)
+            }
+            db.setTransactionSuccessful()
+            db.endTransaction()
+        } finally {
+            if (mapReader != null) {
+                mapReader.close()
             }
         }
-    }
+    }*/
 }

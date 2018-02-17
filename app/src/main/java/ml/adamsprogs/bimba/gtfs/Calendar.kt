@@ -1,4 +1,4 @@
 package ml.adamsprogs.bimba.gtfs
 
-data class Calendar(val monday: Int, val tuesday: Int, val wednesday: Int, val thursday: Int,
-                    val friday: Int, val saturday: Int, val sunday: Int)
+data class Calendar(val monday: Boolean, val tuesday: Boolean, val wednesday: Boolean, val thursday: Boolean,
+                    val friday: Boolean, val saturday: Boolean, val sunday: Boolean)

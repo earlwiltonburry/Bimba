@@ -12,6 +12,7 @@ import java.io.*
 import java.security.MessageDigest
 import android.app.NotificationManager
 import android.os.Build
+import ir.mahdi.mzip.zip.ZipArchive
 import ml.adamsprogs.bimba.NetworkStateReceiver
 import ml.adamsprogs.bimba.NotificationChannels
 import ml.adamsprogs.bimba.R
@@ -48,9 +49,11 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 return
             }
             val lastModified = httpCon.getHeaderField("Content-Disposition").split("=")[1].trim('\"').split("_")[0]
-            //todo size
+            size = httpCon.getHeaderField("Content-Length").toInt() / 1024
+
+            val force = intent.getBooleanExtra(EXTRA_FORCE, false)
             val currentLastModified = prefs.getString("timetableLastModified", "19791012")
-            if (lastModified <= currentLastModified && lastModified <= today()) {
+            if (lastModified <= currentLastModified && lastModified <= today() && !force) {
                 sendResult(RESULT_UP_TO_DATE)
                 return
             }
@@ -58,19 +61,25 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
             notifyDownloading(0)
 
             val gtfs = File(this.filesDir, "timetable.zip")
-            val db = File(this.filesDir, "timetable.db")
+            //val db = File(this.filesDir, "timetable.db")
             copyInputStreamToFile(httpCon.inputStream, gtfs)
             val prefsEditor = prefs.edit()
             prefsEditor.putString("timetableLastModified", lastModified)
             prefsEditor.apply()
             sendResult(RESULT_DOWNLOADED)
 
-            notifyConverting()
+            //notifyConverting() //fixme
 
-            db.delete()
-            TimetableConverter(gtfs, File(this.filesDir, "timetable.db"), this)
+            //db.delete()
+            val target = File(this.filesDir, "gtfs_files")
+            target.deleteRecursively()
+            println("deleted")
+            target.mkdir()
+            ZipArchive.unzip(gtfs.path, target.path, "")
+            println("unzipped")
             gtfs.delete()
-            Timetable.getTimetable().refresh(this)
+            Timetable.getTimetable().refresh()
+            println("refreshed")
 
             cancelNotification()
 
@@ -81,7 +90,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
     private fun today(): String {
         val cal = Calendar.getInstance()
         val d = cal[Calendar.DAY_OF_MONTH]
-        val m = cal[Calendar.MONTH]+1
+        val m = cal[Calendar.MONTH] + 1
         val y = cal[Calendar.YEAR]
 
         return "%d%02d%02d".format(y, m, d)
