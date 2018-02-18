@@ -1,6 +1,8 @@
 package ml.adamsprogs.bimba.models
 
 import android.content.Context
+import com.univocity.parsers.csv.CsvParser
+import com.univocity.parsers.csv.CsvParserSettings
 import ml.adamsprogs.bimba.datasources.CacheManager
 import ml.adamsprogs.bimba.gtfs.AgencyAndId
 import ml.adamsprogs.bimba.gtfs.Route
@@ -17,9 +19,6 @@ import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 import java.util.Calendar as JCalendar
 
-//todo faster csv: http://simpleflatmapper.org/0101-getting-started-csv.html
-//todo faster csv: https://github.com/uniVocity/univocity-parsers
-//todo prolly need to write own simple and fast parser
 class Timetable private constructor() {
     companion object {
         private var timetable: Timetable? = null
@@ -28,7 +27,6 @@ class Timetable private constructor() {
             return if (timetable == null || force)
                 if (context != null) {
                     timetable = Timetable()
-                    //timetable!!.store = read(context)
                     timetable!!.filesDir = context.filesDir
                     timetable!!.cacheManager = CacheManager.getCacheManager(context)
                     timetable as Timetable
@@ -37,21 +35,13 @@ class Timetable private constructor() {
             else
                 timetable as Timetable
         }
-
-        /*private fun read(context: Context): SQLiteDatabase {
-            return SQLiteDatabase.openDatabase(File(context.filesDir, "timetable.db").path,
-                    null, SQLiteDatabase.OPEN_READONLY)
-        }*/
     }
 
-    //lateinit var store: SQLiteDatabase
     private lateinit var cacheManager: CacheManager
-    private var _stops: ArrayList<StopSuggestion>? = null
+    private var _stops: List<StopSuggestion>? = null
     private lateinit var filesDir: File
 
     fun refresh() {
-        //this.store = read(context)
-
         cacheManager.recreate(getStopDeparturesByPlates(cacheManager.keys().toSet()))
 
         getStops(true)
@@ -62,95 +52,37 @@ class Timetable private constructor() {
         if (_stops != null && !force)
             return _stops!!
 
-        /*
-        AWF
-        232 → Os. Rusa|8:1435|AWF03
-        AWF
-        232 → Rondo Kaponiera|8:1436|AWF04
-        AWF
-        76 → Pl. Bernardyński, 74 → Os. Sobieskiego, 603 → Pl. Bernardyński|8:1437|AWF02
-        AWF
-        76 → Os. Dębina, 603 → Łęczyca/Dworcowa|8:1634|AWF01
-        AWF
-        29 → Pl. Wiosny Ludów|8:171|AWF42
-        AWF
-        10 → Połabska, 29 → Dębiec, 15 → Budziszyńska, 10 → Dębiec, 15 → Os. Sobieskiego, 12 → Os. Sobieskiego, 6 → Junikowo, 18 → Ogrody, 2 → Ogrody|8:172|AWF41
-        AWF
-        10 → Franowo, 29 → Franowo, 6 → Miłostowo, 5 → Stomil, 18 → Franowo, 15 → Franowo, 12 → Starołęka, 74 → Os. Orła Białego|8:4586|AWF73
-        */
 
-        //trip_id, stop_id from stop_times if pickup_type in {0,3}
-        //route_id as line, trip_id, headsign from trips
+        val settings = CsvParserSettings()
+        settings.format.setLineSeparator("\r\n")
+        val parser = CsvParser(settings)
 
-        println(JCalendar.getInstance())
-        val stopTripMap = HashMap<String, Set<String>>()
-        val stopTimesFile = File(filesDir, "gtfs_files/stop_times.txt")
-        var mapReader = CsvMapReader(FileReader(stopTimesFile), CsvPreference.STANDARD_PREFERENCE)
-        var header = mapReader.getHeader(true)
+        val ids = HashMap<String, HashSet<AgencyAndId>>()
+        val zones = HashMap<String, String>()
 
-        var stopTimesRow: Map<String, Any>? = null
-        var processors = Array<CellProcessor?>(header.size, { null })
-        while ({ stopTimesRow = mapReader.read(header, processors); stopTimesRow }() != null) {
-            if ((stopTimesRow!!["pickup_type"] as String) in arrayOf("0", "3")) {
-                val stopId = stopTimesRow!!["stop_id"] as String
-                val tripId = stopTimesRow!!["trip_id"] as String
-                if (stopId !in stopTripMap)
-                    stopTripMap[stopId] = HashSet()
-                (stopTripMap[stopId]!! as HashSet).add(tripId)
-            }
-        }
-        mapReader.close()
-        println(JCalendar.getInstance())
-
-        val tripIds = stopTripMap.flatMap { it.value }
-
-        val trips = HashMap<String, String>()
-        val tripsFile = File(filesDir, "gtfs_files/trips.txt")
-        mapReader = CsvMapReader(FileReader(tripsFile), CsvPreference.STANDARD_PREFERENCE)
-        header = mapReader.getHeader(true)
-
-        var tripsRow: Map<String, Any>? = null
-        processors = Array(header.size, { null })
-        while ({ tripsRow = mapReader.read(header, processors); tripsRow }() != null) { //fixme takes 16 min, 21 times more than a file 28 times bigger
-            val tripId = tripsRow!!["trip_id"] as String
-            if (tripId in tripIds) {
-                trips[tripId] = tripsRow!!["trip_headsign"] as String //todo save route_id
-            }
-        }
-        mapReader.close()
-        println(JCalendar.getInstance())
-
-        val routes = HashMap<String, String>()
-        val routesFile = File(filesDir, "gtfs_files/routes.txt")
-        mapReader = CsvMapReader(FileReader(routesFile), CsvPreference.STANDARD_PREFERENCE)
-        header = mapReader.getHeader(true)
-
-        var routesRow: Map<String, Any>? = null
-        processors = Array(header.size, { null })
-        while ({ routesRow = mapReader.read(header, processors); routesRow }() != null) {
-            val tripId = routesRow!!["route_id"] as String
-            if (tripId in tripIds) {//fixme
-                routes[tripId] = routesRow!!["route_short_name"] as String
-            }
-        }
-        mapReader.close()
-        println(JCalendar.getInstance())
-
-        val map = HashMap<AgencyAndId, Set<String>>()
-
-        stopTripMap.forEach {
-            val directions = HashSet<String>()
-            it.value.forEach {
-                val route = routes[it]
-                val headsign = trips[it]
-                directions.add("$route → $headsign")
-            }
-            map[AgencyAndId(it.key)] = directions
+        val stopsFile = File(filesDir, "gtfs_files/stops.txt")
+        parser.parseAll(stopsFile).forEach {
+            if (it[2] !in ids)
+                ids[it[2]] = HashSet()
+            ids[it[2]]!!.add(AgencyAndId(it[0]))
+            zones[it[2]] = it[5]
         }
 
-        _stops = map.map { StopSuggestion(it.value, it.key) }.sortedBy { getStopName(it.id) } as ArrayList<StopSuggestion>
-
+        _stops = ids.map { StopSuggestion(it.key, it.value, zones[it.key]!!) }.sorted()
         return _stops!!
+    }
+
+    fun getHeadlinesForStop(stops: Set<AgencyAndId>): Map<AgencyAndId, Pair<String, Set<String>>> {
+        TODO("Not Implemented")
+        /*
+        1435 -> (AWF03, {232 → Os. Rusa})
+        1436 -> (AWF04, {232 → Rondo Kaponiera})
+        1437 -> (AWF02, {76 → Pl. Bernardyński, 74 → Os. Sobieskiego, 603 → Pl. Bernardyński})
+        1634 -> (AWF01, {76 → Os. Dębina, 603 → Łęczyca/Dworcowa})
+        171 -> (AWF42, {29 → Pl. Wiosny Ludów})
+        172 -> (AWF41, {10 → Połabska, 29 → Dębiec, 15 → Budziszyńska, 10 → Dębiec, 15 → Os. Sobieskiego, 12 → Os. Sobieskiego, 6 → Junikowo, 18 → Ogrody, 2 → Ogrody})
+        4586 -> (AWF73, {10 → Franowo, 29 → Franowo, 6 → Miłostowo, 5 → Stomil, 18 → Franowo, 15 → Franowo, 12 → Starołęka, 74 → Os. Orła Białego})
+        */
     }
 
     fun getStopName(stopId: AgencyAndId): String {
@@ -251,7 +183,7 @@ class Timetable private constructor() {
     private fun getStopDeparturesByPlate(plate: Plate): Plate {
         val resultPlate = Plate(Plate.ID(plate.id), HashMap())
         val trips = HashMap<String, Map<String, Any>>()
-        val stopTimesFile = File(filesDir, "gtfs_files/stop_times.txt")
+        val stopTimesFile = File(filesDir, "gtfs_files/stop_times.txt") //todo stop_times_$stopId
         var mapReader = CsvMapReader(FileReader(stopTimesFile), CsvPreference.STANDARD_PREFERENCE)
         var header = mapReader.getHeader(true)
 

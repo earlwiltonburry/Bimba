@@ -17,7 +17,6 @@ import android.support.v7.widget.*
 import android.view.*
 import android.view.inputmethod.InputMethodManager
 import ml.adamsprogs.bimba.*
-import java.util.*
 import android.os.Bundle
 import android.util.Log
 import kotlinx.android.synthetic.main.activity_dash.*
@@ -30,7 +29,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     val context: Context = this
     private val receiver = MessageReceiver.getMessageReceiver()
     lateinit var timetable: Timetable
-    var stops: ArrayList<StopSuggestion>? = null
+    var stops: List<StopSuggestion>? = null
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var drawerView: NavigationView
     lateinit var favouritesList: RecyclerView
@@ -111,10 +110,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                     view = View(context)
                 }
                 imm.hideSoftInputFromWindow(view.windowToken, 0)
-                intent = Intent(context, StopActivity::class.java)
+                intent = Intent(context, StopSpecifyActivity::class.java) //todo mid activity choose shed
                 searchSuggestion as StopSuggestion
-                intent.putExtra(StopActivity.SOURCE_TYPE, StopActivity.SOURCE_TYPE_STOP)
-                intent.putExtra(StopActivity.EXTRA_STOP_ID, searchSuggestion.id)
+                intent.putExtra(StopSpecifyActivity.EXTRA_STOP_IDS, searchSuggestion.ids.joinToString(",") { it.id })
                 startActivity(intent)
             }
 
@@ -125,9 +123,16 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         searchView.setOnBindSuggestionCallback { _, _, textView, item, _ ->
             val suggestion = item as StopSuggestion
             val text = suggestion.body.split("\n")
-            val t = "<small><font color=\"#a0a0a0\">" + text[1] + "</font></small>"
+            val colour = when (text[1]) {
+                "A" -> context.getString(R.string.zone_a_colour)
+                "B" -> context.getString(R.string.zone_b_colour)
+                "C" -> context.getString(R.string.zone_c_colour)
+                else -> "#000000"
+            }
+            println("${text[0]} $colour")
+            val t = "<small><font color=\"$colour\">" + text[1] + "</font></small>"
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                textView.text = Html.fromHtml(text[0] + "<br/>" + t, Html.FROM_HTML_MODE_LEGACY)
+                textView.text = Html.fromHtml("${text[0]} $t", Html.FROM_HTML_MODE_LEGACY)
             } else {
                 @Suppress("DEPRECATION")
                 textView.text = Html.fromHtml(text[0] + "<br/>" + t)
@@ -152,7 +157,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     private fun getStops() {
         timetable = Timetable.getTimetable(this)
-        stops = timetable.getStops() as ArrayList<StopSuggestion>
+        stops = timetable.getStops()
     }
 
     private fun prepareListeners() {
@@ -237,7 +242,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         }
         Snackbar.make(findViewById(R.id.drawer_layout), message, Snackbar.LENGTH_LONG).show()
         if (result == TimetableDownloader.RESULT_FINISHED) {
-            stops = timetable.getStops() as ArrayList<StopSuggestion>
+            stops = timetable.getStops()
 
             drawerView.menu.findItem(R.id.drawer_validity_since).title = getString(R.string.valid_since, timetable.getValidSince())
             drawerView.menu.findItem(R.id.drawer_validity_till).title = getString(R.string.valid_since, timetable.getValidTill())

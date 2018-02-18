@@ -82,4 +82,8 @@
         <item>Saturday</item>
         <item>Sunday</item>
     </string-array>
+
+    <string name="zone_a_colour" translatable="false">#00a650</string>
+    <string name="zone_b_colour" translatable="false">#ed1c24</string>
+    <string name="zone_c_colour" translatable="false">#ffc107</string>
 </resources>

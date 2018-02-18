@@ -37,6 +37,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.1'
     implementation 'com.squareup.okhttp3:okhttp:3.8.1'
     implementation 'com.github.ghost1372:Mzip-Android:0.4.0'
+    implementation 'com.univocity:univocity-parsers:2.5.9'
     implementation 'net.sf.supercsv:super-csv:2.4.0'
     implementation 'io.requery:sqlite-android:3.22.0'
 }

@@ -31,7 +31,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".activities.NoDbActivity" />
-
         <activity android:name=".activities.EditFavouriteActivity" />
         <activity
             android:name=".activities.HelpActivity"
@@ -42,6 +41,8 @@
             android:name=".datasources.VmClient"
             android:enabled="true"
             android:exported="false" />
+
+        <activity android:name=".activities.StopSpecifyActivity"></activity>
     </application>
 
 </manifest>

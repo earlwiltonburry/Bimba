@@ -5,22 +5,27 @@ import android.os.Parcelable
 import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
 import ml.adamsprogs.bimba.gtfs.AgencyAndId
 
-class StopSuggestion(private val directions: Set<String>, val id: AgencyAndId) : SearchSuggestion {
+class StopSuggestion(val name: String, val ids: Set<AgencyAndId>, private val zone: String) : SearchSuggestion, Comparable<StopSuggestion> {
 
     @Suppress("UNCHECKED_CAST")
-    constructor(parcel: Parcel) : this(parcel.readSerializable() as HashSet<String>, parcel.readSerializable() as AgencyAndId)
+    constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString().split(",").map { AgencyAndId(it) }.toSet(), parcel.readString())
 
     override fun describeContents(): Int {
         return Parcelable.CONTENTS_FILE_DESCRIPTOR
     }
 
     override fun writeToParcel(dest: Parcel?, flags: Int) {
-        dest?.writeSerializable(directions as HashSet)
-        dest?.writeSerializable(id)
+        dest?.writeString(name)
+        dest?.writeString(ids.joinToString(",") { it.toString() })
+        dest?.writeString(zone)
     }
 
     override fun getBody(): String {
-        return "${Timetable.getTimetable().getStopName(id)}\n${directions.sortedBy{it}.joinToString()}"
+        return "$name\n$zone"
+    }
+
+    override fun compareTo(other: StopSuggestion): Int {
+        return name.compareTo(other.name)
     }
 
     companion object CREATOR : Parcelable.Creator<StopSuggestion> {

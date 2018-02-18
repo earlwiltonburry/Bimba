@@ -61,7 +61,6 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
             notifyDownloading(0)
 
             val gtfs = File(this.filesDir, "timetable.zip")
-            //val db = File(this.filesDir, "timetable.db")
             copyInputStreamToFile(httpCon.inputStream, gtfs)
             val prefsEditor = prefs.edit()
             prefsEditor.putString("timetableLastModified", lastModified)
@@ -70,16 +69,13 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
 
             //notifyConverting() //fixme
 
-            //db.delete()
             val target = File(this.filesDir, "gtfs_files")
             target.deleteRecursively()
-            println("deleted")
             target.mkdir()
             ZipArchive.unzip(gtfs.path, target.path, "")
-            println("unzipped")
+            //todo divide stop_times by stop_id
             gtfs.delete()
             Timetable.getTimetable().refresh()
-            println("refreshed")
 
             cancelNotification()
 
