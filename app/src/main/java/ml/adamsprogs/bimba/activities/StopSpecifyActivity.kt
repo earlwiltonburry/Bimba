@@ -20,13 +20,17 @@ class StopSpecifyActivity : AppCompatActivity() {
         val ids = intent.getStringExtra(EXTRA_STOP_IDS).split(",").map {AgencyAndId(it)}.toSet()
         val headlines = Timetable.getTimetable().getHeadlinesForStop(ids)
 
+        headlines.forEach {
+            println(it)
+        }
+
         //todo select shed
 
         val shed = AgencyAndId("1")
 
-        intent = Intent(this, StopActivity::class.java)
+        /*intent = Intent(this, StopActivity::class.java)
         intent.putExtra(StopActivity.SOURCE_TYPE, StopActivity.SOURCE_TYPE_STOP)
         intent.putExtra(StopActivity.EXTRA_STOP_ID, shed)
-        startActivity(intent)
+        startActivity(intent)*/
     }
 }

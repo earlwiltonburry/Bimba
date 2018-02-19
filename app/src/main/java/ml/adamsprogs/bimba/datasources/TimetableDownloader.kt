@@ -6,17 +6,19 @@ import android.app.Notification
 import android.content.Context
 import android.content.Intent
 import android.support.v4.app.NotificationCompat
-import java.net.HttpURLConnection
-import java.net.URL
 import java.io.*
-import java.security.MessageDigest
 import android.app.NotificationManager
 import android.os.Build
+import com.univocity.parsers.csv.CsvWriter
+import com.univocity.parsers.csv.CsvWriterSettings
 import ir.mahdi.mzip.zip.ZipArchive
 import ml.adamsprogs.bimba.NetworkStateReceiver
 import ml.adamsprogs.bimba.NotificationChannels
 import ml.adamsprogs.bimba.R
 import ml.adamsprogs.bimba.models.Timetable
+import org.supercsv.io.CsvListReader
+import org.supercsv.prefs.CsvPreference
+import java.net.*
 import java.util.*
 
 class TimetableDownloader : IntentService("TimetableDownloader") {
@@ -58,7 +60,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 return
             }
 
-            notifyDownloading(0)
+            notify(0, getString(R.string.timetable_downloading), size)
 
             val gtfs = File(this.filesDir, "timetable.zip")
             copyInputStreamToFile(httpCon.inputStream, gtfs)
@@ -67,15 +69,50 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
             prefsEditor.apply()
             sendResult(RESULT_DOWNLOADED)
 
-            //notifyConverting() //fixme
+            notify(getString(R.string.timetable_converting))
 
             val target = File(this.filesDir, "gtfs_files")
             target.deleteRecursively()
             target.mkdir()
             ZipArchive.unzip(gtfs.path, target.path, "")
-            //todo divide stop_times by stop_id
+
+            val stopTimesFile = File(filesDir, "gtfs_files/stop_times.txt")
+
+            val reader = CsvListReader(FileReader(stopTimesFile), CsvPreference.STANDARD_PREFERENCE)
+            val header = reader.getHeader(true)
+
+            val headers = HashMap<String, Boolean>()
+            val mapReader = CsvListReader(FileReader(stopTimesFile), CsvPreference.STANDARD_PREFERENCE)
+
+            val string = getString(R.string.timetable_converting)
+
+            notify(0, string, 1_030_000)
+
+            println(Calendar.getInstance().timeInMillis)
+
+            var row: List<Any>? = null
+            while ({ row = mapReader.read(); row }() != null) {
+                val stopId = row!![3] as String
+                val outFile = File(filesDir, "gtfs_files/stop_times_$stopId.txt")
+                val writer = CsvWriter(CsvWriterSettings())
+                if (headers[stopId] == null) {
+                    val h = writer.writeHeadersToString(header.asList())
+                    outFile.appendText("$h\r\n")
+                    headers[stopId] = true
+                }
+                if (mapReader.rowNumber % 10_300 == 0)
+                    notify(mapReader.rowNumber, string, 1_030_000)
+                val line = writer.writeRowToString(row!!)
+                outFile.appendText("$line\r\n")
+            }
+            mapReader.close()
+
             gtfs.delete()
-            Timetable.getTimetable().refresh()
+
+            stopTimesFile.delete()
+            Timetable.getTimetable(this).refresh()
+
+            println(Calendar.getInstance().timeInMillis)
 
             cancelNotification()
 
@@ -100,51 +137,51 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
         sendBroadcast(broadcastIntent)
     }
 
-    private fun notifyDownloading(progress: Int) {
+    private fun notify(progress: Int, message: String, max: Int) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-            notifyCompat(progress)
+            notifyCompat(progress, message, max)
         else
-            notifyStandard(progress)
+            notifyStandard(progress, message, max)
     }
 
     @Suppress("DEPRECATION")
-    private fun notifyCompat(progress: Int) {
+    private fun notifyCompat(progress: Int, message: String, max: Int) {
         val builder = NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.ic_download)
-                .setContentTitle(getString(R.string.timetable_downloading))
-                .setContentText("$progress KiB/$size KiB")
+                .setContentTitle(message)
+                .setContentText("${(progress.toDouble() / max.toDouble() * 100).toInt()} %")
                 .setCategory(NotificationCompat.CATEGORY_PROGRESS)
                 .setOngoing(true)
-                .setProgress(size, progress, false)
+                .setProgress(max, progress, false)
         notificationManager.notify(42, builder.build())
     }
 
     @TargetApi(Build.VERSION_CODES.O)
-    private fun notifyStandard(progress: Int) {
+    private fun notifyStandard(progress: Int, message: String, max: Int) {
         NotificationChannels.makeChannel(NotificationChannels.CHANNEL_UPDATES, "Updates", notificationManager)
         val builder = Notification.Builder(this, NotificationChannels.CHANNEL_UPDATES)
                 .setSmallIcon(R.drawable.ic_download)
-                .setContentTitle(getString(R.string.timetable_downloading))
-                .setContentText("$progress KiB/$size KiB")
+                .setContentTitle(message)
+                .setContentText("${(progress.toDouble() / max.toDouble() * 100).toInt()} %")
                 .setCategory(Notification.CATEGORY_PROGRESS)
                 .setOngoing(true)
-                .setProgress(size, progress, false)
+                .setProgress(max, progress, false)
         notificationManager.notify(42, builder.build())
     }
 
-    private fun notifyConverting() {
+    private fun notify(message: String) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-            notifyCompatConverting()
+            notifyCompat(message)
         else
-            notifyStandardConverting()
+            notifyStandard(message)
 
     }
 
     @Suppress("DEPRECATION")
-    private fun notifyCompatConverting() {
+    private fun notifyCompat(message: String) {
         val builder = NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.ic_download)
-                .setContentTitle(getString(R.string.timetable_converting))
+                .setContentTitle(message)
                 .setContentText("")
                 .setCategory(NotificationCompat.CATEGORY_PROGRESS)
                 .setOngoing(true)
@@ -153,11 +190,11 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
     }
 
     @TargetApi(Build.VERSION_CODES.O)
-    private fun notifyStandardConverting() {
+    private fun notifyStandard(message: String) {
         NotificationChannels.makeChannel(NotificationChannels.CHANNEL_UPDATES, "Updates", notificationManager)
         val builder = Notification.Builder(this, NotificationChannels.CHANNEL_UPDATES)
                 .setSmallIcon(R.drawable.ic_download)
-                .setContentTitle(getString(R.string.timetable_converting))
+                .setContentTitle(message)
                 .setContentText("")
                 .setCategory(Notification.CATEGORY_PROGRESS)
                 .setOngoing(true)
@@ -170,7 +207,6 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
     }
 
     private fun copyInputStreamToFile(ins: InputStream, file: File) {
-        val md = MessageDigest.getInstance("SHA-512")
         try {
             val out = FileOutputStream(file)
             val buf = ByteArray(5 * 1024)
@@ -180,10 +216,9 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 len = ins.read(buf)
                 if (len <= 0)
                     break
-                md.update(buf, 0, len)
                 out.write(buf, 0, len)
                 lenSum += len.toFloat() / 1024.0f
-                notifyDownloading(lenSum.toInt())
+                notify(lenSum.toInt(), getString(R.string.timetable_downloading), size)
             }
             out.close()
         } catch (e: Exception) {

@@ -40,14 +40,11 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dash)
 
-        println("view set")
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO)
         setSupportActionBar(toolbar)
         supportActionBar?.title = getString(R.string.merge_favourites)
-        println("getting stops")
 
         getStops()
-        println("stops got")
 
         prepareFavourites()
 
@@ -129,7 +126,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 "C" -> context.getString(R.string.zone_c_colour)
                 else -> "#000000"
             }
-            println("${text[0]} $colour")
             val t = "<small><font color=\"$colour\">" + text[1] + "</font></small>"
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 textView.text = Html.fromHtml("${text[0]} $t", Html.FROM_HTML_MODE_LEGACY)

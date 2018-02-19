@@ -73,7 +73,43 @@ class Timetable private constructor() {
     }
 
     fun getHeadlinesForStop(stops: Set<AgencyAndId>): Map<AgencyAndId, Pair<String, Set<String>>> {
-        TODO("Not Implemented")
+        val trips = HashMap<String, HashSet<String>>()
+        val routes = HashMap<String, Pair<String, String>>()
+        val headsigns = HashMap<AgencyAndId, Pair<String, HashSet<String>>>()
+        val settings = CsvParserSettings()
+        settings.format.setLineSeparator("\r\n")
+        settings.format.quote='"'
+        val parser = CsvParser(settings)
+        stops.forEach {
+            trips[it.id] = HashSet()
+            val stop = it.id
+            val stopsFile = File(filesDir, "gtfs_files/stop_times_${it.id}.txt")
+            parser.parseAll(stopsFile).forEach {
+                if (it[6] in arrayOf("0", "3")) {
+                    trips[stop]!!.add(it[0])
+                }
+            }
+        }
+
+        val allTrips = trips.flatMap { it.value }
+
+        val stopsFile = File(filesDir, "gtfs_files/trips.txt")
+        parser.parseAll(stopsFile).forEach {
+            if (it[2] in allTrips)
+                routes[it[2]] = Pair(it[0], it[3])
+        }
+
+
+        trips.forEach {
+            val headsign = HashSet<String>()
+            it.value.forEach {
+                println("adding: ${routes[it]}")
+                headsign.add("${routes[it]!!.first} → ${routes[it]!!.second}")
+            }
+            headsigns[AgencyAndId(it.key)] = Pair(getStopCode(AgencyAndId(it.key)), headsign)
+        }
+
+        return headsigns
         /*
         1435 -> (AWF03, {232 → Os. Rusa})
         1436 -> (AWF04, {232 → Rondo Kaponiera})
