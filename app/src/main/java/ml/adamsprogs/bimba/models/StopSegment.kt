@@ -7,7 +7,7 @@ import ml.adamsprogs.bimba.gtfs.AgencyAndId
 data class StopSegment(val stop: AgencyAndId, var plates: Set<Plate.ID>?) : Parcelable {
     constructor(parcel: Parcel) : this(
             parcel.readSerializable() as AgencyAndId,
-            parcel.readString().split("|").map { Plate.ID.fromString(it) }.toSet()
+            parcel.readString().split(";").map { Plate.ID.fromString(it) }.toSet()
     )
 
     companion object CREATOR : Parcelable.Creator<StopSegment> {
@@ -27,7 +27,7 @@ data class StopSegment(val stop: AgencyAndId, var plates: Set<Plate.ID>?) : Parc
     override fun writeToParcel(dest: Parcel?, flags: Int) {
         dest?.writeSerializable(stop)
         if (plates != null)
-            dest?.writeString(plates!!.joinToString("|") { it.toString() })
+            dest?.writeString(plates!!.joinToString(";") { it.toString() })
     }
 
     override fun describeContents(): Int {

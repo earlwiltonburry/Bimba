@@ -178,13 +178,9 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         //todo refresh
     }
 
-    private fun selectTodayPage() { //todo Services
-        val today = Calendar.getInstance()
-        when (today.get(Calendar.DAY_OF_WEEK)) {
-            Calendar.SATURDAY -> tabLayout.getTabAt(1)?.select()
-            Calendar.SUNDAY -> tabLayout.getTabAt(2)?.select()
-            else -> tabLayout.getTabAt(0)?.select()
-        }
+    private fun selectTodayPage() {
+        val today = (Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1) % 7
+        tabLayout.getTabAt(sectionsPagerAdapter!!.todayTab(today))
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -272,13 +268,47 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         }
     }
 
-    inner class SectionsPagerAdapter(fm: FragmentManager, var departures: Map<AgencyAndId, List<Departure>>) : FragmentStatePagerAdapter(fm) {
+    inner class SectionsPagerAdapter(fm: FragmentManager, departures: Map<AgencyAndId, List<Departure>>) : FragmentStatePagerAdapter(fm) {
 
-        private val modes = departures.keys.sortedBy {
-            timetable.calendarToMode(AgencyAndId(it.id)).sorted()[0]
+        var departures: Map<AgencyAndId, List<Departure>> = departures
+            set(value) {
+                refreshTabs()
+            }
+
+        private var modes = ArrayList<AgencyAndId>()
+
+        init {
+            refreshTabs()
         }
 
         var relativeTime = true
+
+        fun todayTab(today: Int): Int {
+            if (modes.isEmpty())
+                return 0
+            return modes.indexOf(modes.filter {
+                timetable.calendarToMode(it).contains(today)
+            }[0])
+        }
+
+
+        private fun refreshTabs() {
+            tabLayout.removeAllTabs()
+            departures.keys.sortedBy {
+                timetable.calendarToMode(AgencyAndId(it.id)).sorted()[0]
+            }.mapTo(modes) { it }
+            modes.forEach {
+                val tab = tabLayout.newTab()
+                tab.text = timetable.calendarToMode(it)
+                        .joinToString { resources.getStringArray(R.array.daysOfWeekShort)[it] }
+                tabLayout.addTab(tab)
+            }
+            if (modes.isEmpty()) {
+                val tab = tabLayout.newTab()
+                tab.text = getString(R.string.today)
+                tabLayout.addTab(tab)
+            }
+        }
 
         override fun getItemPosition(obj: Any): Int {
             return PagerAdapter.POSITION_NONE

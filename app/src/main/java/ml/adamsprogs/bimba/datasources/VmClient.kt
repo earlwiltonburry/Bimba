@@ -126,7 +126,9 @@ class VmClient : Service() {
     private fun isAlreadyRequested(stopSegment: StopSegment): Boolean {
         val platesIn = requests[stopSegment.stop]?.map { it.plate }?.toSet()
         val platesOut = stopSegment.plates
-        return (platesOut == platesIn || platesIn!!.containsAll(platesOut!!))
+        if (platesIn == null || platesIn.isEmpty())
+            return false
+        return (platesOut == platesIn || platesIn.containsAll(platesOut!!))
     }
 
 
@@ -229,7 +231,8 @@ class VmClient : Service() {
         val broadcastIntent = Intent()
         broadcastIntent.action = ACTION_READY
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT)
-        broadcastIntent.putStringArrayListExtra(EXTRA_DEPARTURES, departures?.map { it.toString() } as java.util.ArrayList<String>)
+        if (departures != null)
+            broadcastIntent.putStringArrayListExtra(EXTRA_DEPARTURES, departures.map { it.toString() } as ArrayList)
         broadcastIntent.putExtra(EXTRA_PLATE_ID, plateId)
         sendBroadcast(broadcastIntent)
     }

@@ -83,7 +83,18 @@
         <item>Sunday</item>
     </string-array>
 
+    <string-array name="daysOfWeekShort">
+        <item>Mon</item>
+        <item>Tue</item>
+        <item>Wed</item>
+        <item>Thu</item>
+        <item>Fri</item>
+        <item>Sat</item>
+        <item>Sun</item>
+    </string-array>
+
     <string name="zone_a_colour" translatable="false">#00a650</string>
     <string name="zone_b_colour" translatable="false">#ed1c24</string>
     <string name="zone_c_colour" translatable="false">#ffc107</string>
+    <string name="today">Today</string>
 </resources>

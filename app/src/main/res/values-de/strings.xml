@@ -68,5 +68,15 @@
         <item>Samstag</item>
         <item>Sontag</item>
     </string-array>
+    <string-array name="daysOfWeekShort">
+        <item>Mon</item>
+        <item>Die</item>
+        <item>Mit</item>
+        <item>Don</item>
+        <item>Fre</item>
+        <item>Sam</item>
+        <item>Son</item>
+    </string-array>
     <string name="timetable_converting">Fahrplan wird umgewandelt…</string>
+    <string name="today">Heute</string>
 </resources>

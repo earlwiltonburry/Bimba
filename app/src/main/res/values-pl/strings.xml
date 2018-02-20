@@ -68,5 +68,15 @@
         <item>Sobota</item>
         <item>Niedziela</item>
     </string-array>
+    <string-array name="daysOfWeekShort">
+        <item>Pn</item>
+        <item>Wt</item>
+        <item>Śr</item>
+        <item>Czw</item>
+        <item>Pt</item>
+        <item>S</item>
+        <item>N</item>
+    </string-array>
     <string name="timetable_converting">Konwertowanie rozkładu</string>
+    <string name="today">Dzisiaj</string>
 </resources>

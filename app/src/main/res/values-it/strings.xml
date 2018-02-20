@@ -66,5 +66,15 @@
         <item>Sabato</item>
         <item>Domenica</item>
     </string-array>
+    <string-array name="daysOfWeekShort">
+        <item>Lu</item>
+        <item>Ma</item>
+        <item>Me</item>
+        <item>Gi</item>
+        <item>Ve</item>
+        <item>Sa</item>
+        <item>Do</item>
+    </string-array>
     <string name="timetable_converting">L’orario e stando convertito</string>
+    <string name="today">Oggi</string>
 </resources>
