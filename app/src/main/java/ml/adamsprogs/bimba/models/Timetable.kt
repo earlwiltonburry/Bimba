@@ -48,7 +48,6 @@ class Timetable private constructor() {
     }
 
     fun getStops(force: Boolean = false): List<StopSuggestion> {
-        println("STOPS!")
         if (_stops != null && !force)
             return _stops!!
 
@@ -73,12 +72,14 @@ class Timetable private constructor() {
     }
 
     fun getHeadlinesForStop(stops: Set<AgencyAndId>): Map<AgencyAndId, Pair<String, Set<String>>> {
+        println(JCalendar.getInstance().timeInMillis)
         val trips = HashMap<String, HashSet<String>>()
         val routes = HashMap<String, Pair<String, String>>()
         val headsigns = HashMap<AgencyAndId, Pair<String, HashSet<String>>>()
         val settings = CsvParserSettings()
         settings.format.setLineSeparator("\r\n")
         settings.format.quote='"'
+        println(JCalendar.getInstance().timeInMillis)
         val parser = CsvParser(settings)
         stops.forEach {
             trips[it.id] = HashSet()
@@ -90,24 +91,27 @@ class Timetable private constructor() {
                 }
             }
         }
+        println(JCalendar.getInstance().timeInMillis)
 
-        val allTrips = trips.flatMap { it.value }
+        //val allTrips = trips.flatMap { it.value }
+        println(JCalendar.getInstance().timeInMillis)
 
         val stopsFile = File(filesDir, "gtfs_files/trips.txt")
         parser.parseAll(stopsFile).forEach {
-            if (it[2] in allTrips)
-                routes[it[2]] = Pair(it[0], it[3])
+            //if (it[2] in allTrips)
+            routes[it[2]] = Pair(it[0], it[3])
         }
+        println(JCalendar.getInstance().timeInMillis)
 
 
         trips.forEach {
             val headsign = HashSet<String>()
             it.value.forEach {
-                println("adding: ${routes[it]}")
                 headsign.add("${routes[it]!!.first} → ${routes[it]!!.second}")
             }
             headsigns[AgencyAndId(it.key)] = Pair(getStopCode(AgencyAndId(it.key)), headsign)
         }
+        println(JCalendar.getInstance().timeInMillis)
 
         return headsigns
         /*

@@ -107,9 +107,10 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                     view = View(context)
                 }
                 imm.hideSoftInputFromWindow(view.windowToken, 0)
-                intent = Intent(context, StopSpecifyActivity::class.java) //todo mid activity choose shed
+                intent = Intent(context, StopSpecifyActivity::class.java)
                 searchSuggestion as StopSuggestion
                 intent.putExtra(StopSpecifyActivity.EXTRA_STOP_IDS, searchSuggestion.ids.joinToString(",") { it.id })
+                intent.putExtra(StopSpecifyActivity.EXTRA_STOP_NAME, searchSuggestion.name)
                 startActivity(intent)
             }
 

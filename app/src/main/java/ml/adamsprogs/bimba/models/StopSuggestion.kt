@@ -5,7 +5,7 @@ import android.os.Parcelable
 import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
 import ml.adamsprogs.bimba.gtfs.AgencyAndId
 
-class StopSuggestion(val name: String, val ids: Set<AgencyAndId>, private val zone: String) : SearchSuggestion, Comparable<StopSuggestion> {
+class StopSuggestion(val name: String, val ids: Set<AgencyAndId>, val zone: String) : SearchSuggestion, Comparable<StopSuggestion> {
 
     @Suppress("UNCHECKED_CAST")
     constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString().split(",").map { AgencyAndId(it) }.toSet(), parcel.readString())
