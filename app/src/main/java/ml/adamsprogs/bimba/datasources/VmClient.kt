@@ -27,6 +27,7 @@ class VmClient : Service() {
         const val EXTRA_DEPARTURES = "ml.adamsprogs.bimba.extra.vm.departures"
         const val EXTRA_PLATE_ID = "ml.adamsprogs.bimba.extra.vm.plate"
     }
+
     private var handler: Handler? = null
     private val tick6ZinaTim: Runnable = object : Runnable {
         override fun run() {
@@ -217,7 +218,7 @@ class VmClient : Service() {
 
         val departuresForPlate = HashMap<AgencyAndId, HashSet<Departure>>()
         departuresForPlate[timetable.getServiceForToday()] = departures
-        val vm = vms[plateId.stop]!!
+        val vm = vms[plateId.stop] ?: HashSet()
         vm.remove(vm.filter { it.id == plateId }[0])
         vm.add(Plate(plateId, departuresForPlate))
         vms[plateId.stop] = vm

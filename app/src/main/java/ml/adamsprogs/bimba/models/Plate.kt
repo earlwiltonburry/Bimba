@@ -59,7 +59,6 @@ data class Plate(val id: ID, val departures: HashMap<AgencyAndId, HashSet<Depart
     data class ID(val line: AgencyAndId, val stop: AgencyAndId, val headsign: String) : Serializable {
         companion object {
             fun fromString(string: String): ID {
-                println(string)
                 val (line, stop, headsign) = string.split("|")
                 return ID(AgencyAndId.convertFromString(line),
                         AgencyAndId.convertFromString(stop), headsign)

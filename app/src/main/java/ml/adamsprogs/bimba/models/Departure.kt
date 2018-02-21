@@ -64,6 +64,11 @@ data class Departure(val line: AgencyAndId, val mode: List<Int>, val time: Int, 
                 rolledDepartures[mode] = filterDepartures(rolledDepartures[mode]!!)
             }
 
+            println("rolled:")
+            rolledDepartures[AgencyAndId("4")]?.forEach {
+                println("${it.lineText} -> ${it.direction} @ ${it.time}")
+            }
+
             return rolledDepartures
         }
 
