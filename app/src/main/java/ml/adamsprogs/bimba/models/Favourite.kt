@@ -62,7 +62,7 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
     private fun filterVmDepartures() {
         this.vmDepartures.forEach {
             val newSet = it.value
-                    .filter { it.timeTill() >= 0 }.toSet()
+                    .filter { it.timeTill(true) >= 0 }.toSet()
             this.vmDepartures[it.key] = newSet
         }
     }
@@ -135,7 +135,7 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         if (vmDepartures.isNotEmpty()) {
             return vmDepartures.flatMap { it.value }
                     .minBy {
-                        it.timeTill()
+                        it.timeTill(true)
                     }
         }
 
@@ -145,8 +145,8 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
             return null
 
         return twoDayDepartures
-                .filter { it.timeTill() >= 0 }
-                .minBy { it.timeTill() }
+                .filter { it.timeTill(true) >= 0 }
+                .minBy { it.timeTill(true) }
     }
 
     private fun nowDepartures(): ArrayList<Departure> {
@@ -175,7 +175,7 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
             departures[today] = vmDepartures.flatMap { it.value } as ArrayList<Departure>
         }
 
-        return Departure.createDepartures(departures)
+        return Departure.rollDepartures(departures)
     }
 
     fun fullTimetable(): Map<AgencyAndId, List<Departure>> {

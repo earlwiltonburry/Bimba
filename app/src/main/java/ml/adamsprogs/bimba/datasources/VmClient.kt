@@ -219,7 +219,7 @@ class VmClient : Service() {
         val departuresForPlate = HashMap<AgencyAndId, HashSet<Departure>>()
         departuresForPlate[timetable.getServiceForToday()] = departures
         val vm = vms[plateId.stop] ?: HashSet()
-        vm.remove(vm.filter { it.id == plateId }[0])
+        vm.remove(vm.filter { it.id == plateId }[0]) //fixme outOfBound when vm is still empty (1st time)
         vm.add(Plate(plateId, departuresForPlate))
         vms[plateId.stop] = vm
         if (departures.isEmpty())

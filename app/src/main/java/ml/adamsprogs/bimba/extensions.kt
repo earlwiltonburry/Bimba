@@ -1,5 +1,7 @@
 package ml.adamsprogs.bimba
 
+import android.content.Context
+import android.os.Build
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -43,4 +45,12 @@ fun calendarFromIso(iso: String): Calendar { // check
     //date.hours = date.getHours() - 1 //fixme why?
     calendar.time = date
     return calendar
+}
+
+fun getColour(id: Int, context: Context): Int {
+    @Suppress("DEPRECATION")
+    (return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        context.resources.getColor(R.color.colorAccent, null)
+    else
+        context.resources.getColor(R.color.colorAccent))
 }

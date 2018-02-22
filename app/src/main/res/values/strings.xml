@@ -93,8 +93,10 @@
         <item>Sun</item>
     </string-array>
 
-    <string name="zone_a_colour" translatable="false">#00a650</string>
-    <string name="zone_b_colour" translatable="false">#ed1c24</string>
-    <string name="zone_c_colour" translatable="false">#ffc107</string>
     <string name="today">Today</string>
+    <string name="mon">Mon</string>
+    <string name="tue__thu">Tue, …, Thu</string>
+    <string name="fri">Fri</string>
+    <string name="sat">Sat</string>
+    <string name="sun">Sun</string>
 </resources>

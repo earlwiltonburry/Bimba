@@ -19,7 +19,6 @@ class SplashActivity : AppCompatActivity() {
             else
                 startActivity(Intent(this, DashActivity::class.java))
         } catch(e: Exception) {
-            e.printStackTrace()
             startActivity(Intent(this, NoDbActivity::class.java))
         }
         finish()

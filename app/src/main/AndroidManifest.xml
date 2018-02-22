@@ -18,10 +18,6 @@
             android:exported="false" />
 
         <activity
-            android:name=".activities.StopActivity"
-            android:label="@string/title_activity_stop"
-            android:theme="@style/AppTheme" />
-        <activity
             android:name=".activities.SplashActivity"
             android:theme="@style/SplashTheme">
             <intent-filter>
@@ -42,7 +38,16 @@
             android:enabled="true"
             android:exported="false" />
 
-        <activity android:name=".activities.StopSpecifyActivity"></activity>
+        <activity android:name=".activities.StopSpecifyActivity" />
+        <activity
+            android:name=".activities.StopActivity"
+            android:label="@string/title_activity_stop"
+            android:parentActivityName=".activities.StopSpecifyActivity"
+            android:theme="@style/AppTheme">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="ml.adamsprogs.bimba.activities.StopSpecifyActivity" />
+        </activity>
     </application>
 
 </manifest>

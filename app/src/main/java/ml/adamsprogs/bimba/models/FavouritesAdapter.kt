@@ -3,7 +3,6 @@ package ml.adamsprogs.bimba.models
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.support.design.widget.AppBarLayout
 import android.support.v4.content.res.ResourcesCompat
 import android.support.v7.widget.*
@@ -18,6 +17,7 @@ import android.util.TypedValue
 import com.arlib.floatingsearchview.FloatingSearchView
 import ml.adamsprogs.bimba.Declinator
 import ml.adamsprogs.bimba.activities.StopActivity
+import ml.adamsprogs.bimba.getColour
 import kotlin.collections.ArrayList
 
 class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, private val onMenuItemClickListener: FavouritesAdapter.OnMenuItemClickListener) :
@@ -61,7 +61,7 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, p
             val nextDepartureText: String
             val nextDepartureLineText: String
             if (nextDeparture != null) {
-                val interval = nextDeparture.timeTill()
+                val interval = nextDeparture.timeTill(true)
                 if (interval < 0)
                     return@thread
                 nextDepartureText = context.getString(Declinator.decline(interval), interval.toString())
@@ -125,11 +125,7 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, p
     private fun select(view: CardView, position: Int) {
         growSelected(position)
 
-        @Suppress("DEPRECATION")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            view.setCardBackgroundColor(context.resources.getColor(R.color.colorAccent, null))
-        else
-            view.setCardBackgroundColor(context.resources.getColor(R.color.colorAccent))
+        view.setCardBackgroundColor(getColour(R.color.colorAccent, context))
         selected[position] = true
         setSelecting()
     }

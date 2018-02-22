@@ -1,28 +1,42 @@
 package ml.adamsprogs.bimba.activities
 
-import java.util.*
-import kotlin.collections.*
-
-import android.content.*
-import android.os.Bundle
-import android.view.*
-import android.support.design.widget.*
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.database.DataSetObserver
+import android.support.design.widget.TabLayout
+import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.*
-import android.support.v4.app.*
-import android.support.v4.view.*
-import android.support.v4.content.res.ResourcesCompat
 
-import ml.adamsprogs.bimba.models.*
-import ml.adamsprogs.bimba.*
-import kotlin.concurrent.thread
+import android.support.v4.app.Fragment
+import android.support.v4.app.FragmentManager
+import android.os.Bundle
+import android.support.v4.app.FragmentStatePagerAdapter
+import android.support.v4.content.res.ResourcesCompat
+import android.support.v4.view.PagerAdapter
+import android.support.v7.widget.DividerItemDecoration
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+
 import kotlinx.android.synthetic.main.activity_stop.*
+import ml.adamsprogs.bimba.MessageReceiver
+import ml.adamsprogs.bimba.R
 import ml.adamsprogs.bimba.datasources.TimetableDownloader
 import ml.adamsprogs.bimba.datasources.VmClient
 import ml.adamsprogs.bimba.gtfs.AgencyAndId
-import android.support.v4.view.ViewPager
+import ml.adamsprogs.bimba.models.*
+import java.util.*
+import kotlin.concurrent.thread
 
 class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, MessageReceiver.OnVmListener, Favourite.OnVmPreparedListener {
+
+    private var sectionsPagerAdapter: SectionsPagerAdapter? = null
+
     companion object {
         const val EXTRA_STOP_ID = "stopId"
         const val EXTRA_FAVOURITE = "favourite"
@@ -31,21 +45,16 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         const val SOURCE_TYPE_FAV = "favourite"
     }
 
-
     private var stopSegment: StopSegment? = null
     private var favourite: Favourite? = null
     private var timetableType = "departure"
-    private var sectionsPagerAdapter: SectionsPagerAdapter? = null
-    private var viewPager: ViewPager? = null
     private lateinit var timetable: Timetable
-    private lateinit var tabLayout: TabLayout
     private val context = this
     private val receiver = MessageReceiver.getMessageReceiver()
     private val vmDepartures = HashMap<Plate.ID, Set<Departure>>()
     private var hasDepartures = false
 
     private lateinit var sourceType: String
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stop)
@@ -54,7 +63,6 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         sourceType = intent.getStringExtra(SOURCE_TYPE)
 
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
 
         when (sourceType) {
@@ -70,30 +78,16 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             }
         }
 
-        prepareOnDownloadListener()
-
-        viewPager = container
-        tabLayout = tabs
         sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, HashMap<AgencyAndId, ArrayList<Departure>>())
 
-        /*thread {
-            if (sourceType == SOURCE_TYPE_STOP) {
-                sectionsPagerAdapter!!.departures = Departure.createDepartures(stopSegment!!.stop)
-            } else {
-                sectionsPagerAdapter!!.departures = favourite!!.allDepartures()
-            }
-            runOnUiThread {
-                sectionsPagerAdapter?.notifyDataSetChanged()
-            }
-        }*/
+        container.adapter = sectionsPagerAdapter
 
-        viewPager!!.adapter = sectionsPagerAdapter
-        viewPager!!.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tabLayout))
-        tabLayout.addOnTabSelectedListener(TabLayout.ViewPagerOnTabSelectedListener(viewPager))
-
-        selectTodayPage()
+        container.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tabs))
+        tabs.addOnTabSelectedListener(TabLayout.ViewPagerOnTabSelectedListener(container))
 
         showFab()
+
+        prepareOnDownloadListener()
     }
 
     private fun getFavouriteDepartures() {
@@ -103,31 +97,12 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun refreshAdapter(departures: Map<AgencyAndId, List<Departure>>) {
-        tabLayout.removeAllTabs()
-        sectionsPagerAdapter?.notifyDataSetChanged()
-        departures.keys.sortedBy {
-            timetable.calendarToMode(AgencyAndId(it.id)).sorted()[0]
-        }.forEach {
-                    val tab = tabLayout.newTab()
-                    tab.text = timetable.calendarToMode(it)
-                            .joinToString { resources.getStringArray(R.array.daysOfWeekShort)[it] }
-                    tabLayout.addTab(tab)
-                    sectionsPagerAdapter?.notifyDataSetChanged()
-                }
-        println("refreshing:")
-        departures[AgencyAndId("4")]?.forEach {
-            println("${it.lineText} -> ${it.direction} @ ${it.time}")
-        }
-        sectionsPagerAdapter?.departures = departures
-        try {
-            sectionsPagerAdapter?.notifyDataSetChanged()
-        } catch (e: Exception) {
-            runOnUiThread {
-                sectionsPagerAdapter?.notifyDataSetChanged()
-            }
-        }
 
-        selectTodayPage()
+        sectionsPagerAdapter?.departures = departures
+        runOnUiThread {
+            sectionsPagerAdapter?.notifyDataSetChanged()
+            selectTodayPage()
+        }
     }
 
     override fun onVmPrepared() {
@@ -188,7 +163,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 this.vmDepartures.remove(plateId)
             val departures = HashMap<AgencyAndId, List<Departure>>()
             if (this.vmDepartures.isNotEmpty()) {
-                departures[timetable.getServiceForToday()] = this.vmDepartures.flatMap { it.value }.sortedBy { it.timeTill() }
+                departures[timetable.getServiceForToday()] = this.vmDepartures.flatMap { it.value }.sortedBy { it.timeTill(true) }
                 refreshAdapter(departures)
             } else {
                 refreshAdapter(Departure.createDepartures(stopSegment!!.stop))
@@ -212,9 +187,9 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         //todo refresh
     }
 
-    private fun selectTodayPage() { //fixme does not work
+    private fun selectTodayPage() {
         val today = (Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1) % 7
-        tabLayout.getTabAt(sectionsPagerAdapter!!.todayTab(today))
+        tabs.getTabAt(sectionsPagerAdapter!!.todayTab(today))
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -263,8 +238,43 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         unregisterReceiver(receiver)
     }
 
-    class PlaceholderFragment : Fragment() {
+    inner class SectionsPagerAdapter(fm: FragmentManager, var departures: Map<AgencyAndId, List<Departure>>) : FragmentStatePagerAdapter(fm) {
+        var relativeTime = true
+        private var modes = ArrayList<AgencyAndId>()
 
+        init {
+            this.registerDataSetObserver(object : DataSetObserver() {
+                override fun onChanged() {
+                    departures.keys.sortedBy { timetable.calendarToMode(it)[0] }.mapTo(modes) { it }
+                }
+            })
+        }
+
+        override fun getItem(position: Int): Fragment {
+            departures.keys.sortedBy { timetable.calendarToMode(it)[0] }.mapTo(modes) { it }
+            val list = if (departures.isEmpty())
+                ArrayList()
+            else
+                departures[modes[position]]!!
+            return PlaceholderFragment.newInstance(list, relativeTime)
+        }
+
+        override fun getCount() = 5
+
+        override fun getItemPosition(obj: Any): Int {
+            return PagerAdapter.POSITION_NONE
+        }
+
+        fun todayTab(today: Int): Int {
+            if (modes.isEmpty())
+                return 0
+            return modes.indexOf(modes.filter {
+                timetable.calendarToMode(it).contains(today)
+            }[0])
+        }
+    }
+
+    class PlaceholderFragment : Fragment() {
         override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
             val rootView = inflater.inflate(R.layout.fragment_stop, container, false)
 
@@ -273,6 +283,8 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             departuresList.addItemDecoration(DividerItemDecoration(departuresList.context, layoutManager.orientation))
 
             val departures = arguments?.getStringArrayList("departures")!!.map { Departure.fromString(it) }
+
+
             departuresList.adapter = DeparturesAdapter(activity as Context, departures,
                     arguments?.get("relativeTime") as Boolean)
             departuresList.layoutManager = layoutManager
@@ -280,18 +292,10 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         }
 
         companion object {
-            private const val ARG_SECTION_NUMBER = "section_number"
-
-            fun newInstance(sectionNumber: Int, departures: List<Departure>, relativeTime: Boolean):
-                    PlaceholderFragment {
+            fun newInstance(departures: List<Departure>, relativeTime: Boolean): PlaceholderFragment {
                 val fragment = PlaceholderFragment()
                 val args = Bundle()
-                args.putInt(ARG_SECTION_NUMBER, sectionNumber)
-                println("newInstance:")
-                departures.forEach {
-                    println("${it.lineText} -> ${it.direction} @ ${it.time}")
-                }
-                if (departures.isEmpty()) {
+                if (departures.isNotEmpty()) {
                     val d = ArrayList<String>()
                     departures.mapTo(d) { it.toString() }
                     args.putStringArrayList("departures", d)
@@ -302,59 +306,5 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 return fragment
             }
         }
-    }
-
-    inner class SectionsPagerAdapter(fm: FragmentManager, departures: Map<AgencyAndId, List<Departure>>) : FragmentStatePagerAdapter(fm) { //todo swipe
-
-        var departures: Map<AgencyAndId, List<Departure>> = departures
-            set(value) {
-                println("setting:")
-                value[AgencyAndId("4")]?.forEach {
-                    println("${it.lineText} -> ${it.direction} @ ${it.time}")
-                }
-                field = value
-                println("set:")
-                this.departures[AgencyAndId("4")]?.forEach {
-                    println("${it.lineText} -> ${it.direction} @ ${it.time}")
-                }
-            }
-
-        private var modes = ArrayList<AgencyAndId>()
-
-        init {
-            val tab = tabLayout.newTab()
-            tab.text = getString(R.string.today)
-            tabLayout.addTab(tab)
-            sectionsPagerAdapter?.notifyDataSetChanged()
-        }
-
-        var relativeTime = true
-
-        fun todayTab(today: Int): Int {
-            if (modes.isEmpty())
-                return 0
-            return modes.indexOf(modes.filter {
-                timetable.calendarToMode(it).contains(today)
-            }[0])
-        }
-
-        override fun getItemPosition(obj: Any): Int {
-            return PagerAdapter.POSITION_NONE
-        }
-
-        override fun getItem(position: Int): Fragment {
-            //fixme doesn't refresh after getting departures/switching. Thinks `departures` is empty. May be connected with swipe
-            println("adapter:")
-            departures[AgencyAndId("4")]?.forEach {
-                println("${it.lineText} -> ${it.direction} @ ${it.time}")
-            }
-            val list = if (departures.isEmpty())
-                ArrayList()
-            else
-                departures[modes[position]]!!
-            return PlaceholderFragment.newInstance(position + 1, list, relativeTime)
-        }
-
-        override fun getCount() = if (departures.isEmpty()) 1 else modes.size
     }
 }

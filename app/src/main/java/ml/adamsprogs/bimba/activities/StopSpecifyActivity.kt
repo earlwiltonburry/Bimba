@@ -11,7 +11,6 @@ import ml.adamsprogs.bimba.gtfs.AgencyAndId
 import ml.adamsprogs.bimba.models.Timetable
 import android.content.Context
 import android.widget.TextView
-import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater

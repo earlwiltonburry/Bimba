@@ -122,9 +122,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             val suggestion = item as StopSuggestion
             val text = suggestion.body.split("\n")
             val colour = when (text[1]) {
-                "A" -> context.getString(R.string.zone_a_colour)
-                "B" -> context.getString(R.string.zone_b_colour)
-                "C" -> context.getString(R.string.zone_c_colour)
+                "A" -> "#${getColour(R.color.zoneA, context).toString(16)}"
+                "B" -> "#${getColour(R.color.zoneB, context).toString(16)}"
+                "C" -> "#${getColour(R.color.zoneC, context).toString(16)}"
                 else -> "#000000"
             }
             val t = "<small><font color=\"$colour\">" + text[1] + "</font></small>"
