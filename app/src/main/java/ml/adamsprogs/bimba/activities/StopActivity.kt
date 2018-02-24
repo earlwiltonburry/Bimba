@@ -89,6 +89,8 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         container.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tabs))
         tabs.addOnTabSelectedListener(TabLayout.ViewPagerOnTabSelectedListener(container))
 
+        selectTodayPage()
+
         showFab()
 
         prepareOnDownloadListener()
@@ -192,7 +194,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun selectTodayPage() {
-        tabs.getTabAt(sectionsPagerAdapter!!.todayTab())
+        tabs.getTabAt(sectionsPagerAdapter!!.todayTab())!!.select()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

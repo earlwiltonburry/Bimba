@@ -47,7 +47,7 @@ data class Departure(val line: AgencyAndId, val mode: List<Int>, val time: Int, 
             return rollDepartures(departures)
         }
 
-        fun rollDepartures(departures: Map<AgencyAndId, List<Departure>>): Map<AgencyAndId, List<Departure>> { //fixme doesn't roll night properly: (23),(23,00)
+        fun rollDepartures(departures: Map<AgencyAndId, List<Departure>>): Map<AgencyAndId, List<Departure>> { //todo it'd be nice to roll from tomorrow's real mode (Fri->Sat, Sat->Sun, Sun->Mon)
             val rolledDepartures = HashMap<AgencyAndId, List<Departure>>()
             departures.keys.forEach {
                 val (filtered, isFull) = filterDepartures(departures[it]!!)
