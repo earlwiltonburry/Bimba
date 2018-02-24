@@ -326,7 +326,7 @@ class Timetable private constructor() {
 //        return lines
 //    }
 
-    fun getTripsForStop(stopId: AgencyAndId): HashMap<String, Trip> { //todo actually, we have trips at the start. Why not cache?
+    fun getTripsForStop(stopId: AgencyAndId): HashMap<String, Trip> {
         val tripIds = HashSet<String>()
         val stopTimesFile = File(filesDir, "gtfs_files/stop_times_${stopId.id}.txt")
         val mapReader = CsvMapReader(FileReader(stopTimesFile), CsvPreference.STANDARD_PREFERENCE)
@@ -418,6 +418,11 @@ class Timetable private constructor() {
 
     private fun getServiceFor(day: Int): AgencyAndId {
         val dow = arrayOf("sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday")
+
+        return getServiceFor(dow[day - 1])
+    }
+
+    fun getServiceFor(day: String): AgencyAndId {
         val file = File(filesDir, "gtfs_files/calendar.txt")
         val mapReader = CsvMapReader(FileReader(file), CsvPreference.STANDARD_PREFERENCE)
         val header = mapReader.getHeader(true)
@@ -425,13 +430,14 @@ class Timetable private constructor() {
         var row: Map<String, Any>? = null
         val processors = Array<CellProcessor?>(header.size, { null })
         while ({ row = mapReader.read(header, processors); row }() != null) {
-            if ((row!![dow[day - 1]] as String) == "1") {
+            if ((row!![day] as String) == "1") {
                 mapReader.close()
                 return AgencyAndId(row!!["service_id"] as String)
             }
         }
         mapReader.close()
         throw IllegalArgumentException("Day $day not in calendar")
+
     }
 
     fun getLineForNumber(number: String): AgencyAndId {

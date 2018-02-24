@@ -57,24 +57,6 @@
         "Assicurati di consultare le notifiche su\nhttps://www.ztm.poznan.pl/en.\n\n"
     </string>
     <string name="refreshing_cache">Cache sta essendo aggiornato. Può richiedere un certo tempo…</string>
-    <string-array name="daysOfWeek">
-        <item>Lunedi</item>
-        <item>Martedi</item>
-        <item>Mercoledi</item>
-        <item>Giovedi</item>
-        <item>Venerdi</item>
-        <item>Sabato</item>
-        <item>Domenica</item>
-    </string-array>
-    <string-array name="daysOfWeekShort">
-        <item>Lu</item>
-        <item>Ma</item>
-        <item>Me</item>
-        <item>Gi</item>
-        <item>Ve</item>
-        <item>Sa</item>
-        <item>Do</item>
-    </string-array>
     <string name="timetable_converting">L’orario e stando convertito</string>
     <string name="today">Oggi</string>
 </resources>

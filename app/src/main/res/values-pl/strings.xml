@@ -59,24 +59,6 @@
     <string name="valid_since">Ważny od %1$s</string>
     <string name="valid_till">Ważny do %1$s</string>
     <string name="refreshing_cache">Odświeżanie pamięci podręcznej. Może chwilę potrwać…</string>
-    <string-array name="daysOfWeek">
-        <item>Poniedziałek</item>
-        <item>Wtorek</item>
-        <item>Środa</item>
-        <item>Czwartek</item>
-        <item>Piątek</item>
-        <item>Sobota</item>
-        <item>Niedziela</item>
-    </string-array>
-    <string-array name="daysOfWeekShort">
-        <item>Pn</item>
-        <item>Wt</item>
-        <item>Śr</item>
-        <item>Czw</item>
-        <item>Pt</item>
-        <item>S</item>
-        <item>N</item>
-    </string-array>
     <string name="timetable_converting">Konwertowanie rozkładu</string>
     <string name="today">Dzisiaj</string>
 </resources>

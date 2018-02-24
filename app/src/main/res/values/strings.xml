@@ -73,30 +73,5 @@
     <string name="refreshing_cache">Refreshing cache. May take some time…</string>
     <string name="timetable_converting">Converting timetable…</string>
 
-    <string-array name="daysOfWeek">
-        <item>Monday</item>
-        <item>Tuesday</item>
-        <item>Wednesday</item>
-        <item>Thursday</item>
-        <item>Friday</item>
-        <item>Saturday</item>
-        <item>Sunday</item>
-    </string-array>
-
-    <string-array name="daysOfWeekShort">
-        <item>Mon</item>
-        <item>Tue</item>
-        <item>Wed</item>
-        <item>Thu</item>
-        <item>Fri</item>
-        <item>Sat</item>
-        <item>Sun</item>
-    </string-array>
-
     <string name="today">Today</string>
-    <string name="mon">Mon</string>
-    <string name="tue__thu">Tue, …, Thu</string>
-    <string name="fri">Fri</string>
-    <string name="sat">Sat</string>
-    <string name="sun">Sun</string>
 </resources>

@@ -3,7 +3,6 @@ package ml.adamsprogs.bimba.activities
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.database.DataSetObserver
 import android.support.design.widget.TabLayout
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
@@ -28,6 +27,7 @@ import ml.adamsprogs.bimba.MessageReceiver
 import ml.adamsprogs.bimba.R
 import ml.adamsprogs.bimba.datasources.TimetableDownloader
 import ml.adamsprogs.bimba.datasources.VmClient
+import ml.adamsprogs.bimba.getMode
 import ml.adamsprogs.bimba.gtfs.AgencyAndId
 import ml.adamsprogs.bimba.models.*
 import java.util.*
@@ -43,6 +43,10 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         const val SOURCE_TYPE = "sourceType"
         const val SOURCE_TYPE_STOP = "stop"
         const val SOURCE_TYPE_FAV = "favourite"
+
+        const val MODE_WORKDAYS = 0
+        const val MODE_SATURDAYS = 1
+        const val MODE_SUNDAYS = 2
     }
 
     private var stopSegment: StopSegment? = null
@@ -188,8 +192,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun selectTodayPage() {
-        val today = (Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1) % 7
-        tabs.getTabAt(sectionsPagerAdapter!!.todayTab(today))
+        tabs.getTabAt(sectionsPagerAdapter!!.todayTab())
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -240,37 +243,35 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     inner class SectionsPagerAdapter(fm: FragmentManager, var departures: Map<AgencyAndId, List<Departure>>) : FragmentStatePagerAdapter(fm) {
         var relativeTime = true
-        private var modes = ArrayList<AgencyAndId>()
-
-        init {
-            this.registerDataSetObserver(object : DataSetObserver() {
-                override fun onChanged() {
-                    departures.keys.sortedBy { timetable.calendarToMode(it)[0] }.mapTo(modes) { it }
-                }
-            })
-        }
 
         override fun getItem(position: Int): Fragment {
-            departures.keys.sortedBy { timetable.calendarToMode(it)[0] }.mapTo(modes) { it }
-            val list = if (departures.isEmpty())
-                ArrayList()
-            else
-                departures[modes[position]]!!
+            if (departures.isEmpty())
+                return PlaceholderFragment.newInstance(ArrayList(), relativeTime)
+            val sat = timetable.getServiceFor("saturday")
+            val sun = timetable.getServiceFor("sunday")
+            val list: List<Departure> = when (position) {
+                1 -> departures[sat]!!
+                2 -> departures[sun]!!
+                0 -> try {
+                    departures
+                            .filter { it.key != sat && it.key != sun }
+                            .filter { it.value.isNotEmpty() }.toList()[0].second
+                } catch (e: IndexOutOfBoundsException) {
+                    departures.filter { it.key != sat && it.key != sun }.toList()[0].second
+                }
+                else -> throw IndexOutOfBoundsException("No tab at index $position")
+            }
             return PlaceholderFragment.newInstance(list, relativeTime)
         }
 
-        override fun getCount() = 5
+        override fun getCount() = 3
 
         override fun getItemPosition(obj: Any): Int {
             return PagerAdapter.POSITION_NONE
         }
 
-        fun todayTab(today: Int): Int {
-            if (modes.isEmpty())
-                return 0
-            return modes.indexOf(modes.filter {
-                timetable.calendarToMode(it).contains(today)
-            }[0])
+        fun todayTab(): Int {
+            return Calendar.getInstance().getMode()
         }
     }
 

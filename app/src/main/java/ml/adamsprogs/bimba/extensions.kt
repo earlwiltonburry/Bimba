@@ -2,6 +2,7 @@ package ml.adamsprogs.bimba
 
 import android.content.Context
 import android.os.Build
+import ml.adamsprogs.bimba.activities.StopActivity
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -50,7 +51,15 @@ fun calendarFromIso(iso: String): Calendar { // check
 fun getColour(id: Int, context: Context): Int {
     @Suppress("DEPRECATION")
     (return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-        context.resources.getColor(R.color.colorAccent, null)
+        context.resources.getColor(id, null)
     else
-        context.resources.getColor(R.color.colorAccent))
+        context.resources.getColor(id))
+}
+
+internal fun Calendar.getMode(): Int {
+    return when (this.get(Calendar.DAY_OF_WEEK)) {
+        Calendar.SUNDAY -> StopActivity.MODE_SUNDAYS
+        Calendar.SATURDAY -> StopActivity.MODE_SATURDAYS
+        else -> StopActivity.MODE_WORKDAYS
+    }
 }
