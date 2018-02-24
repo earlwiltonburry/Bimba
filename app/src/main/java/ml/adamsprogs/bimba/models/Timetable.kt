@@ -266,17 +266,17 @@ class Timetable private constructor() {
         throw IllegalArgumentException("Service $serviceId not in store")
     }
 
-    private fun explainModification(trip: Trip, stopSequence: Int): List<String> {
-        return listOf("err")
-        val definitions = getRouteForTrip(trip).modifications
-        val explanations = ArrayList<String>()
+    private fun explainModification(trip: Trip, stopSequence: Int): List<String> { //todo "kurs obsługiwany taborem niskopodłogowym" -> ignore
+        val route = getRouteForTrip(trip)
+        val definitions = route.modifications
 
+        val explanations = ArrayList<String>()
         trip.id.modification.forEach {
             if (it.stopRange != null) {
                 if (stopSequence in it.stopRange)
                     explanations.add(definitions[it.id.id]!!)
             } else {
-                explanations.add(definitions[it.id.id]!!) //fixme null
+                explanations.add(definitions[it.id.id]!!)
             }
         }
 
@@ -284,7 +284,7 @@ class Timetable private constructor() {
     }
 
     private fun getRouteForTrip(trip: Trip): Route {
-        val routeId = tripsCache[trip.rawId]!![0]
+        val routeId = tripsCache[trip.id.rawId]!![0]
 
         val tripsFile = File(filesDir, "gtfs_files/routes.txt")
         val mapReader = CsvMapReader(FileReader(tripsFile), CsvPreference.STANDARD_PREFERENCE)
@@ -317,7 +317,7 @@ class Timetable private constructor() {
             }
         }
         mapReader.close()
-        throw IllegalArgumentException("Trip ${trip.rawId} not in store")
+        throw IllegalArgumentException("Trip ${trip.id.rawId} not in store")
     }
 
 //    fun getLinesForStop(stopId: AgencyAndId): Set<AgencyAndId> {
@@ -358,17 +358,19 @@ class Timetable private constructor() {
             if (isMain)
                 modification = modification.subSequence(0, modification.length - 1) as String
             val modifications = HashSet<Trip.ID.Modification>()
-            modification.split(",").forEach {
-                try {
-                    val (id, start, end) = it.split(":")
-                    modifications.add(Trip.ID.Modification(AgencyAndId(id), IntRange(start.toInt(), end.toInt())))
-                } catch (e: Exception) {
-                    modifications.add(Trip.ID.Modification(AgencyAndId(it), null))
+            if (modification != "") {
+                modification.split(",").forEach {
+                    try {
+                        val (id, start, end) = it.split(":")
+                        modifications.add(Trip.ID.Modification(AgencyAndId(id), IntRange(start.toInt(), end.toInt())))
+                    } catch (e: Exception) {
+                        modifications.add(Trip.ID.Modification(AgencyAndId(it), null))
+                    }
                 }
             }
-            return Trip.ID(AgencyAndId(rawId.split("^")[0]), modifications, isMain)
+            return Trip.ID(rawId, AgencyAndId(rawId.split("^")[0]), modifications, isMain)
         } else
-            return Trip.ID(AgencyAndId(rawId), HashSet(), false)
+            return Trip.ID(rawId, AgencyAndId(rawId), HashSet(), false)
     }
 
     fun isEmpty(): Boolean {

@@ -77,10 +77,15 @@ data class Departure(val line: AgencyAndId, val mode: List<Int>, val time: Int, 
             val array = string.split("|")
             if (array.size != 9)
                 throw IllegalArgumentException()
+            val modification =
+                    if (array[4] == "")
+                        ArrayList()
+                    else
+                        array[4].split(";")
             return Departure(AgencyAndId.convertFromString(array[0]),
                     array[1].split(";").map { Integer.parseInt(it) },
                     Integer.parseInt(array[2]), array[3] == "true",
-                    array[4].split(";"), array[5], array[6] == "true",
+                    modification, array[5], array[6] == "true",
                     array[7] == "true", array[8] == "true")
         }
     }
@@ -88,7 +93,7 @@ data class Departure(val line: AgencyAndId, val mode: List<Int>, val time: Int, 
     fun timeTill(relative: Boolean = true): Long {
         val time = Calendar.getInstance().rollTime(this.time)
         var now = Calendar.getInstance()
-        if(!relative)
+        if (!relative)
             now = now.rollTime(0)
         if (this.tomorrow)
             time.add(Calendar.DAY_OF_MONTH, 1)
