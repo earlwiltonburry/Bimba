@@ -13,7 +13,7 @@ import ml.adamsprogs.bimba.calendarFromIso
 import ml.adamsprogs.bimba.models.*
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
-import ml.adamsprogs.bimba.gtfs.AgencyAndId
+import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 import ml.adamsprogs.bimba.secondsAfterMidnight
 import java.io.IOException
 import java.util.*

@@ -1,6 +1,7 @@
 package ml.adamsprogs.bimba
 
 import android.content.Context
+import android.graphics.drawable.Drawable
 import android.os.Build
 import ml.adamsprogs.bimba.activities.StopActivity
 import java.text.SimpleDateFormat
@@ -55,6 +56,14 @@ fun getColour(id: Int, context: Context): Int {
         context.resources.getColor(id, null)
     else
         context.resources.getColor(id))
+}
+
+fun getDrawable(id: Int, context: Context): Drawable {
+    @Suppress("DEPRECATION")
+    (return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+        context.resources.getDrawable(id, null)
+    else
+        context.resources.getDrawable(id))
 }
 
 internal fun Calendar.getMode(): Int {

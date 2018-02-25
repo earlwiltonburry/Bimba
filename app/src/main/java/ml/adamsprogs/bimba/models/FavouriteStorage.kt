@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import ml.adamsprogs.bimba.gtfs.AgencyAndId
+import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 
 
 class FavouriteStorage private constructor(context: Context) : Iterable<Favourite> {

@@ -1,7 +1,7 @@
 package ml.adamsprogs.bimba.models
 
 import ml.adamsprogs.bimba.rollTime
-import ml.adamsprogs.bimba.gtfs.AgencyAndId
+import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 import ml.adamsprogs.bimba.safeSplit
 import java.io.Serializable
 import java.util.*

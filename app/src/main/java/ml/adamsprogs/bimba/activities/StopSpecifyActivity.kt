@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import kotlinx.android.synthetic.main.activity_stop_specify.*
 import ml.adamsprogs.bimba.R
-import ml.adamsprogs.bimba.gtfs.AgencyAndId
+import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 import ml.adamsprogs.bimba.models.Timetable
 import android.content.Context
 import android.widget.TextView

@@ -2,7 +2,7 @@ package ml.adamsprogs.bimba.models
 
 import android.os.Parcel
 import android.os.Parcelable
-import ml.adamsprogs.bimba.gtfs.AgencyAndId
+import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 
 data class StopSegment(val stop: AgencyAndId, var plates: Set<Plate.ID>?) : Parcelable {
     constructor(parcel: Parcel) : this(

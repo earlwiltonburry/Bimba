@@ -3,7 +3,7 @@ package ml.adamsprogs.bimba.datasources
 import android.content.Context
 import android.content.SharedPreferences
 import ml.adamsprogs.bimba.models.Plate
-import ml.adamsprogs.bimba.gtfs.AgencyAndId
+import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 
 class CacheManager private constructor(context: Context) {
     companion object {

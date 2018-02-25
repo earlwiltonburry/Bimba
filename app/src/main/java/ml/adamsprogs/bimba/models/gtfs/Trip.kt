@@ -1,4 +1,4 @@
-package ml.adamsprogs.bimba.gtfs
+package ml.adamsprogs.bimba.models.gtfs
 
 data class Trip(val routeId: AgencyAndId, val serviceId: AgencyAndId, val id: ID,
                 val headsign: String, val direction: Int, val shapeId: AgencyAndId,

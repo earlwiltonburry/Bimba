@@ -28,7 +28,7 @@ import ml.adamsprogs.bimba.R
 import ml.adamsprogs.bimba.datasources.TimetableDownloader
 import ml.adamsprogs.bimba.datasources.VmClient
 import ml.adamsprogs.bimba.getMode
-import ml.adamsprogs.bimba.gtfs.AgencyAndId
+import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 import ml.adamsprogs.bimba.models.*
 import java.util.*
 import kotlin.concurrent.thread

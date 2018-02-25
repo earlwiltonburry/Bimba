@@ -3,10 +3,13 @@ package ml.adamsprogs.bimba.models
 import android.content.Context
 import com.univocity.parsers.csv.CsvParser
 import com.univocity.parsers.csv.CsvParserSettings
-import ml.adamsprogs.bimba.gtfs.AgencyAndId
-import ml.adamsprogs.bimba.gtfs.Route
-import ml.adamsprogs.bimba.gtfs.Trip
-import ml.adamsprogs.bimba.gtfs.Calendar
+import ml.adamsprogs.bimba.R
+import ml.adamsprogs.bimba.getColour
+import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
+import ml.adamsprogs.bimba.models.gtfs.Route
+import ml.adamsprogs.bimba.models.gtfs.Trip
+import ml.adamsprogs.bimba.models.gtfs.Calendar
+import ml.adamsprogs.bimba.models.suggestions.StopSuggestion
 import ml.adamsprogs.bimba.secondsAfterMidnight
 import org.supercsv.cellprocessor.ift.CellProcessor
 import org.supercsv.io.CsvMapReader
@@ -44,10 +47,10 @@ class Timetable private constructor() {
     fun refresh() {
         //cacheManager.recreate(getStopDeparturesByPlates(cacheManager.keys().toSet()))
 
-        //getStops(true)
+        //getStopSuggestions(true)
     }
 
-    fun getStops(force: Boolean = false): List<StopSuggestion> {
+    fun getStopSuggestions(context: Context, force: Boolean = false): List<StopSuggestion> {
         if (_stops != null && !force)
             return _stops!!
 
@@ -67,7 +70,16 @@ class Timetable private constructor() {
             zones[it[2]] = it[5]
         }
 
-        _stops = ids.map { StopSuggestion(it.key, it.value, zones[it.key]!!) }.sorted()
+
+        _stops = ids.map {
+            val colour = when (zones[it.key]) {
+                "A" -> "#${getColour(R.color.zoneA, context).toString(16)}"
+                "B" -> "#${getColour(R.color.zoneB, context).toString(16)}"
+                "C" -> "#${getColour(R.color.zoneC, context).toString(16)}"
+                else -> "#000000"
+            }
+            StopSuggestion(it.key, it.value, zones[it.key]!!, colour)
+        }.sorted()
         return _stops!!
     }
 

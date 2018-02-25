@@ -1,4 +1,4 @@
-package ml.adamsprogs.bimba.gtfs
+package ml.adamsprogs.bimba.models.gtfs
 
 import java.io.Serializable
 

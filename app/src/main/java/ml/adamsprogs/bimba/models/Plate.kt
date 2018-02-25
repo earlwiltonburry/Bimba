@@ -1,6 +1,6 @@
 package ml.adamsprogs.bimba.models
 
-import ml.adamsprogs.bimba.gtfs.AgencyAndId
+import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 import java.io.Serializable
 
 data class Plate(val id: ID, val departures: HashMap<AgencyAndId, HashSet<Departure>>?) {

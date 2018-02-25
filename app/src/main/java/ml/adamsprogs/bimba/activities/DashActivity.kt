@@ -22,6 +22,8 @@ import android.util.Log
 import kotlinx.android.synthetic.main.activity_dash.*
 import ml.adamsprogs.bimba.datasources.TimetableDownloader
 import ml.adamsprogs.bimba.datasources.VmClient
+import ml.adamsprogs.bimba.models.suggestions.GtfsSuggestion
+import ml.adamsprogs.bimba.models.suggestions.StopSuggestion
 
 //todo cards
 class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener,
@@ -29,7 +31,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     val context: Context = this
     private val receiver = MessageReceiver.getMessageReceiver()
     lateinit var timetable: Timetable
-    var stops: List<StopSuggestion>? = null
+    var suggestions: List<GtfsSuggestion>? = null
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var drawerView: NavigationView
     lateinit var favouritesList: RecyclerView
@@ -44,7 +46,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         setSupportActionBar(toolbar)
         supportActionBar?.title = getString(R.string.merge_favourites)
 
-        getStops()
+        getSuggestions()
 
         prepareFavourites()
 
@@ -80,7 +82,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             override fun onFocus() {
                 favouritesList.visibility = View.GONE
                 thread {
-                    val newStops = stops!!.filter { deAccent(it.body.split("\n")[0]).contains(deAccent(searchView.query), true) }
+                    val newStops = suggestions!!.filter { deAccent(it.name).contains(deAccent(searchView.query), true) }
                     runOnUiThread { searchView.swapSuggestions(newStops) }
                 }
             }
@@ -94,7 +96,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             if (oldQuery != "" && newQuery == "")
                 searchView.clearSuggestions()
             thread {
-                val newStops = stops!!.filter { deAccent(it.body.split("\n")[0]).contains(deAccent(newQuery), true) }
+                val newStops = suggestions!!.filter { deAccent(it.name).contains(deAccent(newQuery), true) }
                 runOnUiThread { searchView.swapSuggestions(newStops) }
             }
         })
@@ -107,33 +109,27 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                     view = View(context)
                 }
                 imm.hideSoftInputFromWindow(view.windowToken, 0)
-                intent = Intent(context, StopSpecifyActivity::class.java)
-                searchSuggestion as StopSuggestion
-                intent.putExtra(StopSpecifyActivity.EXTRA_STOP_IDS, searchSuggestion.ids.joinToString(",") { it.id })
-                intent.putExtra(StopSpecifyActivity.EXTRA_STOP_NAME, searchSuggestion.name)
-                startActivity(intent)
+                if (searchSuggestion is StopSuggestion) {
+                    intent = Intent(context, StopSpecifyActivity::class.java)
+                    intent.putExtra(StopSpecifyActivity.EXTRA_STOP_IDS, searchSuggestion.ids.joinToString(",") { it.id })
+                    intent.putExtra(StopSpecifyActivity.EXTRA_STOP_NAME, searchSuggestion.name)
+                    startActivity(intent)
+                } //todo if line
             }
 
             override fun onSearchAction(query: String) {
             }
         })
 
-        searchView.setOnBindSuggestionCallback { _, _, textView, item, _ ->
-            val suggestion = item as StopSuggestion
-            val text = suggestion.body.split("\n")
-            val colour = when (text[1]) {
-                "A" -> "#${getColour(R.color.zoneA, context).toString(16)}"
-                "B" -> "#${getColour(R.color.zoneB, context).toString(16)}"
-                "C" -> "#${getColour(R.color.zoneC, context).toString(16)}"
-                else -> "#000000"
-            }
-            val t = "<small><font color=\"$colour\">" + text[1] + "</font></small>"
+        searchView.setOnBindSuggestionCallback { _, iconView, textView, item, _ ->
+            val suggestion = item as GtfsSuggestion
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                textView.text = Html.fromHtml("${text[0]} $t", Html.FROM_HTML_MODE_LEGACY)
+                textView.text = Html.fromHtml(item.body, Html.FROM_HTML_MODE_LEGACY)
             } else {
                 @Suppress("DEPRECATION")
-                textView.text = Html.fromHtml(text[0] + "<br/>" + t)
+                textView.text = Html.fromHtml(item.body)
             }
+            iconView.setImageDrawable(getDrawable(suggestion.getIcon(), context))
         }
 
         searchView.attachNavigationDrawerToMenuButton(drawer_layout as DrawerLayout)
@@ -152,9 +148,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         favouritesList.adapter.notifyDataSetChanged()
     }
 
-    private fun getStops() {
+    private fun getSuggestions() {
         timetable = Timetable.getTimetable(this)
-        stops = timetable.getStops()
+        suggestions = timetable.getStopSuggestions(context) //todo get lines, bike stations
     }
 
     private fun prepareListeners() {
@@ -239,7 +235,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         }
         Snackbar.make(findViewById(R.id.drawer_layout), message, Snackbar.LENGTH_LONG).show()
         if (result == TimetableDownloader.RESULT_FINISHED) {
-            stops = timetable.getStops()
+            getSuggestions()
 
             drawerView.menu.findItem(R.id.drawer_validity_since).title = getString(R.string.valid_since, timetable.getValidSince())
             drawerView.menu.findItem(R.id.drawer_validity_till).title = getString(R.string.valid_since, timetable.getValidTill())
