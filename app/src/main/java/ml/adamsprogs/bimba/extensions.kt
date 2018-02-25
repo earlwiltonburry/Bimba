@@ -5,6 +5,7 @@ import android.os.Build
 import ml.adamsprogs.bimba.activities.StopActivity
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.ArrayList
 
 internal fun String.toPascalCase(): String { //check
     val builder = StringBuilder(this)
@@ -62,4 +63,10 @@ internal fun Calendar.getMode(): Int {
         Calendar.SATURDAY -> StopActivity.MODE_SATURDAYS
         else -> StopActivity.MODE_WORKDAYS
     }
+}
+
+internal fun CharSequence.safeSplit(vararg delimiters: String, ignoreCase: Boolean = false, limit: Int = 0): List<String> {
+    if (this == "")
+        return ArrayList()
+    return this.split(*delimiters, ignoreCase = ignoreCase, limit = limit)
 }

@@ -2,6 +2,7 @@ package ml.adamsprogs.bimba.models
 
 import ml.adamsprogs.bimba.rollTime
 import ml.adamsprogs.bimba.gtfs.AgencyAndId
+import ml.adamsprogs.bimba.safeSplit
 import java.io.Serializable
 import java.util.*
 import kotlin.collections.ArrayList
@@ -77,11 +78,7 @@ data class Departure(val line: AgencyAndId, val mode: List<Int>, val time: Int, 
             val array = string.split("|")
             if (array.size != 9)
                 throw IllegalArgumentException()
-            val modification =
-                    if (array[4] == "")
-                        ArrayList()
-                    else
-                        array[4].split(";")
+            val modification = array[4].safeSplit(";")
             return Departure(AgencyAndId.convertFromString(array[0]),
                     array[1].split(";").map { Integer.parseInt(it) },
                     Integer.parseInt(array[2]), array[3] == "true",
