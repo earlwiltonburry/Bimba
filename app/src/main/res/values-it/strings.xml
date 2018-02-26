@@ -59,4 +59,5 @@
     <string name="refreshing_cache">Cache sta essendo aggiornato. Può richiedere un certo tempo…</string>
     <string name="timetable_converting">L’orario e stando convertito</string>
     <string name="today">Oggi</string>
+    <string name="no_departures">Nessune partenze</string>
 </resources>

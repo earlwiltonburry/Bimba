@@ -74,4 +74,5 @@
     <string name="timetable_converting">Converting timetable…</string>
 
     <string name="today">Today</string>
+    <string name="no_departures">No departures</string>
 </resources>

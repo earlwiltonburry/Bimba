@@ -61,4 +61,5 @@
     <string name="refreshing_cache">Odświeżanie pamięci podręcznej. Może chwilę potrwać…</string>
     <string name="timetable_converting">Konwertowanie rozkładu</string>
     <string name="today">Dzisiaj</string>
+    <string name="no_departures">Brak odjazdów</string>
 </resources>

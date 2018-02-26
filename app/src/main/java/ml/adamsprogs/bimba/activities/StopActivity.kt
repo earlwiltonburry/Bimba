@@ -31,6 +31,7 @@ import ml.adamsprogs.bimba.getMode
 import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 import ml.adamsprogs.bimba.models.*
 import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.concurrent.thread
 
 class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, MessageReceiver.OnVmListener, Favourite.OnVmPreparedListener {
@@ -82,7 +83,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             }
         }
 
-        sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, HashMap<AgencyAndId, ArrayList<Departure>>())
+        sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, null)
 
         container.adapter = sectionsPagerAdapter
 
@@ -102,9 +103,20 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         }
     }
 
-    private fun refreshAdapter(departures: Map<AgencyAndId, List<Departure>>) {
+    private fun refreshAdapterFromStop() {
+        val departures = HashMap<AgencyAndId, List<Departure>>()
+        if (this.vmDepartures.isNotEmpty()) {
+            departures[timetable.getServiceForToday()] = this.vmDepartures.flatMap { it.value }.sortedBy { it.timeTill(true) }
+            refreshAdapter(departures)
+        } else {
+            refreshAdapter(Departure.createDepartures(stopSegment!!.stop))
+            hasDepartures = true
+        }
+    }
 
-        sectionsPagerAdapter?.departures = departures
+    private fun refreshAdapter(departures: Map<AgencyAndId, List<Departure>>?) {
+        if (departures != null)
+            sectionsPagerAdapter?.departures = departures
         runOnUiThread {
             sectionsPagerAdapter?.notifyDataSetChanged()
             selectTodayPage()
@@ -167,14 +179,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 this.vmDepartures[plateId] = vmDepartures
             else
                 this.vmDepartures.remove(plateId)
-            val departures = HashMap<AgencyAndId, List<Departure>>()
-            if (this.vmDepartures.isNotEmpty()) {
-                departures[timetable.getServiceForToday()] = this.vmDepartures.flatMap { it.value }.sortedBy { it.timeTill(true) }
-                refreshAdapter(departures)
-            } else {
-                refreshAdapter(Departure.createDepartures(stopSegment!!.stop))
-                hasDepartures = true
-            }
+            refreshAdapterFromStop()
         }
     }
 
@@ -219,7 +224,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_timetable_full, this.theme))
                 sectionsPagerAdapter?.relativeTime = true
                 if (sourceType == SOURCE_TYPE_STOP)
-                    refreshAdapter(Departure.createDepartures(stopSegment!!.stop))
+                    refreshAdapterFromStop()
                 else
                     refreshAdapter(favourite!!.allDepartures())
             }
@@ -243,23 +248,27 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         unregisterReceiver(receiver)
     }
 
-    inner class SectionsPagerAdapter(fm: FragmentManager, var departures: Map<AgencyAndId, List<Departure>>) : FragmentStatePagerAdapter(fm) {
+    inner class SectionsPagerAdapter(fm: FragmentManager, var departures: Map<AgencyAndId, List<Departure>>?) : FragmentStatePagerAdapter(fm) {
         var relativeTime = true
 
         override fun getItem(position: Int): Fragment {
-            if (departures.isEmpty())
+            if (departures == null)
+                return PlaceholderFragment.newInstance(null, relativeTime)
+            if (departures!!.isEmpty())
                 return PlaceholderFragment.newInstance(ArrayList(), relativeTime)
             val sat = timetable.getServiceFor("saturday")
             val sun = timetable.getServiceFor("sunday")
             val list: List<Departure> = when (position) {
-                1 -> departures[sat]!!
-                2 -> departures[sun]!!
+                1 -> departures!![sat] ?: ArrayList()
+                2 -> departures!![sun] ?: ArrayList()
                 0 -> try {
-                    departures
+                    departures!!
                             .filter { it.key != sat && it.key != sun }
                             .filter { it.value.isNotEmpty() }.toList()[0].second
                 } catch (e: IndexOutOfBoundsException) {
-                    departures.filter { it.key != sat && it.key != sun }.toList()[0].second
+                    departures!!.filter { it.key != sat && it.key != sun }.toList()[0].second
+                } catch (e: Exception) {
+                    ArrayList<Departure>()
                 }
                 else -> throw IndexOutOfBoundsException("No tab at index $position")
             }
@@ -283,9 +292,9 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
             val layoutManager = LinearLayoutManager(activity)
             val departuresList: RecyclerView = rootView.findViewById(R.id.departuresList)
+            val departures = arguments?.getStringArrayList("departures")?.map { Departure.fromString(it) }
+            if (departures != null && departures.isNotEmpty())
             departuresList.addItemDecoration(DividerItemDecoration(departuresList.context, layoutManager.orientation))
-
-            val departures = arguments?.getStringArrayList("departures")!!.map { Departure.fromString(it) }
 
 
             departuresList.adapter = DeparturesAdapter(activity as Context, departures,
@@ -295,15 +304,17 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         }
 
         companion object {
-            fun newInstance(departures: List<Departure>, relativeTime: Boolean): PlaceholderFragment {
+            fun newInstance(departures: List<Departure>?, relativeTime: Boolean): PlaceholderFragment {
                 val fragment = PlaceholderFragment()
                 val args = Bundle()
-                if (departures.isNotEmpty()) {
-                    val d = ArrayList<String>()
-                    departures.mapTo(d) { it.toString() }
-                    args.putStringArrayList("departures", d)
-                } else
-                    args.putStringArrayList("departures", ArrayList<String>())
+                if (departures != null){
+                    if (departures.isNotEmpty()) {
+                        val d = ArrayList<String>()
+                        departures.mapTo(d) { it.toString() }
+                        args.putStringArrayList("departures", d)
+                    } else
+                        args.putStringArrayList("departures", ArrayList<String>())
+                }
                 args.putBoolean("relativeTime", relativeTime)
                 fragment.arguments = args
                 return fragment

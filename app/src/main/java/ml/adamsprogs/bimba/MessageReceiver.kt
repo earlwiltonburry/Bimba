@@ -29,7 +29,7 @@ class MessageReceiver private constructor() : BroadcastReceiver() {
             }
         }
         if (intent?.action == VmClient.ACTION_READY) {
-            val departures = intent.getStringArrayListExtra(VmClient.EXTRA_DEPARTURES)?.map { Departure.fromString(it) }?.toSet() as HashSet<Departure>?
+            val departures = intent.getStringArrayListExtra(VmClient.EXTRA_DEPARTURES)?.map { Departure.fromString(it) }?.toSet()
             val plateId = intent.getSerializableExtra(VmClient.EXTRA_PLATE_ID) as Plate.ID
             for (listener in onVmListeners) {
                 listener.onVm(departures, plateId)

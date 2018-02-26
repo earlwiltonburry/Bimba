@@ -212,14 +212,15 @@ class VmClient : Service() {
                         departureDay != todayDay, it["onStopPoint"] as Boolean)
                 departures.add(departure)
             }
-
         }
-
 
         val departuresForPlate = HashMap<AgencyAndId, HashSet<Departure>>()
         departuresForPlate[timetable.getServiceForToday()] = departures
         val vm = vms[plateId.stop] ?: HashSet()
-        vm.remove(vm.filter { it.id == plateId }[0]) //fixme outOfBound when vm is still empty (1st time)
+        try {
+            vm.remove(vm.filter { it.id == plateId }[0]) //fixme outOfBound when vm is still empty (1st time)
+        } catch (e: IndexOutOfBoundsException) {
+        }
         vm.add(Plate(plateId, departuresForPlate))
         vms[plateId.stop] = vm
         if (departures.isEmpty())

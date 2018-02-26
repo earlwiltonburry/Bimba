@@ -15,29 +15,38 @@ import ml.adamsprogs.bimba.Declinator
 import ml.adamsprogs.bimba.rollTime
 import java.util.*
 
-class DeparturesAdapter(val context: Context, private val departures: List<Departure>, private val relativeTime: Boolean) :
+class DeparturesAdapter(val context: Context, private val departures: List<Departure>?, private val relativeTime: Boolean) :
         RecyclerView.Adapter<DeparturesAdapter.ViewHolder>() {
 
     companion object {
         const val VIEW_TYPE_LOADING: Int = 0
         const val VIEW_TYPE_CONTENT: Int = 1
+        const val VIEW_TYPE_EMPTY: Int = 2
     }
 
     override fun getItemCount(): Int {
-        if (departures.isEmpty())
+        if (departures == null || departures.isEmpty())
             return 1
         return departures.size
     }
 
     override fun getItemViewType(position: Int): Int {
-        return if (departures.isEmpty())
-            VIEW_TYPE_LOADING
-        else
-            VIEW_TYPE_CONTENT
+        return when {
+            departures == null -> VIEW_TYPE_EMPTY
+            departures.isEmpty() -> VIEW_TYPE_LOADING
+            else -> VIEW_TYPE_CONTENT
+        }
     }
 
     override fun onBindViewHolder(holder: ViewHolder?, position: Int) {
+        if (departures == null) {
+            return
+        }
+        val line = holder?.lineTextView
+        val time = holder?.timeTextView
+        val direction = holder?.directionTextView
         if (departures.isEmpty()) {
+            time?.text = context.getString(R.string.no_departures)
             return
         }
         val departure = departures[position]
@@ -50,18 +59,15 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
         val timeString: String
 
         timeString = if (departureIn > 60 || departureIn < 0 || !relativeTime)
-            //todo shall we pad hour too?
+        //todo shall we pad hour too?
             context.getString(R.string.departure_at, "${departureTime.get(Calendar.HOUR_OF_DAY)}:${String.format("%02d", departureTime.get(Calendar.MINUTE))}")
         else if (departureIn > 0 && !departure.onStop)
             context.getString(Declinator.decline(departureIn), departureIn.toString())
         else
             context.getString(R.string.now)
 
-        val line = holder?.lineTextView
         line?.text = departure.lineText
-        val time = holder?.timeTextView
         time?.text = timeString
-        val direction = holder?.directionTextView
         direction?.text = context.getString(R.string.departure_to, departure.direction)
         val icon = holder?.typeIcon
         if (departure.vm)
