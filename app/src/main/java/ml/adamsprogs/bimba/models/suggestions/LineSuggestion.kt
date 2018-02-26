@@ -31,6 +31,12 @@ class LineSuggestion(name: String, private val route: Route) : GtfsSuggestion(na
         return name
     }
 
+    override fun compareTo(other: GtfsSuggestion): Int {
+        return if (other is LineSuggestion)
+            name.toInt().compareTo(other.name.toInt())
+        else
+            name.compareTo(other.name)
+    }
 
     companion object CREATOR : Parcelable.Creator<LineSuggestion> {
         override fun createFromParcel(parcel: Parcel): LineSuggestion {

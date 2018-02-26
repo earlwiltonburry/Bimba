@@ -9,6 +9,7 @@ import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 import ml.adamsprogs.bimba.models.gtfs.Route
 import ml.adamsprogs.bimba.models.gtfs.Trip
 import ml.adamsprogs.bimba.models.gtfs.Calendar
+import ml.adamsprogs.bimba.models.suggestions.LineSuggestion
 import ml.adamsprogs.bimba.models.suggestions.StopSuggestion
 import ml.adamsprogs.bimba.secondsAfterMidnight
 import org.supercsv.cellprocessor.ift.CellProcessor
@@ -81,6 +82,29 @@ class Timetable private constructor() {
             StopSuggestion(it.key, it.value, zones[it.key]!!, colour)
         }.sorted()
         return _stops!!
+    }
+
+    fun getLineSuggestions(): List<LineSuggestion> {
+        val routes = ArrayList<LineSuggestion>()
+        val file = File(filesDir, "gtfs_files/routes.txt")
+        val settings = CsvParserSettings()
+        settings.format.setLineSeparator("\r\n")
+        settings.format.quote = '"'
+        settings.isHeaderExtractionEnabled = true
+        val parser = CsvParser(settings)
+        parser.parseAll(file).forEach {
+            routes.add(LineSuggestion(it[2], createRoute(
+                    it[0],
+                    it[1],
+                    it[2],
+                    it[3],
+                    it[4],
+                    Integer.parseInt(it[5]),
+                    Integer.parseInt(it[6], 16),
+                    Integer.parseInt(it[7], 16)
+            )))
+        }
+        return routes.sortedBy { it.name }
     }
 
     fun getHeadlinesForStop(stops: Set<AgencyAndId>): Map<AgencyAndId, Pair<String, Set<String>>> {
@@ -315,21 +339,38 @@ class Timetable private constructor() {
                 val type = Integer.parseInt(routeRow!!["route_type"] as String)
                 val colour = Integer.parseInt(routeRow!!["route_color"] as String, 16)
                 val textColour = Integer.parseInt(routeRow!!["route_text_color"] as String, 16)
-                val (to, from) = desc.split("|")
-                val toSplit = to.split("^")
-                val fromSplit = from.split("^")
-                val description = "${toSplit[0]}|${fromSplit[0]}"
-                val modifications = HashMap<String, String>()
-                toSplit.slice(1 until toSplit.size).forEach {
-                    val (k, v) = it.split(" - ")
-                    modifications[k] = v
-                }
-                return Route(AgencyAndId(id), AgencyAndId(agency), shortName, longName, description,
-                        type, colour, textColour, modifications)
+                return createRoute(id, agency, shortName, longName, desc, type, colour, textColour)
             }
         }
         mapReader.close()
         throw IllegalArgumentException("Trip ${trip.id.rawId} not in store")
+    }
+
+    private fun createRoute(id: String, agency: String, shortName: String, longName: String,
+                            desc: String, type: Int, colour: Int, textColour: Int): Route {
+        if (desc.contains("|")) {
+            val (to, from) = desc.split("|")
+            val fromSplit = from.split("^")
+            val toSplit = to.split("^")
+            val description = "${toSplit[0]}|${fromSplit[0]}"
+            val modifications = HashMap<String, String>()
+            toSplit.slice(1 until toSplit.size).forEach {
+                val (k, v) = it.split(" - ")
+                modifications[k] = v
+            }
+            return Route(AgencyAndId(id), AgencyAndId(agency), shortName, longName, description,
+                    type, colour, textColour, modifications)
+        } else {
+            val toSplit = desc.split("^")
+            val description = toSplit[0]
+            val modifications = HashMap<String, String>()
+            toSplit.slice(1 until toSplit.size).forEach {
+                val (k, v) = it.split(" - ")
+                modifications[k] = v
+            }
+            return Route(AgencyAndId(id), AgencyAndId(agency), shortName, longName, description,
+                    type, colour, textColour, modifications)
+        }
     }
 
 //    fun getLinesForStop(stopId: AgencyAndId): Set<AgencyAndId> {

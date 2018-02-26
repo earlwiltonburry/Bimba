@@ -11,7 +11,7 @@
     <string name="no_db_connect">Połącz się z Internetem aby pobrać rozkład</string>
     <string name="no_db_downloading">Pobieranie rozkładu…</string>
     <string name="timetable_downloading">Pobieranie rozkładu…</string>
-    <string name="search_placeholder">Szukaj przystanku…</string>
+    <string name="search_placeholder">Przystanek lub linia…</string>
     <string name="timetable_up_to_date">Rozkład jest aktualny</string>
     <string name="validity_failed">Pobrany rozkład jest uszkodzony – nie można zaktualizować</string>
     <string name="no_connectivity">Brak połączenia z Internetem – nie można zaktualizować rozkładu</string>

@@ -15,7 +15,7 @@
     <string name="no_db_connect">Connect to the Internet to download the timetable</string>
     <string name="no_db_downloading">Timetable is being downloaded…</string>
     <string name="timetable_downloading">Downloading timetable</string>
-    <string name="search_placeholder">Search for a stop…</string>
+    <string name="search_placeholder">Stop or line…</string>
     <string name="no_connectivity">No connectivity – can’t update timetable</string>
     <string name="timetable_up_to_date">Timetable is up-to-date</string>
     <string name="validity_failed">Downloaded timetable is corrupted – can’t update</string>

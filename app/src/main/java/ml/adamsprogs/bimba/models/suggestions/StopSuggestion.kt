@@ -5,7 +5,7 @@ import android.os.Parcelable
 import ml.adamsprogs.bimba.R
 import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 
-class StopSuggestion(name: String, val ids: Set<AgencyAndId>, private val zone: String, private val zoneColour: String) : GtfsSuggestion(name), Comparable<StopSuggestion> {
+class StopSuggestion(name: String, val ids: Set<AgencyAndId>, private val zone: String, private val zoneColour: String) : GtfsSuggestion(name){
     @Suppress("UNCHECKED_CAST")
     constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString().split(",").map { AgencyAndId(it) }.toSet(), parcel.readString(), parcel.readString())
 
@@ -28,7 +28,7 @@ class StopSuggestion(name: String, val ids: Set<AgencyAndId>, private val zone: 
         return R.drawable.ic_stop
     }
 
-    override fun compareTo(other: StopSuggestion): Int {
+    override fun compareTo(other: GtfsSuggestion): Int {
         return name.compareTo(other.name)
     }
 
