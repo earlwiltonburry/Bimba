@@ -195,7 +195,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             Snackbar.make(findViewById(R.id.drawer_layout), message, Snackbar.LENGTH_LONG).show()
         } catch (e: IllegalArgumentException) {
         }
-        //todo refresh
+        refreshAdapterFromStop()
     }
 
     private fun selectTodayPage() {

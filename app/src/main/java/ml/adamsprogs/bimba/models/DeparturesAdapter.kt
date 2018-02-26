@@ -59,8 +59,7 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
         val timeString: String
 
         timeString = if (departureIn > 60 || departureIn < 0 || !relativeTime)
-        //todo shall we pad hour too?
-            context.getString(R.string.departure_at, "${departureTime.get(Calendar.HOUR_OF_DAY)}:${String.format("%02d", departureTime.get(Calendar.MINUTE))}")
+            context.getString(R.string.departure_at, "${String.format("%02d", departureTime.get(Calendar.HOUR_OF_DAY))}:${String.format("%02d", departureTime.get(Calendar.MINUTE))}")
         else if (departureIn > 0 && !departure.onStop)
             context.getString(Declinator.decline(departureIn), departureIn.toString())
         else

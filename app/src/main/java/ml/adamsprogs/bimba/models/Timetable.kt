@@ -232,7 +232,7 @@ class Timetable private constructor() {
         return plates.map { getStopDeparturesByPlate(it, trips) }.toSet()
     }
 
-    private fun getStopDeparturesByPlate(plate: Plate, trips: Map<String, Trip>): Plate { //fixme takes too long
+    private fun getStopDeparturesByPlate(plate: Plate, trips: Map<String, Trip>): Plate { //fixme<c:optimisation> takes too long
         println("getStopDeparturesByPlate: ${JCalendar.getInstance().timeInMillis}")
         val resultPlate = Plate(Plate.ID(plate.id), HashMap())
         val stopTimes = HashMap<String, Map<String, Any>>()
@@ -302,7 +302,7 @@ class Timetable private constructor() {
         throw IllegalArgumentException("Service $serviceId not in store")
     }
 
-    private fun explainModification(trip: Trip, stopSequence: Int): List<String> { //todo "kurs obsługiwany taborem niskopodłogowym" -> ignore
+    private fun explainModification(trip: Trip, stopSequence: Int): List<String> { //todo<p:1> "kurs obsługiwany taborem niskopodłogowym" -> ignore
         val route = getRouteForTrip(trip)
         val definitions = route.modifications
 

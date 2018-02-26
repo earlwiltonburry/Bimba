@@ -64,7 +64,7 @@ class StopSpecifyActivity : AppCompatActivity() {
             }
             holder?.stopCode?.text = values.values.sortedBy { it.first }[position].first
             holder?.stopHeadlines?.text = values.values.sortedBy { it.first }[position].second
-                    .sortedBy { it } // fixme natural sort
+                    .sortedBy { it } // fixme<p:1> natural sort
                     .joinToString()
         }
 

@@ -150,7 +150,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     private fun getSuggestions() {
         timetable = Timetable.getTimetable(this)
-        suggestions = (timetable.getStopSuggestions(context) + timetable.getLineSuggestions()).sorted() //todo + bike stations, &c
+        suggestions = (timetable.getStopSuggestions(context) + timetable.getLineSuggestions()).sorted() //todo<p:v+1> + bike stations, &c
     }
 
     private fun prepareListeners() {
