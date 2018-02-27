@@ -231,7 +231,8 @@ class Timetable private constructor() {
             departures[AgencyAndId(it[0])] = ArrayList()
         }
 
-        tripsInStop.forEach { //fixme this part is long --- cache is the only option
+        tripsInStop.forEach {
+            //fixme this part is long --- cache is the only option
             departures[trips[it.key]!!.serviceId]!!.add(Departure(trips[it.key]!!.routeId,
                     calendarToMode(trips[it.key]!!.serviceId),
                     it.value.first, trips[it.key]!!.wheelchairAccessible,
@@ -435,7 +436,7 @@ class Timetable private constructor() {
         return filteredTrips
     }
 
-    private fun tripFromCache(id: String):Trip {
+    private fun tripFromCache(id: String): Trip {
         return Trip(AgencyAndId(tripsCache[id]!![0]),
                 AgencyAndId(tripsCache[id]!![1]), createTripId(tripsCache[id]!![2]),
                 tripsCache[id]!![3], Integer.parseInt(tripsCache[id]!![4]),
@@ -571,6 +572,25 @@ class Timetable private constructor() {
         }
 
         return filteredPlates
+    }
+
+    fun getTripGraphs(id: AgencyAndId): List<Map<Int, List<Int>>> {
+        tripsCache.forEach {
+            if (it.value[0] == id.id) {
+                //todo needs stop_times.txt indexed by trips
+            }
+        }
+        val map = ArrayList<HashMap<Int, List<Int>>>()
+        val map0 = HashMap<Int, List<Int>>()
+        map0[0] = listOf(1, 2)
+        map0[1] = listOf(3, 4, 5)
+        map.add(map0)
+        val map1 = HashMap<Int, List<Int>>()
+        map1[0] = listOf(1)
+        map1[1] = listOf(2, 3, 4)
+        map1[2] = listOf(4, 5)
+        map.add(map1)
+        return map
     }
 }
 

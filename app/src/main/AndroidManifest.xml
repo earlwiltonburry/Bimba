@@ -48,6 +48,15 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="ml.adamsprogs.bimba.activities.StopSpecifyActivity" />
         </activity>
+        <activity
+            android:name=".activities.LineSpecifyActivity"
+            android:label="@string/title_activity_main"
+            android:parentActivityName=".activities.DashActivity"
+            android:theme="@style/AppTheme">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="ml.adamsprogs.bimba.activities.DashActivity" />
+        </activity>
     </application>
 
 </manifest>

@@ -23,9 +23,10 @@ import kotlinx.android.synthetic.main.activity_dash.*
 import ml.adamsprogs.bimba.datasources.TimetableDownloader
 import ml.adamsprogs.bimba.datasources.VmClient
 import ml.adamsprogs.bimba.models.suggestions.GtfsSuggestion
+import ml.adamsprogs.bimba.models.suggestions.LineSuggestion
 import ml.adamsprogs.bimba.models.suggestions.StopSuggestion
 
-//todo cards
+//todo cards https://enoent.fr/blog/2015/01/18/recyclerview-basics/
 class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener,
         FavouritesAdapter.OnMenuItemClickListener, Favourite.OnVmPreparedListener {
     val context: Context = this
@@ -110,11 +111,15 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 }
                 imm.hideSoftInputFromWindow(view.windowToken, 0)
                 if (searchSuggestion is StopSuggestion) {
-                    intent = Intent(context, StopSpecifyActivity::class.java)
+                    val intent = Intent(context, StopSpecifyActivity::class.java)
                     intent.putExtra(StopSpecifyActivity.EXTRA_STOP_IDS, searchSuggestion.ids.joinToString(",") { it.id })
                     intent.putExtra(StopSpecifyActivity.EXTRA_STOP_NAME, searchSuggestion.name)
                     startActivity(intent)
-                } //todo if line
+                } else if (searchSuggestion is LineSuggestion){
+                    val intent = Intent(context, LineSpecifyActivity::class.java)
+                    intent.putExtra(LineSpecifyActivity.EXTRA_LINE_ID, searchSuggestion.name)
+                    startActivity(intent)
+                }
             }
 
             override fun onSearchAction(query: String) {
