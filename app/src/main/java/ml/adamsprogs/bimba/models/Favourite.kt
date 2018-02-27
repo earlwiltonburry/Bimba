@@ -167,14 +167,15 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         return twoDayDepartures
     }
 
-    fun allDepartures(): Map<AgencyAndId, List<Departure>> { // fixme<c:optimisation> departures through vm not the other way around
-        val departures = timetable.getStopDepartures(timetables) as HashMap<AgencyAndId, ArrayList<Departure>>
-
+    fun allDepartures(): Map<AgencyAndId, List<Departure>> {
         if (vmDepartures.isNotEmpty()) {
+            val departures = HashMap<AgencyAndId, ArrayList<Departure>>()
             val today = timetable.getServiceForToday()
             departures[today] = vmDepartures.flatMap { it.value } as ArrayList<Departure>
+            return departures
         }
 
+        val departures = timetable.getStopDepartures(timetables)
         return Departure.rollDepartures(departures)
     }
 

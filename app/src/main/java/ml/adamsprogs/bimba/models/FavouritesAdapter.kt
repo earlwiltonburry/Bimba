@@ -65,7 +65,7 @@ class FavouritesAdapter(val context: Context, var favourites: List<Favourite>, p
                 if (interval < 0)
                     return@thread
                 nextDepartureText = context.getString(Declinator.decline(interval), interval.toString())
-                nextDepartureLineText = context.getString(R.string.departure_to_line, nextDeparture.line, nextDeparture.direction)
+                nextDepartureLineText = context.getString(R.string.departure_to_line, nextDeparture.line, nextDeparture.headsign)
             } else {
                 nextDepartureText = context.getString(R.string.no_next_departure)
                 nextDepartureLineText = ""

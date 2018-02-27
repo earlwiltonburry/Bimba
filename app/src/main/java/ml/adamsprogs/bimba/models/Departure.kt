@@ -9,7 +9,7 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 data class Departure(val line: AgencyAndId, val mode: List<Int>, val time: Int, val lowFloor: Boolean, //time in seconds since midnight
-                     val modification: List<String>, val direction: String, val vm: Boolean = false,
+                     val modification: List<String>, val headsign: String, val vm: Boolean = false,
                      var tomorrow: Boolean = false, val onStop: Boolean = false) {
 
     val isModified: Boolean
@@ -18,7 +18,7 @@ data class Departure(val line: AgencyAndId, val mode: List<Int>, val time: Int, 
         }
 
     override fun toString(): String {
-        return "$line|${mode.joinToString(";")}|$time|$lowFloor|${modification.joinToString(";")}|$direction|$vm|$tomorrow|$onStop"
+        return "$line|${mode.joinToString(";")}|$time|$lowFloor|${modification.joinToString(";")}|$headsign|$vm|$tomorrow|$onStop"
     }
 
     fun copy(): Departure {

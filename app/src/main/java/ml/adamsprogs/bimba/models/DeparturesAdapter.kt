@@ -67,7 +67,7 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
 
         line?.text = departure.lineText
         time?.text = timeString
-        direction?.text = context.getString(R.string.departure_to, departure.direction)
+        direction?.text = context.getString(R.string.departure_to, departure.headsign)
         val icon = holder?.typeIcon
         if (departure.vm)
             icon?.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_vm, context.theme))
