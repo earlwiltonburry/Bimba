@@ -60,4 +60,6 @@
     <string name="timetable_converting">L’orario e stando convertito</string>
     <string name="today">Oggi</string>
     <string name="no_departures">Nessune partenze</string>
+    <string name="tab_text_line_to">Avanti</string>
+    <string name="tab_text_line_fro">Indietro</string>
 </resources>

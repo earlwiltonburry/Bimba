@@ -76,7 +76,6 @@
     <string name="today">Today</string>
     <string name="no_departures">No departures</string>
     <string name="title_activity_main" translatable="false">LineSpecifyActivity</string>
-    <string name="section_format">Hello World from section: %1$d</string>
     <string name="tab_text_line_to">To</string>
     <string name="tab_text_line_fro">Fro</string>
 </resources>

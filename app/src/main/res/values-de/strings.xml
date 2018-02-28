@@ -62,4 +62,6 @@
     <string name="timetable_converting">Fahrplan wird umgewandelt…</string>
     <string name="today">Heute</string>
     <string name="no_departures">Keine Abfahrten</string>
+    <string name="tab_text_line_to">Hin</string>
+    <string name="tab_text_line_fro">Her</string>
 </resources>

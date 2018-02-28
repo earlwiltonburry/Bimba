@@ -62,4 +62,6 @@
     <string name="timetable_converting">Konwertowanie rozkładu</string>
     <string name="today">Dzisiaj</string>
     <string name="no_departures">Brak odjazdów</string>
+    <string name="tab_text_line_to">Tam</string>
+    <string name="tab_text_line_fro">Z powrotem</string>
 </resources>
