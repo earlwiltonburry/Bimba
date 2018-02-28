@@ -126,11 +126,12 @@ class Timetable private constructor() {
             }
         }
 
-        val stopsFile = File(filesDir, "gtfs_files/trips.txt")
-        parser.parseAll(stopsFile).forEach {
-            tripsCache[it[2]] = it
-            routes[it[2]] = Pair(it[0], it[3])
+        if (tripsCache.isEmpty())
+            createTripCache()
+        tripsCache.forEach {
+            routes[it.key] = Pair(it.value[0], it.value[3])
         }
+
 
         trips.forEach {
             val headsign = HashSet<String>()
@@ -150,6 +151,17 @@ class Timetable private constructor() {
         172 -> (AWF41, {10 → Połabska, 29 → Dębiec, 15 → Budziszyńska, 10 → Dębiec, 15 → Os. Sobieskiego, 12 → Os. Sobieskiego, 6 → Junikowo, 18 → Ogrody, 2 → Ogrody})
         4586 -> (AWF73, {10 → Franowo, 29 → Franowo, 6 → Miłostowo, 5 → Stomil, 18 → Franowo, 15 → Franowo, 12 → Starołęka, 74 → Os. Orła Białego})
         */
+    }
+
+    private fun createTripCache() {
+        val settings = CsvParserSettings()
+        settings.format.setLineSeparator("\r\n")
+        settings.format.quote = '"'
+        val parser = CsvParser(settings)
+        val stopsFile = File(filesDir, "gtfs_files/trips.txt")
+        parser.parseAll(stopsFile).forEach {
+            tripsCache[it[2]] = it
+        }
     }
 
     fun getStopName(stopId: AgencyAndId): String {
@@ -211,6 +223,8 @@ class Timetable private constructor() {
         return getStopDeparturesBySegment(segment, trips)
     }
 
+    fun getStopDeparturesBySegment(segment: StopSegment) = getStopDeparturesBySegment(segment, getTripsForStop(segment.stop))
+
     private fun getStopDeparturesBySegment(segment: StopSegment, trips: Map<String, Trip>): HashMap<AgencyAndId, List<Departure>> {
         println("getStopDeparturesBySegment: ${JCalendar.getInstance().timeInMillis}")
         val departures = HashMap<AgencyAndId, ArrayList<Departure>>()
@@ -249,55 +263,41 @@ class Timetable private constructor() {
         return sortedDepartures
     }
 
-    fun getStopDepartures(plates: Set<Plate>): Map<AgencyAndId, ArrayList<Departure>> {
-        val trips = HashMap<String, Trip>()
-
-        tripsCache.forEach { trips[it.key] = tripFromCache(it.key) }
-        return Plate.join(getStopDeparturesByPlates(plates, trips))
-    }
-
-    private fun getStopDeparturesByPlates(plates: Set<Plate>, trips: Map<String, Trip>): Set<Plate> {
-        if (plates.isEmpty())
-            return emptySet()
-
-        return plates.map { getStopDeparturesByPlate(it, trips) }.toSet()
-    }
-
-    private fun getStopDeparturesByPlate(plate: Plate, trips: Map<String, Trip>): Plate { //fixme<c:optimisation> takes too long --- cache
-        println("getStopDeparturesByPlate: ${JCalendar.getInstance().timeInMillis}")
-        val resultPlate = Plate(Plate.ID(plate.id), HashMap())
-        val stopTimes = HashMap<String, Map<String, Any>>()
-        val stopTimesFile = File(filesDir, "gtfs_files/stop_times_${plate.id.stop.id}.txt")
-        val mapReader = CsvMapReader(FileReader(stopTimesFile), CsvPreference.STANDARD_PREFERENCE)
-        val header = mapReader.getHeader(true)
-
-        var stopTimesRow: Map<String, Any>? = null
-        val processors = Array<CellProcessor?>(header.size, { null })
-        while ({ stopTimesRow = mapReader.read(header, processors); stopTimesRow }() != null) {
-            val tripId = stopTimesRow!!["trip_id"] as String
-            stopTimes[tripId] = stopTimesRow!!
-        }
-        mapReader.close()
-
-        trips.forEach {
-            if (it.value.routeId == plate.id.line &&
-                    it.value.headsign == plate.id.headsign) {
-                val time = parseTime(stopTimes[it.key]!!["departure_time"] as String)
-                val serviceId = it.value.serviceId
-                val mode = calendarToMode(serviceId)
-                val lowFloor = it.value.wheelchairAccessible
-                val mod = explainModification(it.value,
-                        Integer.parseInt(stopTimes[it.key]!!["stop_sequence"] as String))
-
-                val dep = Departure(plate.id.line, mode, time, lowFloor, mod, plate.id.headsign)
-                if (resultPlate.departures!![serviceId] == null)
-                    resultPlate.departures[serviceId] = HashSet()
-                resultPlate.departures[serviceId]!!.add(dep)
-            }
-        }
-        println("</>: ${JCalendar.getInstance().timeInMillis}")
-        return resultPlate
-    }
+//    private fun getStopDeparturesByPlate(plate: Plate, trips: Map<String, Trip>): Plate { //fixme<c:optimisation> takes too long --- cache
+//        println("getStopDeparturesByPlate: ${JCalendar.getInstance().timeInMillis}")
+//        val resultPlate = Plate(Plate.ID(plate.id), HashMap())
+//        val stopTimes = HashMap<String, Map<String, Any>>()
+//        val stopTimesFile = File(filesDir, "gtfs_files/stop_times_${plate.id.stop.id}.txt")
+//        val mapReader = CsvMapReader(FileReader(stopTimesFile), CsvPreference.STANDARD_PREFERENCE)
+//        val header = mapReader.getHeader(true)
+//
+//        var stopTimesRow: Map<String, Any>? = null
+//        val processors = Array<CellProcessor?>(header.size, { null })
+//        while ({ stopTimesRow = mapReader.read(header, processors); stopTimesRow }() != null) {
+//            val tripId = stopTimesRow!!["trip_id"] as String
+//            stopTimes[tripId] = stopTimesRow!!
+//        }
+//        mapReader.close()
+//
+//        trips.forEach {
+//            if (it.value.routeId == plate.id.line &&
+//                    it.value.headsign == plate.id.headsign) {
+//                val time = parseTime(stopTimes[it.key]!!["departure_time"] as String)
+//                val serviceId = it.value.serviceId
+//                val mode = calendarToMode(serviceId)
+//                val lowFloor = it.value.wheelchairAccessible
+//                val mod = explainModification(it.value,
+//                        Integer.parseInt(stopTimes[it.key]!!["stop_sequence"] as String))
+//
+//                val dep = Departure(plate.id.line, mode, time, lowFloor, mod, plate.id.headsign)
+//                if (resultPlate.departures!![serviceId] == null)
+//                    resultPlate.departures[serviceId] = HashSet()
+//                resultPlate.departures[serviceId]!!.add(dep)
+//            }
+//        }
+//        println("</>: ${JCalendar.getInstance().timeInMillis}")
+//        return resultPlate
+//    }
 
     private fun parseTime(time: String): Int {
         val cal = JCalendar.getInstance()
@@ -355,6 +355,8 @@ class Timetable private constructor() {
     }
 
     private fun getRouteForTrip(trip: Trip): Route {
+        if (tripsCache.isEmpty())
+            createTripCache()
         val routeId = tripsCache[trip.id.rawId]!![0]
 
         val tripsFile = File(filesDir, "gtfs_files/routes.txt")
@@ -437,6 +439,8 @@ class Timetable private constructor() {
     }
 
     private fun tripFromCache(id: String): Trip {
+        if (tripsCache.isEmpty())
+            createTripCache()
         return Trip(AgencyAndId(tripsCache[id]!![0]),
                 AgencyAndId(tripsCache[id]!![1]), createTripId(tripsCache[id]!![2]),
                 tripsCache[id]!![3], Integer.parseInt(tripsCache[id]!![4]),
@@ -511,26 +515,21 @@ class Timetable private constructor() {
         return getServiceFor(tomorrowDoW)
     }
 
-    private fun getServiceFor(day: Int): AgencyAndId {
-        val dow = arrayOf("sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday")
-
-        return getServiceFor(dow[day - 1])
-    }
-
-    fun getServiceFor(day: String): AgencyAndId {
+    fun getServiceFor(day: Int): AgencyAndId {
+        val dayColumn = ((day + 5) % 7) + 1
         val file = File(filesDir, "gtfs_files/calendar.txt")
-        val mapReader = CsvMapReader(FileReader(file), CsvPreference.STANDARD_PREFERENCE)
-        val header = mapReader.getHeader(true)
 
-        var row: Map<String, Any>? = null
-        val processors = Array<CellProcessor?>(header.size, { null })
-        while ({ row = mapReader.read(header, processors); row }() != null) {
-            if ((row!![day] as String) == "1") {
-                mapReader.close()
-                return AgencyAndId(row!!["service_id"] as String)
+        val settings = CsvParserSettings()
+        settings.format.quote = '"'
+        settings.format.setLineSeparator("\r\n")
+        settings.isHeaderExtractionEnabled = true
+        val parser = CsvParser(settings)
+
+        parser.parseAll(file).forEach {
+            if ((it[dayColumn] as String) == "1") {
+                return AgencyAndId(it[0] as String)
             }
         }
-        mapReader.close()
         throw IllegalArgumentException("Day $day not in calendar")
 
     }
@@ -575,6 +574,8 @@ class Timetable private constructor() {
     }
 
     fun getTripGraphs(id: AgencyAndId): List<Map<Int, List<Int>>> {
+        if(tripsCache.isEmpty())
+            createTripCache()
         tripsCache.forEach {
             if (it.value[0] == id.id) {
                 //todo needs stop_times.txt indexed by trips

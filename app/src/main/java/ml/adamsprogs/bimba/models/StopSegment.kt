@@ -61,4 +61,11 @@ data class StopSegment(val stop: AgencyAndId, var plates: Set<Plate.ID>?) : Parc
             return false
         return plates!!.contains(plateId)
     }
+
+    fun remove(plateId: Plate.ID) {
+        (plates as HashSet).remove(plateId)
+    }
+
+    val size: Int
+        get() = plates?.size ?: 0
 }

@@ -3,6 +3,7 @@ package ml.adamsprogs.bimba.activities
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.icu.util.JapaneseCalendar
 import android.support.design.widget.TabLayout
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
@@ -140,11 +141,8 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         fab.setOnClickListener {
             if (!favourites.has(stopSymbol)) {
-                val items = HashSet<Plate>()
-                timetable.getTripsForStop(stopSegment!!.stop).values.forEach {
-                    val o = Plate(Plate.ID(it.routeId, stopSegment!!.stop, it.headsign), null)
-                    items.add(o)
-                }
+                val items = HashSet<StopSegment>()
+                items.add(stopSegment!!)
                 favourites.add(stopSymbol, items)
                 fab.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_favourite, this.theme))
             } else {
@@ -256,8 +254,8 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 return PlaceholderFragment.newInstance(null, relativeTime)
             if (departures!!.isEmpty())
                 return PlaceholderFragment.newInstance(ArrayList(), relativeTime)
-            val sat = timetable.getServiceFor("saturday")
-            val sun = timetable.getServiceFor("sunday")
+            val sat = timetable.getServiceFor(Calendar.getInstance().get(Calendar.DAY_OF_WEEK))
+            val sun = timetable.getServiceFor(Calendar.getInstance().get(Calendar.DAY_OF_WEEK))
             val list: List<Departure> = when (position) {
                 1 -> departures!![sat] ?: ArrayList()
                 2 -> departures!![sun] ?: ArrayList()

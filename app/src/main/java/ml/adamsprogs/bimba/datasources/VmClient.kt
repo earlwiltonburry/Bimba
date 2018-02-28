@@ -38,7 +38,7 @@ class VmClient : Service() {
     }
     private val requests = HashMap<AgencyAndId, Set<Request>>()
     private val vms = HashMap<AgencyAndId, HashSet<Plate>>() //HashSet<Departure>?
-    private val timetable = Timetable.getTimetable()
+    private val timetable = Timetable.getTimetable(this)
 
 
     override fun onCreate() {

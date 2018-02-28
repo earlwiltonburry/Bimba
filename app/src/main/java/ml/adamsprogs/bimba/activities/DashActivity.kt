@@ -25,10 +25,14 @@ import ml.adamsprogs.bimba.datasources.VmClient
 import ml.adamsprogs.bimba.models.suggestions.GtfsSuggestion
 import ml.adamsprogs.bimba.models.suggestions.LineSuggestion
 import ml.adamsprogs.bimba.models.suggestions.StopSuggestion
+import android.support.v7.widget.DefaultItemAnimator
+import android.content.Intent
 
 //todo cards https://enoent.fr/blog/2015/01/18/recyclerview-basics/
+//todo searchView integration
 class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener,
-        FavouritesAdapter.OnMenuItemClickListener, Favourite.OnVmPreparedListener {
+        FavouritesAdapter.OnMenuItemClickListener, Favourite.OnVmPreparedListener,
+        FavouritesAdapter.ViewHolder.OnClickListener {
     val context: Context = this
     private val receiver = MessageReceiver.getMessageReceiver()
     lateinit var timetable: Timetable
@@ -38,6 +42,13 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     lateinit var favouritesList: RecyclerView
     lateinit var searchView: FloatingSearchView
     private lateinit var favourites: FavouriteStorage
+    private lateinit var adapter: FavouritesAdapter
+    private val actionModeCallback = ActionModeCallback()
+    private var actionMode: ActionMode? = null
+
+    companion object {
+        const val REQUEST_EDIT_FAVOURITE = 1
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,7 +56,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO)
         setSupportActionBar(toolbar)
-        supportActionBar?.title = getString(R.string.merge_favourites)
 
         getSuggestions()
 
@@ -115,7 +125,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                     intent.putExtra(StopSpecifyActivity.EXTRA_STOP_IDS, searchSuggestion.ids.joinToString(",") { it.id })
                     intent.putExtra(StopSpecifyActivity.EXTRA_STOP_NAME, searchSuggestion.name)
                     startActivity(intent)
-                } else if (searchSuggestion is LineSuggestion){
+                } else if (searchSuggestion is LineSuggestion) {
                     val intent = Intent(context, LineSpecifyActivity::class.java)
                     intent.putExtra(LineSpecifyActivity.EXTRA_LINE_ID, searchSuggestion.name)
                     startActivity(intent)
@@ -144,7 +154,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         favourites = FavouriteStorage.getFavouriteStorage(context)
         val layoutManager = LinearLayoutManager(context)
         favouritesList = favourites_list
-        favouritesList.adapter = FavouritesAdapter(context, favourites.favouritesList, this)
+        adapter = FavouritesAdapter(context, favourites, this, this)
+        favouritesList.adapter = adapter
+        favouritesList.itemAnimator = DefaultItemAnimator()
         favouritesList.layoutManager = layoutManager
     }
 
@@ -164,9 +176,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         filter.addCategory(Intent.CATEGORY_DEFAULT)
         registerReceiver(receiver, filter)
         receiver.addOnTimetableDownloadListener(context as MessageReceiver.OnTimetableDownloadListener)
-        favourites.favouritesList.forEach {
-            it.registerOnVm(receiver, context)
-        }
+        favourites.registerOnVm(receiver, context)
     }
 
     private fun startDownloaderService() {
@@ -185,36 +195,15 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     override fun onResume() {
         super.onResume()
-        (favouritesList.adapter as FavouritesAdapter).favourites = favourites.favouritesList
+        adapter.favourites = favourites
         favouritesList.adapter.notifyDataSetChanged()
     }
 
     override fun onDestroy() {
         super.onDestroy()
         receiver.removeOnTimetableDownloadListener(context as MessageReceiver.OnTimetableDownloadListener)
-        favourites.favouritesList.forEach {
-            it.deregisterOnVm(receiver, context)
-        }
+        favourites.deregisterOnVm(receiver, context)
         unregisterReceiver(receiver)
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_favourite_merge, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val id = item.itemId
-
-        if (id == R.id.action_merge) {
-            val names = (favouritesList.adapter as FavouritesAdapter).selectedNames
-            favourites.merge(names)
-            (favouritesList.adapter as FavouritesAdapter).favourites = favourites.favouritesList
-            favouritesList.adapter.notifyDataSetChanged()
-            (favouritesList.adapter as FavouritesAdapter).stopSelecting(names[0])
-        }
-
-        return super.onOptionsItemSelected(item)
     }
 
     fun deAccent(str: String): String {
@@ -248,18 +237,35 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     override fun edit(name: String): Boolean {
+        val positionBefore = favourites.indexOf(name)
         val intent = Intent(this, EditFavouriteActivity::class.java)
-        intent.putExtra(EditFavouriteActivity.EXTRA_FAVOURITE, favourites.favourites[name])
-        startActivity(intent)
-        (favouritesList.adapter as FavouritesAdapter).favourites = favourites.favouritesList
-        favouritesList.adapter.notifyDataSetChanged()
+        intent.putExtra(EditFavouriteActivity.EXTRA_FAVOURITE, favourites[name])
+        intent.putExtra(EditFavouriteActivity.EXTRA_POSITION_BEFORE, positionBefore)
+        startActivityForResult(intent, REQUEST_EDIT_FAVOURITE)
         return true
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+        if (requestCode == REQUEST_EDIT_FAVOURITE) {
+            if (resultCode == Activity.RESULT_OK) {
+                val name = data.getStringExtra(EditFavouriteActivity.EXTRA_NEW_NAME)
+                val positionBefore = data.getIntExtra(EditFavouriteActivity.EXTRA_POSITION_BEFORE, -1)
+                //adapter.favourites = favourites.favouritesList
+                if (positionBefore == -1)
+                    favouritesList.adapter.notifyDataSetChanged()
+                else {
+                    val positionAfter = favourites.indexOf(name)
+                    favouritesList.adapter.notifyItemChanged(positionBefore)
+                    favouritesList.adapter.notifyItemMoved(positionBefore, positionAfter)
+                }
+            }
+        }
     }
 
     override fun delete(name: String): Boolean {
         favourites.delete(name)
-        (favouritesList.adapter as FavouritesAdapter).favourites = favourites.favouritesList
-        favouritesList.adapter.notifyDataSetChanged()
+        //adapter.favourites = favourites.favouritesList
+        favouritesList.adapter.notifyItemRemoved(favourites.indexOf(name))
         return true
     }
 
@@ -267,5 +273,76 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     override fun onSaveInstanceState(outState: Bundle) {
         //hack below line to be commented to prevent crash on nougat.
         //super.onSaveInstanceState(outState);
+    }
+
+    override fun onItemClicked(position: Int) {
+        if (actionMode != null) {
+            toggleSelection(position)
+        }
+
+        //todo else -> StopActivity
+    }
+
+    override fun onItemLongClicked(position: Int): Boolean {
+        if (actionMode == null) {
+            actionMode = startActionMode(actionModeCallback)
+        }
+
+        toggleSelection(position)
+
+        return true
+    }
+
+    private fun toggleSelection(position: Int) {
+        adapter.toggleSelection(position)
+        val count = adapter.getSelectedItemCount()
+
+        if (count == 0) {
+            actionMode?.finish()
+        } else {
+            actionMode?.title = getString(R.string.merge_favourites)
+            actionMode?.invalidate()
+        }
+    }
+
+    private fun clearSelection() {
+        adapter.clearSelection()
+        actionMode?.finish()
+    }
+
+    private inner class ActionModeCallback : ActionMode.Callback {
+        override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
+            menuInflater.inflate(R.menu.menu_favourite_merge, menu)
+            return true
+        }
+
+        override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean {
+            return false
+        }
+
+        override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
+            return when (item.itemId) {
+                R.id.action_merge -> {
+                    val selectedPositions = adapter.getSelectedItems()
+                    val selectedNames = selectedPositions.map { favourites[it]?.name }.filter { it != null }.map { it!! }
+                    favourites.merge(selectedNames)
+
+                    adapter.notifyItemChanged(selectedPositions.min()!!)
+                    (1 until selectedPositions.size).forEach {
+                        adapter.notifyItemRemoved(it)
+                    }
+
+                    clearSelection()
+                    true
+                }
+
+                else -> false
+            }
+        }
+
+        override fun onDestroyActionMode(mode: ActionMode) {
+            (favouritesList.adapter as FavouritesAdapter).clearSelection()
+            actionMode = null
+        }
     }
 }

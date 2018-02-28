@@ -19,7 +19,7 @@
         android:textAlignment="viewStart"
         android:textAppearance="@style/TextAppearance.AppCompat"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/favourite_edit_split"
+        app:layout_constraintEnd_toStartOf="@+id/favourite_edit_delete"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -31,25 +31,25 @@
         android:layout_marginStart="9dp"
         android:layout_marginTop="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/favourite_edit_split"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_delete"
         tools:layout_editor_absoluteX="335dp"
         tools:layout_editor_absoluteY="16dp"
         android:contentDescription="@string/favourite_element_delete_button" />
 
-    <ImageView
-        android:id="@+id/favourite_edit_split"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:layout_marginEnd="58dp"
-        android:layout_marginTop="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_split"
-        tools:layout_editor_absoluteX="302dp"
-        tools:layout_editor_absoluteY="16dp"
-        android:contentDescription="@string/favourite_element_split_button" />
+    <!--<ImageView-->
+        <!--android:id="@+id/favourite_edit_split"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_marginBottom="16dp"-->
+        <!--android:layout_marginEnd="58dp"-->
+        <!--android:layout_marginTop="16dp"-->
+        <!--app:layout_constraintBottom_toBottomOf="parent"-->
+        <!--app:layout_constraintEnd_toEndOf="parent"-->
+        <!--app:layout_constraintTop_toTopOf="parent"-->
+        <!--app:srcCompat="@drawable/ic_split"-->
+        <!--tools:layout_editor_absoluteX="302dp"-->
+        <!--tools:layout_editor_absoluteY="16dp"-->
+        <!--android:contentDescription="@string/favourite_element_split_button" />-->
 </android.support.constraint.ConstraintLayout>

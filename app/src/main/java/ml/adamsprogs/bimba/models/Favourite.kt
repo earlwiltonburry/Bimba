@@ -16,13 +16,15 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
     private var isRegisteredOnVmListener: Boolean = false
     var name: String
         private set
-    var timetables: HashSet<Plate>
+    var timetables: HashSet<StopSegment>
         private set
     private var vmDepartures = HashMap<Plate.ID, Set<Departure>>()
     val timetable = Timetable.getTimetable()
 
     val size
-        get() = this.timetables.size
+        get() = timetables.sumBy {
+            it.size
+        }
 
     private val onVmPreparedListeners = HashSet<OnVmPreparedListener>()
 
@@ -35,15 +37,17 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
     }
 
     constructor(parcel: Parcel) {
-        val array = ArrayList<String>()
-        parcel.readStringList(array)
-        val timetables = HashSet<Plate>()
-        array.mapTo(timetables) { Plate.fromString(it) }
         this.name = parcel.readString()
-        this.timetables = timetables
+        @Suppress("UNCHECKED_CAST")
+        val set = HashSet<StopSegment>()
+        val array = parcel.readParcelableArray(StopSegment::class.java.classLoader)
+        array.forEach {
+            set.add(it as StopSegment)
+        }
+        this.timetables = set
     }
 
-    constructor(name: String, timetables: HashSet<Plate>) {
+    constructor(name: String, timetables: HashSet<StopSegment>) {
         this.name = name
         this.timetables = timetables
 
@@ -54,9 +58,9 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
     }
 
     override fun writeToParcel(dest: Parcel?, flags: Int) {
-        val parcel = timetables.map { it.toString() }
-        dest?.writeStringList(parcel)
         dest?.writeString(name)
+        val parcelableSegments = timetables.map { it }.toTypedArray()
+        dest?.writeParcelableArray(parcelableSegments, flags)
     }
 
     private fun filterVmDepartures() {
@@ -67,8 +71,10 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         }
     }
 
-    fun delete(plate: Plate) {
-        timetables.remove(timetables.find { it.id == plate.id })
+    fun delete(plateId: Plate.ID) {
+        timetables.forEach {
+            it.remove(plateId)
+        }
     }
 
     fun registerOnVm(receiver: MessageReceiver, context: Context) {
@@ -76,16 +82,10 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
             receiver.addOnVmListener(this)
             isRegisteredOnVmListener = true
 
-            val segments = HashMap<AgencyAndId, StopSegment>()
-            timetables.forEach {
-                if (segments[it.id.stop] == null)
-                    segments[it.id.stop] = StopSegment(it.id.stop, HashSet())
-                segments[it.id.stop]!!.plates = segments[it.id.stop]!!.plates!!.plus(it.id)
-            }
 
-            segments.forEach {
+            timetables.forEach {
                 val intent = Intent(context, VmClient::class.java)
-                intent.putExtra("stop", it.value)
+                intent.putExtra("stop", it)
                 intent.action = "request"
                 context.startService(intent)
             }
@@ -97,16 +97,9 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
             receiver.removeOnVmListener(this)
             isRegisteredOnVmListener = false
 
-            val segments = HashMap<AgencyAndId, StopSegment>()
             timetables.forEach {
-                if (segments[it.id.stop] == null)
-                    segments[it.id.stop] = StopSegment(it.id.stop, HashSet())
-                segments[it.id.stop]!!.plates = segments[it.id.stop]!!.plates!!.plus(it.id)
-            }
-
-            segments.forEach {
                 val intent = Intent(context, VmClient::class.java)
-                intent.putExtra("stop", it.value)
+                intent.putExtra("stop", it)
                 intent.action = "remove"
                 context.startService(intent)
             }
@@ -153,14 +146,22 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         val today = timetable.getServiceForToday()
         val tomorrowCal = Calendar.getInstance()
         tomorrowCal.add(Calendar.DAY_OF_MONTH, 1)
-        val tomorrow = timetable.getServiceForTomorrow()
+        val tomorrow = try {
+            timetable.getServiceForTomorrow()
+        } catch (e: IllegalArgumentException) {
+            -1
+        }
 
-        val departures = timetable.getStopDepartures(timetables)
+        val departures = fullTimetable()
+
+        println(departures.keys.joinToString(","))
         val todayDepartures = departures[today]!!
         val tomorrowDepartures = ArrayList<Departure>()
         val twoDayDepartures = ArrayList<Departure>()
-        departures[tomorrow]!!.mapTo(tomorrowDepartures) { it.copy() }
-        tomorrowDepartures.forEach { it.tomorrow = true }
+        if (tomorrow != -1) {
+            departures[tomorrow]!!.mapTo(tomorrowDepartures) { it.copy() }
+            tomorrowDepartures.forEach { it.tomorrow = true }
+        }
 
         todayDepartures.forEach { twoDayDepartures.add(it) }
         tomorrowDepartures.forEach { twoDayDepartures.add(it) }
@@ -175,16 +176,25 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
             return departures
         }
 
-        val departures = timetable.getStopDepartures(timetables)
+        val departures = fullTimetable()
         return Departure.rollDepartures(departures)
     }
 
     fun fullTimetable(): Map<AgencyAndId, List<Departure>> {
-        return timetable.getStopDepartures(timetables)
+        val departureSet = HashSet<Map<AgencyAndId, List<Departure>>>()
+        timetables.forEach { departureSet.add(timetable.getStopDeparturesBySegment(it)) }
+        val departures = HashMap<AgencyAndId, List<Departure>>()
+        departureSet.forEach {
+            val map = it
+            it.keys.forEach {
+                departures[it] = (departures[it] ?: ArrayList()) + (map[it] ?: ArrayList())
+            }
+        }
+        return departures
     }
 
     override fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID) {
-        if (timetables.any { it.id == plateId }) {
+        if (timetables.any { it.contains(plateId) }) {
             if (vmDepartures == null)
                 this.vmDepartures.remove(plateId)
             else
