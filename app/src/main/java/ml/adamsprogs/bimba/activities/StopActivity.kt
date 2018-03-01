@@ -254,8 +254,8 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 return PlaceholderFragment.newInstance(null, relativeTime)
             if (departures!!.isEmpty())
                 return PlaceholderFragment.newInstance(ArrayList(), relativeTime)
-            val sat = timetable.getServiceFor(Calendar.getInstance().get(Calendar.DAY_OF_WEEK))
-            val sun = timetable.getServiceFor(Calendar.getInstance().get(Calendar.DAY_OF_WEEK))
+            val sat = timetable.getServiceFor(Calendar.SATURDAY)
+            val sun = timetable.getServiceFor(Calendar.SUNDAY)
             val list: List<Departure> = when (position) {
                 1 -> departures!![sat] ?: ArrayList()
                 2 -> departures!![sun] ?: ArrayList()

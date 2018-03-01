@@ -78,4 +78,6 @@
     <string name="title_activity_main" translatable="false">LineSpecifyActivity</string>
     <string name="tab_text_line_to">To</string>
     <string name="tab_text_line_fro">Fro</string>
+    <string name="timetable_validity_finished">Timetable validity has ended. Connect to the Internet to download a new one in order to continue.</string>
+    <string name="timetable_validity_warning">Timetable validity ends today.</string>
 </resources>

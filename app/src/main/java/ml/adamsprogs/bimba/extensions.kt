@@ -26,6 +26,13 @@ internal fun Calendar.secondsAfterMidnight(): Int {
     return hour * 3600 + minute * 60 + second
 }
 
+internal fun Calendar.toIsoDate(): String {
+    val year = this.get(Calendar.YEAR)
+    val month = String.format("%02d", this.get(Calendar.MONTH)+1)
+    val day = String.format("%02d", this.get(Calendar.DAY_OF_MONTH))
+    return "$year$month$day"
+}
+
 const val ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
 
 fun calendarFromIso(iso: String): Calendar { // check

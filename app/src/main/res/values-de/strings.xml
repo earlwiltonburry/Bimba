@@ -13,7 +13,7 @@
     <string name="tab_saturday_text">Samstags</string>
     <string name="tab_sunday_text">Sonntags</string>
     <string name="action_change_type">Typ</string>
-    <string name="no_db_connect">Verbind mit dem Internet um zu den Fahrplan herunterladen</string>
+    <string name="no_db_connect">Verbind mit dem Internet, um den Fahrplan herunterzuladen</string>
     <string name="no_db_downloading">Fahrplan wird heruntergeladen…</string>
     <string name="timetable_downloading">Fahrplan wird heruntergeladen</string>
     <string name="search_placeholder">Haltestelle oder Linie…</string>
@@ -64,4 +64,6 @@
     <string name="no_departures">Keine Abfahrten</string>
     <string name="tab_text_line_to">Hin</string>
     <string name="tab_text_line_fro">Her</string>
+    <string name="timetable_validity_warning">Fahrplan gilt nur bis heute.</string>
+    <string name="timetable_validity_finished">Die Gültigkeit des Zeitplans ist beendet. Verbind mit dem Internet, um eine neue herunterzuladen und um fortzufahren.</string>
 </resources>

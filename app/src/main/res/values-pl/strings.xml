@@ -64,4 +64,6 @@
     <string name="no_departures">Brak odjazdów</string>
     <string name="tab_text_line_to">Tam</string>
     <string name="tab_text_line_fro">Z powrotem</string>
+    <string name="timetable_validity_warning">Rozkład obowiązuje tylko do dzisiaj.</string>
+    <string name="timetable_validity_finished">Rozkład przestał obowiązywać. Połącz się z Internetem, aby pobrać nowy i kontynuować.</string>
 </resources>

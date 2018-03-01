@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.google.gson.Gson
 import com.google.gson.JsonArray
-import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import ml.adamsprogs.bimba.MessageReceiver
 import ml.adamsprogs.bimba.models.gtfs.AgencyAndId

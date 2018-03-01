@@ -27,6 +27,8 @@ import ml.adamsprogs.bimba.models.suggestions.LineSuggestion
 import ml.adamsprogs.bimba.models.suggestions.StopSuggestion
 import android.support.v7.widget.DefaultItemAnimator
 import android.content.Intent
+import java.util.*
+import kotlin.collections.ArrayList
 
 //todo cards https://enoent.fr/blog/2015/01/18/recyclerview-basics/
 //todo searchView integration
@@ -57,7 +59,11 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO)
         setSupportActionBar(toolbar)
 
+        timetable = Timetable.getTimetable(this)
+
         getSuggestions()
+
+        warnTimetableValidity()
 
         prepareFavourites()
 
@@ -150,6 +156,54 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         searchView.attachNavigationDrawerToMenuButton(drawer_layout as DrawerLayout)
     }
 
+    private fun warnTimetableValidity() {
+        val validTill = timetable.getValidTill()
+        val today = Calendar.getInstance().toIsoDate()
+        val tomorrow = Calendar.getInstance().apply {
+            this.add(Calendar.DAY_OF_MONTH, 1)
+        }.toIsoDate()
+
+        println(today)
+        println(tomorrow)
+        println(validTill)
+        try {
+            timetable.getServiceForToday()
+            if (today >= validTill) {
+                notifyTimetableValidity()
+                suggestions = ArrayList()
+                return
+            }
+        } catch (e: IllegalArgumentException) {
+            notifyTimetableValidity()
+            suggestions = ArrayList()
+            return
+        }
+
+        try {
+            timetable.getServiceForTomorrow()
+            if (tomorrow == validTill) {
+                notifyTimetableValidity(true)
+                return
+            }
+        } catch (e: IllegalArgumentException) {
+            notifyTimetableValidity(true)
+            return
+        }
+    }
+
+    private fun notifyTimetableValidity(warning: Boolean = false) {
+        val message = if (warning)
+            getString(R.string.timetable_validity_warning)
+        else
+            getString(R.string.timetable_validity_finished)
+        AlertDialog.Builder(context)
+                .setPositiveButton(context.getText(android.R.string.ok),
+                        { dialog: DialogInterface, _: Int -> dialog.cancel() })
+                .setCancelable(true)
+                .setMessage(message)
+                .create().show()
+    }
+
     private fun prepareFavourites() {
         favourites = FavouriteStorage.getFavouriteStorage(context)
         val layoutManager = LinearLayoutManager(context)
@@ -166,7 +220,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun getSuggestions() {
-        timetable = Timetable.getTimetable(this)
         suggestions = (timetable.getStopSuggestions(context) + timetable.getLineSuggestions()).sorted() //todo<p:v+1> + bike stations, &c
     }
 
