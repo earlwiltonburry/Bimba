@@ -9,17 +9,20 @@ import android.support.v4.app.NotificationCompat
 import java.io.*
 import android.app.NotificationManager
 import android.os.Build
-import com.univocity.parsers.csv.CsvWriter
-import com.univocity.parsers.csv.CsvWriterSettings
+import com.google.gson.Gson
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import com.univocity.parsers.csv.CsvParser
+import com.univocity.parsers.csv.CsvParserSettings
 import ir.mahdi.mzip.zip.ZipArchive
 import ml.adamsprogs.bimba.NetworkStateReceiver
 import ml.adamsprogs.bimba.NotificationChannels
 import ml.adamsprogs.bimba.R
+import ml.adamsprogs.bimba.getSecondaryExternalFilesDir
 import ml.adamsprogs.bimba.models.Timetable
-import org.supercsv.io.CsvListReader
-import org.supercsv.prefs.CsvPreference
+import java.util.Calendar
 import java.net.*
-import java.util.*
+import kotlin.collections.*
 
 class TimetableDownloader : IntentService("TimetableDownloader") {
     companion object {
@@ -35,7 +38,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
     private lateinit var notificationManager: NotificationManager
     private var size: Int = 0
 
-    override fun onHandleIntent(intent: Intent?) { //fixme throws something
+    override fun onHandleIntent(intent: Intent?) {
 
         if (intent != null) {
             notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -44,25 +47,40 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 sendResult(RESULT_NO_CONNECTIVITY)
                 return
             }
-            val url = URL("http://ztm.poznan.pl/pl/dla-deweloperow/getGTFSFile")
-            val httpCon = url.openConnection() as HttpURLConnection
-            if (httpCon.responseCode != HttpURLConnection.HTTP_OK) { //IOEXCEPTION or EOFEXCEPTION or ConnectException
+
+            val httpCon: HttpURLConnection
+            try {
+                val url = URL("http://ztm.poznan.pl/pl/dla-deweloperow/getGTFSFile") //todo download proper file
+                httpCon = url.openConnection() as HttpURLConnection
+                if (httpCon.responseCode != HttpURLConnection.HTTP_OK) {
+                    sendResult(RESULT_NO_CONNECTIVITY)
+                    return
+                }
+            } catch (e: IOException) {
+                sendResult(RESULT_NO_CONNECTIVITY)
+                return
+            } catch (e: EOFException) {
+                sendResult(RESULT_NO_CONNECTIVITY)
+                return
+            } catch (e: ConnectException) {
                 sendResult(RESULT_NO_CONNECTIVITY)
                 return
             }
+
             val lastModified = httpCon.getHeaderField("Content-Disposition").split("=")[1].trim('\"').split("_")[0]
             size = httpCon.getHeaderField("Content-Length").toInt() / 1024
 
             val force = intent.getBooleanExtra(EXTRA_FORCE, false)
             val currentLastModified = prefs.getString("timetableLastModified", "19791012")
-            if (lastModified <= currentLastModified && lastModified <= today() && !force) {
+            if (lastModified <= currentLastModified && !force) {
                 sendResult(RESULT_UP_TO_DATE)
                 return
             }
 
             notify(0, getString(R.string.timetable_downloading), size)
 
-            val gtfs = File(this.filesDir, "timetable.zip")
+
+            val gtfs = File(getSecondaryExternalFilesDir(), "timetable.zip")
             copyInputStreamToFile(httpCon.inputStream, gtfs)
             val prefsEditor = prefs.edit()
             prefsEditor.putString("timetableLastModified", lastModified)
@@ -71,45 +89,46 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
 
             notify(getString(R.string.timetable_converting))
 
-            val target = File(this.filesDir, "gtfs_files")
+            val target = File(getSecondaryExternalFilesDir(), "gtfs_files")
             target.deleteRecursively()
             target.mkdir()
             ZipArchive.unzip(gtfs.path, target.path, "")
 
-            val stopTimesFile = File(filesDir, "gtfs_files/stop_times.txt")
+//            val stopTimesFile = File(filesDir, "gtfs_files/stop_times.txt")
 
-            val reader = CsvListReader(FileReader(stopTimesFile), CsvPreference.STANDARD_PREFERENCE)
-            val header = reader.getHeader(true)
-
-            val headers = HashMap<String, Boolean>()
-            val mapReader = CsvListReader(FileReader(stopTimesFile), CsvPreference.STANDARD_PREFERENCE)
+//            val reader = CsvListReader(FileReader(stopTimesFile), CsvPreference.STANDARD_PREFERENCE)
+//            val header = reader.getHeader(true)
+//
+//            val headers = HashMap<String, Boolean>()
+//            val mapReader = CsvListReader(FileReader(stopTimesFile), CsvPreference.STANDARD_PREFERENCE)
 
             val string = getString(R.string.timetable_converting)
-
             notify(0, string, 1_030_000)
 
             println(Calendar.getInstance().timeInMillis)
 
-            var row: List<Any>? = null
-            while ({ row = mapReader.read(); row }() != null) {
-                val stopId = row!![3] as String
-                val outFile = File(filesDir, "gtfs_files/stop_times_$stopId.txt")
-                val writer = CsvWriter(CsvWriterSettings())
-                if (headers[stopId] == null) {
-                    val h = writer.writeHeadersToString(header.asList())
-                    outFile.appendText("$h\r\n")
-                    headers[stopId] = true
-                }
-                if (mapReader.rowNumber % 10_300 == 0)
-                    notify(mapReader.rowNumber, string, 1_030_000)
-                val line = writer.writeRowToString(row!!)
-                outFile.appendText("$line\r\n")
-            }
-            mapReader.close()
-
+//            var row: List<Any>? = null
+//            while ({ row = mapReader.read(); row }() != null) {
+//                val stopId = row!![3] as String
+//                val outFile = File(filesDir, "gtfs_files/stop_times_$stopId.txt")
+//                val writer = CsvWriter(CsvWriterSettings())
+//                if (headers[stopId] == null) {
+//                    val h = writer.writeHeadersToString(header.asList())
+//                    outFile.appendText("$h\r\n")
+//                    headers[stopId] = true
+//                }
+//                if (mapReader.rowNumber % 10_300 == 0)
+//                    notify(mapReader.rowNumber, string, 1_030_000)
+//                val line = writer.writeRowToString(row!!)
+//                outFile.appendText("$line\r\n")
+//            }
+//            mapReader.close()
+//
             gtfs.delete()
+//
+//            stopTimesFile.delete()
 
-            stopTimesFile.delete()
+            createIndices()
             Timetable.getTimetable(this).refresh()
 
             println(Calendar.getInstance().timeInMillis)
@@ -118,6 +137,63 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
 
             sendResult(RESULT_FINISHED)
         }
+    }
+
+    private fun createIndices() {
+        val settings = CsvParserSettings()
+        settings.format.setLineSeparator("\r\n")
+        settings.format.quote = '"'
+        settings.isHeaderExtractionEnabled = true
+
+        val parser = CsvParser(settings)
+
+        val stopIndexFile = File(getSecondaryExternalFilesDir(), "gtfs_files/stop_index.yml")
+        val tripIndexFile = File(getSecondaryExternalFilesDir(), "gtfs_files/trip_index.yml")
+
+        val stopsIndex = HashMap<String, List<Long>>()
+        val tripsIndex = HashMap<String, List<Long>>()
+
+        parser.parseAll(File(getSecondaryExternalFilesDir(), "gtfs_files/trips.txt")).forEach {
+            tripsIndex[it[2]] = ArrayList()
+        }
+
+        parser.parseAll(File(getSecondaryExternalFilesDir(), "gtfs_files/stops.txt")).forEach {
+            stopsIndex[it[0]] = ArrayList()
+        }
+
+        val string = getString(R.string.timetable_converting)
+
+        parser.beginParsing(File(getSecondaryExternalFilesDir(), "gtfs_files/stop_times.txt"))
+        var line: Array<String>? = null
+        while ({ line = parser.parseNext(); line }() != null) {
+            val lineNumber = parser.context.currentLine()
+            (tripsIndex[line!![0]] as ArrayList).add(lineNumber)
+            (stopsIndex[line!![3]] as ArrayList).add(lineNumber)
+            if (lineNumber % 10_300 == 0L)
+                notify(lineNumber.toInt(), string, 1_030_000)
+        }
+
+        println(Calendar.getInstance().timeInMillis)
+        stopsIndex.filter { it.value.contains(0) }.forEach { println("${it.key}: ${it.value.joinToString()}") }
+        println(Calendar.getInstance().timeInMillis)
+
+        serialiseIndex(stopsIndex, stopIndexFile)
+        serialiseIndex(tripsIndex, tripIndexFile)
+    }
+
+    private fun serialiseIndex(index: HashMap<String, List<Long>>, file: File) {
+        val stopsRootObject = JsonObject()
+        index.forEach {
+            val stop = JsonArray()
+            it.value.forEach {
+                stop.add(it)
+            }
+            stopsRootObject.add(it.key, stop)
+        }
+
+        val writer = BufferedWriter(file.writer())
+        writer.write(Gson().toJson(stopsRootObject))
+        writer.close()
     }
 
     private fun today(): String {

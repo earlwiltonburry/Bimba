@@ -1,10 +1,13 @@
 package ml.adamsprogs.bimba.models
 
 import android.content.Context
+import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.univocity.parsers.csv.CsvParser
 import com.univocity.parsers.csv.CsvParserSettings
 import ml.adamsprogs.bimba.R
 import ml.adamsprogs.bimba.getColour
+import ml.adamsprogs.bimba.getSecondaryExternalFilesDir
 import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 import ml.adamsprogs.bimba.models.gtfs.Route
 import ml.adamsprogs.bimba.models.gtfs.Trip
@@ -22,7 +25,7 @@ import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 import java.util.Calendar as JCalendar
 
-class Timetable private constructor() {
+class Timetable private constructor() { //todo indices
     companion object {
         private var timetable: Timetable? = null
 
@@ -30,7 +33,7 @@ class Timetable private constructor() {
             return if (timetable == null || force)
                 if (context != null) {
                     timetable = Timetable()
-                    timetable!!.filesDir = context.filesDir
+                    timetable!!.filesDir = context.getSecondaryExternalFilesDir()
                     //timetable!!.cacheManager = CacheManager.getCacheManager(context)
                     timetable!!
                 } else
@@ -107,25 +110,63 @@ class Timetable private constructor() {
         return routes.sortedBy { it.name }
     }
 
-    fun getHeadlinesForStop(stops: Set<AgencyAndId>): Map<AgencyAndId, Pair<String, Set<String>>> {
+    fun getHeadlinesForStop(stops: Set<AgencyAndId>): Map<AgencyAndId, Pair<String, Set<String>>> { //fixme adds one (not-)random shed
         val trips = HashMap<String, HashSet<String>>()
         val routes = HashMap<String, Pair<String, String>>()
         val headsigns = HashMap<AgencyAndId, Pair<String, HashSet<String>>>()
         val settings = CsvParserSettings()
         settings.format.setLineSeparator("\r\n")
         settings.format.quote = '"'
+        settings.isHeaderExtractionEnabled = true
         val parser = CsvParser(settings)
-        stops.forEach {
-            trips[it.id] = HashSet()
-            val stop = it.id
-            val stopsFile = File(filesDir, "gtfs_files/stop_times_${it.id}.txt")
-            parser.parseAll(stopsFile).forEach {
-                if (it[6] in arrayOf("0", "3")) {
-                    trips[stop]!!.add(it[0])
-                }
-            }
+
+        val stopIndex = HashMap<String, List<Long>>()
+
+        var timeStart = JCalendar.getInstance().timeInMillis
+        var timeEnd = JCalendar.getInstance().timeInMillis
+        println(JCalendar.getInstance().timeInMillis)
+
+        val reader = File(filesDir, "gtfs_files/stop_index.yml").bufferedReader() //fixme 5s
+        val json = Gson().fromJson(reader.readText(), JsonObject::class.java)
+        reader.close()
+
+        timeEnd = JCalendar.getInstance().timeInMillis
+        println("${timeEnd-timeStart}: ${JCalendar.getInstance().timeInMillis}")
+        timeStart = JCalendar.getInstance().timeInMillis
+        json.entrySet().forEach {//fixme 3s
+            stopIndex[it.key] = ArrayList()
+            it.value.asJsonArray.mapTo(stopIndex[it.key] as ArrayList) { it.asLong }
         }
 
+        timeEnd = JCalendar.getInstance().timeInMillis
+        println("${timeEnd-timeStart}: ${JCalendar.getInstance().timeInMillis}")
+        timeStart = JCalendar.getInstance().timeInMillis
+        val stopIds = stops.map { it.id }
+
+        val lines = stopIndex.filter { it.key in stopIds }.flatMap { it.value }.sorted()
+        timeEnd = JCalendar.getInstance().timeInMillis
+        println("${timeEnd-timeStart}: ${JCalendar.getInstance().timeInMillis}")
+        timeStart = JCalendar.getInstance().timeInMillis
+        val pickupPossibilities = arrayOf("0", "3")
+        parser.beginParsing(File(filesDir, "gtfs_files/stop_times.txt"))
+        var lineKey = 0
+        lines.forEach {//fixme 3s
+//            println("At line ${parser.context.currentLine()}, skipping ${lines[lineKey] - parser.context.currentLine() - 1} lines to line ${lines[lineKey]}")
+            parser.context.skipLines(lines[lineKey] - parser.context.currentLine() - 1)
+            val line = parser.parseNext()
+            val stopId = line[3]
+//            println("Parsing line ${parser.context.currentLine()}; stopId: $stopId")
+            if (line[6] in pickupPossibilities) {
+                if (trips[stopId] == null)
+                    trips[stopId] = HashSet()
+                trips[stopId]!!.add(line[0])
+            }
+            lineKey++
+        }
+
+        timeEnd = JCalendar.getInstance().timeInMillis
+        println("${timeEnd-timeStart}: ${JCalendar.getInstance().timeInMillis}")
+        timeStart = JCalendar.getInstance().timeInMillis
         if (tripsCache.isEmpty())
             createTripCache()
         tripsCache.forEach {
@@ -133,6 +174,9 @@ class Timetable private constructor() {
         }
 
 
+        timeEnd = JCalendar.getInstance().timeInMillis
+        println("${timeEnd-timeStart}: ${JCalendar.getInstance().timeInMillis}")
+        timeStart = JCalendar.getInstance().timeInMillis
         trips.forEach {
             val headsign = HashSet<String>()
             it.value.forEach {
@@ -141,6 +185,8 @@ class Timetable private constructor() {
             headsigns[AgencyAndId(it.key)] = Pair(getStopCode(AgencyAndId(it.key)), headsign)
         }
 
+        timeEnd = JCalendar.getInstance().timeInMillis
+        println("${timeEnd-timeStart}: ${JCalendar.getInstance().timeInMillis}")
         return headsigns
         /*
         1435 -> (AWF03, {232 → Os. Rusa})
@@ -574,7 +620,7 @@ class Timetable private constructor() {
     }
 
     fun getTripGraphs(id: AgencyAndId): List<Map<Int, List<Int>>> {
-        if(tripsCache.isEmpty())
+        if (tripsCache.isEmpty())
             createTripCache()
         tripsCache.forEach {
             if (it.value[0] == id.id) {

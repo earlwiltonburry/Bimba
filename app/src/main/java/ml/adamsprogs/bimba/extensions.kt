@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.os.Build
 import ml.adamsprogs.bimba.activities.StopActivity
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
@@ -28,7 +29,7 @@ internal fun Calendar.secondsAfterMidnight(): Int {
 
 internal fun Calendar.toIsoDate(): String {
     val year = this.get(Calendar.YEAR)
-    val month = String.format("%02d", this.get(Calendar.MONTH)+1)
+    val month = String.format("%02d", this.get(Calendar.MONTH) + 1)
     val day = String.format("%02d", this.get(Calendar.DAY_OF_MONTH))
     return "$year$month$day"
 }
@@ -72,4 +73,9 @@ internal fun CharSequence.safeSplit(vararg delimiters: String, ignoreCase: Boole
     if (this == "")
         return ArrayList()
     return this.split(*delimiters, ignoreCase = ignoreCase, limit = limit)
+}
+
+internal fun Context.getSecondaryExternalFilesDir(): File {
+    val dirs = this.getExternalFilesDirs(null)
+    return dirs[dirs.size - 1]
 }
