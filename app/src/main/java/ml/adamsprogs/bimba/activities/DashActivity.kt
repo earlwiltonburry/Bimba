@@ -163,9 +163,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             this.add(Calendar.DAY_OF_MONTH, 1)
         }.toIsoDate()
 
-        println(today)
-        println(tomorrow)
-        println(validTill)
         try {
             timetable.getServiceForToday()
             if (today >= validTill) {

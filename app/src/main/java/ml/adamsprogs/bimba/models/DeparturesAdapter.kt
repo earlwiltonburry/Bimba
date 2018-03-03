@@ -38,15 +38,15 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
         }
     }
 
-    override fun onBindViewHolder(holder: ViewHolder?, position: Int) {
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         if (departures == null) {
             return
         }
-        val line = holder?.lineTextView
-        val time = holder?.timeTextView
-        val direction = holder?.directionTextView
+        val line = holder.lineTextView
+        val time = holder.timeTextView
+        val direction = holder.directionTextView
         if (departures.isEmpty()) {
-            time?.text = context.getString(R.string.no_departures)
+            time.text = context.getString(R.string.no_departures)
             return
         }
         val departure = departures[position]
@@ -65,20 +65,20 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
         else
             context.getString(R.string.now)
 
-        line?.text = departure.lineText
-        time?.text = timeString
-        direction?.text = context.getString(R.string.departure_to, departure.headsign)
-        val icon = holder?.typeIcon
+        line.text = departure.lineText
+        time.text = timeString
+        direction.text = context.getString(R.string.departure_to, departure.headsign)
+        val icon = holder.typeIcon
         if (departure.vm)
-            icon?.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_vm, context.theme))
+            icon.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_vm, context.theme))
         else
-            icon?.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_timetable, context.theme))
+            icon.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_timetable, context.theme))
 
         if (departure.lowFloor)
-            holder?.floorIcon?.visibility = View.VISIBLE
+            holder.floorIcon.visibility = View.VISIBLE
         if (departure.isModified) {
-            holder?.infoIcon?.visibility = View.VISIBLE
-            holder?.root?.setOnClickListener {
+            holder.infoIcon.visibility = View.VISIBLE
+            holder.root.setOnClickListener {
                 AlertDialog.Builder(context)
                         .setPositiveButton(context.getText(android.R.string.ok),
                                 { dialog: DialogInterface, _: Int -> dialog.cancel() })
@@ -89,8 +89,8 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolder {
-        val context = parent?.context
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val context = parent.context
         val inflater = LayoutInflater.from(context)
 
         val rowView = inflater.inflate(R.layout.row_departure, parent, false)

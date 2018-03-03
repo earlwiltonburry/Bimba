@@ -51,8 +51,8 @@ class FavouritesAdapter(val context: Context, var favourites: FavouriteStorage,
 
     override fun getItemCount() = favourites.size
 
-    override fun onBindViewHolder(holder: ViewHolder?, position: Int) {
-        holder?.selectedOverlay?.visibility = if (isSelected(position)) View.VISIBLE else View.INVISIBLE
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        holder.selectedOverlay.visibility = if (isSelected(position)) View.VISIBLE else View.INVISIBLE
 
         thread {
             val favourite = favourites[position]!!
@@ -75,16 +75,16 @@ class FavouritesAdapter(val context: Context, var favourites: FavouriteStorage,
                 nextDepartureLineText = ""
             }
             (context as Activity).runOnUiThread {
-                holder?.nameTextView?.text = favourite.name
-                holder?.timeTextView?.text = nextDepartureText
-                holder?.lineTextView?.text = nextDepartureLineText
+                holder.nameTextView.text = favourite.name
+                holder.timeTextView.text = nextDepartureText
+                holder.lineTextView.text = nextDepartureLineText
                 if (nextDeparture != null) {
                     if (nextDeparture.vm)
-                        holder?.typeIcon?.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_vm, context.theme))
+                        holder.typeIcon.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_vm, context.theme))
                     else
-                        holder?.typeIcon?.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_timetable, context.theme))
+                        holder.typeIcon.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_timetable, context.theme))
                 }
-                holder?.moreButton?.setOnClickListener {
+                holder.moreButton.setOnClickListener {
                     val popup = PopupMenu(context, it)
                     val inflater = popup.menuInflater
                     popup.setOnMenuItemClickListener {
@@ -101,8 +101,8 @@ class FavouritesAdapter(val context: Context, var favourites: FavouriteStorage,
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolder {
-        val context = parent?.context
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val context = parent.context
         val inflater = LayoutInflater.from(context)
 
         val rowView = inflater.inflate(R.layout.row_favourite, parent, false)

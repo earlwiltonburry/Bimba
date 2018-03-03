@@ -44,8 +44,8 @@ class StopSpecifyActivity : AppCompatActivity() {
 
     class ShedAdapter(val context: Context, val values: Map<AgencyAndId, Pair<String, Set<String>>>) :
             RecyclerView.Adapter<ShedAdapter.ViewHolder>() {
-        override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolder {
-            val context = parent?.context
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+            val context = parent.context
             val inflater = LayoutInflater.from(context)
 
             val rowView = inflater.inflate(R.layout.row_shed, parent, false)
@@ -54,16 +54,16 @@ class StopSpecifyActivity : AppCompatActivity() {
 
         override fun getItemCount(): Int = values.size
 
-        override fun onBindViewHolder(holder: ViewHolder?, position: Int) {
-            holder?.root?.setOnClickListener {
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+            holder.root.setOnClickListener {
                 val id = values.entries.sortedBy { it.value.first }[position].key
                 val intent = Intent(context, StopActivity::class.java)
                 intent.putExtra(StopActivity.SOURCE_TYPE, StopActivity.SOURCE_TYPE_STOP)
                 intent.putExtra(StopActivity.EXTRA_STOP_ID, id)
                 context.startActivity(intent)
             }
-            holder?.stopCode?.text = values.values.sortedBy { it.first }[position].first
-            holder?.stopHeadlines?.text = values.values.sortedBy { it.first }[position].second
+            holder.stopCode.text = values.values.sortedBy { it.first }[position].first
+            holder.stopHeadlines.text = values.values.sortedBy { it.first }[position].second
                     .sortedBy { it } // fixme<p:1> natural sort
                     .joinToString()
         }
