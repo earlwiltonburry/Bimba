@@ -99,7 +99,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             override fun onFocus() {
                 favouritesList.visibility = View.GONE
                 thread {
-                    val newStops = suggestions!!.filter { deAccent(it.name).contains(deAccent(searchView.query), true) }
+                    val newStops = suggestions!!.filter { deAccent(it.name).contains(deAccent(searchView.query), true) } //todo sorted by similarity
                     runOnUiThread { searchView.swapSuggestions(newStops) }
                 }
             }
@@ -113,7 +113,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             if (oldQuery != "" && newQuery == "")
                 searchView.clearSuggestions()
             thread {
-                val newStops = suggestions!!.filter { deAccent(it.name).contains(deAccent(newQuery), true) }
+                val newStops = suggestions!!.filter { deAccent(it.name).contains(deAccent(newQuery), true) } //todo sorted by similarity
                 runOnUiThread { searchView.swapSuggestions(newStops) }
             }
         })

@@ -94,39 +94,12 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
             target.mkdir()
             ZipArchive.unzip(gtfs.path, target.path, "")
 
-//            val stopTimesFile = File(filesDir, "gtfs_files/stop_times.txt")
-
-//            val reader = CsvListReader(FileReader(stopTimesFile), CsvPreference.STANDARD_PREFERENCE)
-//            val header = reader.getHeader(true)
-//
-//            val headers = HashMap<String, Boolean>()
-//            val mapReader = CsvListReader(FileReader(stopTimesFile), CsvPreference.STANDARD_PREFERENCE)
-
             val string = getString(R.string.timetable_converting)
             notify(0, string, 1_030_000)
 
             println(Calendar.getInstance().timeInMillis)
 
-//            var row: List<Any>? = null
-//            while ({ row = mapReader.read(); row }() != null) {
-//                val stopId = row!![3] as String
-//                val outFile = File(filesDir, "gtfs_files/stop_times_$stopId.txt")
-//                val writer = CsvWriter(CsvWriterSettings())
-//                if (headers[stopId] == null) {
-//                    val h = writer.writeHeadersToString(header.asList())
-//                    outFile.appendText("$h\r\n")
-//                    headers[stopId] = true
-//                }
-//                if (mapReader.rowNumber % 10_300 == 0)
-//                    notify(mapReader.rowNumber, string, 1_030_000)
-//                val line = writer.writeRowToString(row!!)
-//                outFile.appendText("$line\r\n")
-//            }
-//            mapReader.close()
-//
             gtfs.delete()
-//
-//            stopTimesFile.delete()
 
             createIndices()
             Timetable.getTimetable(this).refresh()

@@ -77,5 +77,6 @@ internal fun CharSequence.safeSplit(vararg delimiters: String, ignoreCase: Boole
 
 internal fun Context.getSecondaryExternalFilesDir(): File {
     val dirs = this.getExternalFilesDirs(null)
-    return dirs[dirs.size - 1]
+    return dirs[0]
+//    return dirs[dirs.size - 1]
 }
