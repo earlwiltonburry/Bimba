@@ -25,7 +25,7 @@ class TimetableDownloader:
         self.__tidy_up()
 
         with open('metadata.yml', 'w') as metadata_file:
-            yaml.dump(self.__metadata, metadata_file)
+            yaml.dump(self.__metadata, metadata_file, default_flow_style=False)
 
     def __download(self):
         self.__session = requests.session()
@@ -272,33 +272,33 @@ class TimetableConverter:
                                     ?)''', row)
 
     def __create_tables(self):
-        self.__cursor.execute('''create table agency(agency_id TEXT PRIMARY KEY,
+        self.__cursor.execute('''create table agency(agency_id INTEGER PRIMARY KEY
                    agency_name TEXT,
                    agency_url TEXT,
                    agency_timezone TEXT,
                    agency_phone TEXT,
                    agency_lang TEXT)''')
-        self.__cursor.execute('''create table stops(stop_id TEXT PRIMARY KEY,
+        self.__cursor.execute('''create table stops(stop_id INTEGER PRIMARY KEY,
                    stop_code TEXT,
                    stop_name TEXT,
                    stop_lat DOUBLE,
                    stop_lon DOUBLE,
                    zone_id TEXT)''')
-        self.__cursor.execute('''create table routes(route_id TEXT PRIMARY KEY,
-                   agency_id TEXT,
-                   route_short_name TEXT,
+        self.__cursor.execute('''create table routes(route_id INTEGER PRIMARY KEY,
+                   agency_id INTEGER,
+                   route_short_name INTEGER,
                    route_long_name TEXT,
                    route_desc TEXT,
                    route_type INTEGER,
                    route_color TEXT,
                    route_text_color TEXT,
                    FOREIGN KEY(agency_id) REFERENCES agency(agency_id))''')
-        self.__cursor.execute('''create table trips(route_id TEXT,
-                   service_id TEXT,
+        self.__cursor.execute('''create table trips(route_id INTEGER,
+                   service_id INTEGER,
                    trip_id TEXT PRIMARY KEY,
                    trip_headsign TEXT,
                    direction_id INTEGER,
-                   shape_id TEXT,
+                   shape_id INTEGER,
                    wheelchair_accessible BOOL,
                    FOREIGN KEY(route_id) REFERENCES routes(route_id),
                    FOREIGN KEY(service_id) REFERENCES calendar(service_id),
@@ -306,14 +306,14 @@ class TimetableConverter:
         self.__cursor.execute('''create table stop_times(trip_id TEXT,
                    arrival_time TEXT,
                    departure_time TEXT,
-                   stop_id TEXT,
+                   stop_id INTEGER,
                    stop_sequence INTEGER,
                    stop_headsign TEXT,
                    pickup_type INTEGER,
                    drop_off_type INTEGER,
                    FOREIGN KEY(trip_id) REFERENCES trips(trip_id),
                    FOREIGN KEY(stop_id) REFERENCES stops(stop_id))''')
-        self.__cursor.execute('''create table calendar(service_id TEXT PRIMARY KEY,
+        self.__cursor.execute('''create table calendar(service_id INTEGER PRIMARY KEY,
                    monday TEXT,
                    tuesday TEXT,
                    wednesday TEXT,
@@ -323,11 +323,11 @@ class TimetableConverter:
                    sunday TEXT,
                    start_date TEXT,
                    end_date TEXT)''')
-        self.__cursor.execute('''create table calendar_dates(service_id TEXT,
+        self.__cursor.execute('''create table calendar_dates(service_id INTEGER,
                    date TEXT,
                    exception_type INTEGER,
                    FOREIGN KEY(service_id) REFERENCES calendar(service_id))''')
-        self.__cursor.execute('''create table shapes(shape_id TEXT,
+        self.__cursor.execute('''create table shapes(shape_id INTEGER,
                    shape_pt_lat DOUBLE,
                    shape_pt_lon DOUBLE,
                    shape_pt_sequence INTEGER)''')
