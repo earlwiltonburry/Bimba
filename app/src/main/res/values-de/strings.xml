@@ -64,6 +64,7 @@
     <string name="no_departures">Keine Abfahrten</string>
     <string name="tab_text_line_to">Hin</string>
     <string name="tab_text_line_fro">Her</string>
-    <string name="timetable_validity_warning">Fahrplan gilt nur bis heute.</string>
+    <string name="timetable_validity_today">Fahrplan gilt nur bis heute.</string>
     <string name="timetable_validity_finished">Die Gültigkeit des Zeitplans ist beendet. Verbind mit dem Internet, um eine neue herunterzuladen und um fortzufahren.</string>
+    <string name="timetable_validity_tomorrow">Fahrplan gilt nur bis morgen.</string>
 </resources>

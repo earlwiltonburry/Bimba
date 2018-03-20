@@ -8,6 +8,7 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
+//todo may show just departed as HH:MM
 data class Departure(val line: AgencyAndId, val mode: List<Int>, val time: Int, val lowFloor: Boolean, //time in seconds since midnight
                      val modification: List<String>, val headsign: String, val vm: Boolean = false,
                      var tomorrow: Boolean = false, val onStop: Boolean = false) {
@@ -80,7 +81,7 @@ data class Departure(val line: AgencyAndId, val mode: List<Int>, val time: Int, 
                 throw IllegalArgumentException()
             val modification = array[4].safeSplit(";")
             return Departure(AgencyAndId.convertFromString(array[0]),
-                    array[1].split(";").map { Integer.parseInt(it) },
+                    array[1].safeSplit(";").map { Integer.parseInt(it) },
                     Integer.parseInt(array[2]), array[3] == "true",
                     modification, array[5], array[6] == "true",
                     array[7] == "true", array[8] == "true")
@@ -97,5 +98,5 @@ data class Departure(val line: AgencyAndId, val mode: List<Int>, val time: Int, 
         return (time.timeInMillis - now.timeInMillis) / (1000 * 60)
     }
 
-    val lineText: String = Timetable.getTimetable().getLineNumber(line)
+    val lineText: String = line.id
 }

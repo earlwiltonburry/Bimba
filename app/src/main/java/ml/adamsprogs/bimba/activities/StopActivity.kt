@@ -3,7 +3,6 @@ package ml.adamsprogs.bimba.activities
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.icu.util.JapaneseCalendar
 import android.support.design.widget.TabLayout
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
@@ -35,6 +34,7 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.concurrent.thread
 
+//todo<p:1> on click show time (HH:MM)
 class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, MessageReceiver.OnVmListener, Favourite.OnVmPreparedListener {
 
     private var sectionsPagerAdapter: SectionsPagerAdapter? = null
@@ -59,6 +59,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     private val receiver = MessageReceiver.getMessageReceiver()
     private val vmDepartures = HashMap<Plate.ID, Set<Departure>>()
     private var hasDepartures = false
+    private var lastUpdated = 0L
 
     private lateinit var sourceType: String
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,8 +74,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         when (sourceType) {
             SOURCE_TYPE_STOP -> {
-                stopSegment = StopSegment(intent.getSerializableExtra(EXTRA_STOP_ID) as AgencyAndId, null)
-                stopSegment!!.fillPlates()
+                stopSegment = StopSegment(intent.getSerializableExtra(EXTRA_STOP_ID) as AgencyAndId, null).apply { fillPlates() }
                 supportActionBar?.title = timetable.getStopName(stopSegment!!.stop)
             }
             SOURCE_TYPE_FAV -> {
@@ -121,6 +121,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         runOnUiThread {
             sectionsPagerAdapter?.notifyDataSetChanged()
             selectTodayPage()
+            lastUpdated = Calendar.getInstance().timeInMillis
         }
     }
 
@@ -170,6 +171,9 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     override fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID) {
         if (vmDepartures == null && this.vmDepartures.isEmpty() && hasDepartures) {
+            if (ticked()) {
+                refreshAdapterFromStop()
+            }
             return
         }
         if (timetableType == "departure" && stopSegment!!.contains(plateId)) {
@@ -180,6 +184,8 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             refreshAdapterFromStop()
         }
     }
+
+    private fun ticked() = Calendar.getInstance().timeInMillis - lastUpdated >= VmClient.TICK_6_ZINA_TIM
 
     override fun onTimetableDownload(result: String?) {
         val message: String = when (result) {
@@ -254,18 +260,24 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 return PlaceholderFragment.newInstance(null, relativeTime)
             if (departures!!.isEmpty())
                 return PlaceholderFragment.newInstance(ArrayList(), relativeTime)
-            val sat = timetable.getServiceFor(Calendar.SATURDAY)
-            val sun = timetable.getServiceFor(Calendar.SUNDAY)
+            val sat = try {
+                timetable.getServiceFor(Calendar.SATURDAY)
+            } catch (e: IllegalArgumentException) {
+                null
+            }
+            val sun = try {
+                timetable.getServiceFor(Calendar.SUNDAY)
+            } catch (e: IllegalArgumentException) {
+                null
+            }
             val list: List<Departure> = when (position) {
                 1 -> departures!![sat] ?: ArrayList()
                 2 -> departures!![sun] ?: ArrayList()
                 0 -> try {
                     departures!!
                             .filter { it.key != sat && it.key != sun }
-                            .filter { it.value.isNotEmpty() }.toList()[0].second
+                            .toList()[0].second
                 } catch (e: IndexOutOfBoundsException) {
-                    departures!!.filter { it.key != sat && it.key != sun }.toList()[0].second
-                } catch (e: Exception) {
                     ArrayList<Departure>()
                 }
                 else -> throw IndexOutOfBoundsException("No tab at index $position")
@@ -292,7 +304,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             val departuresList: RecyclerView = rootView.findViewById(R.id.departuresList)
             val departures = arguments?.getStringArrayList("departures")?.map { Departure.fromString(it) }
             if (departures != null && departures.isNotEmpty())
-            departuresList.addItemDecoration(DividerItemDecoration(departuresList.context, layoutManager.orientation))
+                departuresList.addItemDecoration(DividerItemDecoration(departuresList.context, layoutManager.orientation))
 
 
             departuresList.adapter = DeparturesAdapter(activity as Context, departures,
@@ -305,7 +317,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             fun newInstance(departures: List<Departure>?, relativeTime: Boolean): PlaceholderFragment {
                 val fragment = PlaceholderFragment()
                 val args = Bundle()
-                if (departures != null){
+                if (departures != null) {
                     if (departures.isNotEmpty()) {
                         val d = ArrayList<String>()
                         departures.mapTo(d) { it.toString() }

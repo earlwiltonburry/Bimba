@@ -20,8 +20,10 @@ import ml.adamsprogs.bimba.NotificationChannels
 import ml.adamsprogs.bimba.R
 import ml.adamsprogs.bimba.getSecondaryExternalFilesDir
 import ml.adamsprogs.bimba.models.Timetable
+import java.net.ConnectException
+import java.net.URL
 import java.util.Calendar
-import java.net.*
+import javax.net.ssl.HttpsURLConnection
 import kotlin.collections.*
 
 class TimetableDownloader : IntentService("TimetableDownloader") {
@@ -48,11 +50,18 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 return
             }
 
-            val httpCon: HttpURLConnection
+            sendResult(RESULT_UP_TO_DATE)
+            return
+
+            val httpCon: HttpsURLConnection
             try {
-                val url = URL("http://ztm.poznan.pl/pl/dla-deweloperow/getGTFSFile") //todo download proper file
-                httpCon = url.openConnection() as HttpURLConnection
-                if (httpCon.responseCode != HttpURLConnection.HTTP_OK) {
+                val url = URL("https://adamsprogs.ml/gtfs")
+                httpCon = url.openConnection() as HttpsURLConnection
+                if (httpCon.responseCode == HttpsURLConnection.HTTP_NOT_MODIFIED) {
+                    sendResult(RESULT_UP_TO_DATE)
+                    return
+                }
+                if (httpCon.responseCode != HttpsURLConnection.HTTP_OK) {
                     sendResult(RESULT_NO_CONNECTIVITY)
                     return
                 }

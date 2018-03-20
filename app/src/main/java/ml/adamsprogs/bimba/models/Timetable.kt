@@ -1,6 +1,9 @@
 package ml.adamsprogs.bimba.models
 
 import android.content.Context
+import android.database.Cursor
+import android.database.CursorIndexOutOfBoundsException
+import android.database.sqlite.SQLiteDatabase
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.univocity.parsers.csv.CsvParser
@@ -11,7 +14,6 @@ import ml.adamsprogs.bimba.getSecondaryExternalFilesDir
 import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 import ml.adamsprogs.bimba.models.gtfs.Route
 import ml.adamsprogs.bimba.models.gtfs.Trip
-import ml.adamsprogs.bimba.models.gtfs.Calendar
 import ml.adamsprogs.bimba.models.suggestions.LineSuggestion
 import ml.adamsprogs.bimba.models.suggestions.StopSuggestion
 import ml.adamsprogs.bimba.secondsAfterMidnight
@@ -23,9 +25,10 @@ import java.io.FileReader
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.collections.HashSet
+import kotlin.system.measureTimeMillis
 import java.util.Calendar as JCalendar
 
-class Timetable private constructor() { //fixme uses much too much RAM
+class Timetable private constructor() {
     companion object {
         private var timetable: Timetable? = null
 
@@ -34,18 +37,8 @@ class Timetable private constructor() { //fixme uses much too much RAM
                 if (context != null) {
                     timetable = Timetable()
                     timetable!!.filesDir = context.getSecondaryExternalFilesDir()
-                    val gtfsDir = File(timetable!!.filesDir, "gtfs_dir")
-                    timetable!!.agencyFile = File(gtfsDir, "agency.txt")
-                    timetable!!.calendarFile = File(gtfsDir, "calendar.txt")
-                    timetable!!.calendarDatesFile = File(gtfsDir, "calendar_dates.txt")
-                    timetable!!.feedInfoFile = File(gtfsDir, "feed_info.txt")
-                    timetable!!.routesFile = File(gtfsDir, "routes.txt")
-                    timetable!!.shapesFile = File(gtfsDir, "shapes.txt")
-                    timetable!!.stopsFile = File(gtfsDir, "stops.txt")
-                    timetable!!.stopTimesFile = File(gtfsDir, "stop_times.txt")
-                    timetable!!.tripsFile = File(gtfsDir, "trips.txt")
-                    timetable!!.stopsIndexFile = File(gtfsDir, "stop_index.txt")
-                    timetable!!.tripsIndexFile = File(gtfsDir, "trip_index.txt")
+                    val dbFile = File(timetable!!.filesDir, "timetable.db")
+                    timetable!!.db = SQLiteDatabase.openDatabase(dbFile.path, null, SQLiteDatabase.OPEN_READONLY)
                     timetable!!
                 } else
                     throw IllegalArgumentException("new timetable requested and no context given")
@@ -54,17 +47,7 @@ class Timetable private constructor() { //fixme uses much too much RAM
         }
     }
 
-    private lateinit var agencyFile: File
-    private lateinit var calendarFile: File
-    private lateinit var calendarDatesFile: File
-    private lateinit var feedInfoFile: File
-    private lateinit var routesFile: File
-    private lateinit var shapesFile: File
-    private lateinit var stopsFile: File
-    private lateinit var stopTimesFile: File
-    private lateinit var tripsFile: File
-    private lateinit var stopsIndexFile: File
-    private lateinit var tripsIndexFile: File
+    private lateinit var db: SQLiteDatabase
     private var _stops: List<StopSuggestion>? = null
     private lateinit var filesDir: File
     private val tripsCache = HashMap<String, Array<String>>()
@@ -76,24 +59,22 @@ class Timetable private constructor() { //fixme uses much too much RAM
         if (_stops != null && !force)
             return _stops!!
 
-
-        val settings = CsvParserSettings()
-        settings.format.setLineSeparator("\r\n")
-        settings.format.quote = '"'
-        settings.isHeaderExtractionEnabled = true
-        val parser = CsvParser(settings)
-
         val ids = HashMap<String, HashSet<AgencyAndId>>()
         val zones = HashMap<String, String>()
 
-        val stopsFile = File(filesDir, "gtfs_files/stops.txt")
-        parser.parseAll(stopsFile).forEach {
-            if (it[2] !in ids)
-                ids[it[2]] = HashSet()
-            ids[it[2]]!!.add(AgencyAndId(it[0]))
-            zones[it[2]] = it[5]
+        val cursor = db.rawQuery("select stop_name, stop_id, zone_id from stops", null)
+
+        while (cursor.moveToNext()) {
+            val name = cursor.getString(0)
+            val id = cursor.getInt(1)
+            val zone = cursor.getString(2)
+            if (name !in ids)
+                ids[name] = HashSet()
+            ids[name]!!.add(AgencyAndId(id.toString()))
+            zones[name] = zone
         }
 
+        cursor.close()
 
         _stops = ids.map {
             val colour = when (zones[it.key]) {
@@ -109,60 +90,49 @@ class Timetable private constructor() { //fixme uses much too much RAM
 
     fun getLineSuggestions(): List<LineSuggestion> {
         val routes = ArrayList<LineSuggestion>()
-        val file = File(filesDir, "gtfs_files/routes.txt")
-        val settings = CsvParserSettings()
-        settings.format.setLineSeparator("\r\n")
-        settings.format.quote = '"'
-        settings.isHeaderExtractionEnabled = true
-        val parser = CsvParser(settings)
-        parser.parseAll(file).forEach {
-            routes.add(LineSuggestion(it[2], createRoute(
-                    it[0],
-                    it[1],
-                    it[2],
-                    it[3],
-                    it[4],
-                    Integer.parseInt(it[5]),
-                    Integer.parseInt(it[6], 16),
-                    Integer.parseInt(it[7], 16)
-            )))
+        val cursor = db.rawQuery("select * from routes", null)
+
+        while (cursor.moveToNext()) {
+            val routeId = cursor.getString(0)
+
+            routes.add(LineSuggestion(routeId,
+                    createRouteFromCursorRow(cursor)))
         }
+
         return routes.sortedBy { it.name }
     }
 
-    fun getHeadlinesForStop(stops: Set<AgencyAndId>): Map<AgencyAndId, Pair<String, Set<String>>> { //fixme adds one (not-)random shed
-        val trips = HashMap<String, HashSet<String>>()
-        val routes = HashMap<String, Pair<String, String>>()
+    fun getHeadlinesForStop(stops: Set<AgencyAndId>): Map<AgencyAndId, Pair<String, Set<String>>> {
         val headsigns = HashMap<AgencyAndId, Pair<String, HashSet<String>>>()
 
-        val stopIds = stops.map { it.id }
+        val stopsIndex = HashMap<Int, String>()
+        val where = stops.joinToString(" or ", "where ") { "stop_id = ?" }
+        var cursor = db.rawQuery("select stop_id, stop_code from stops $where", stops.map { it.toString() }.toTypedArray())
 
-        parseStopTimesWithStopIndex(stopIds) {
-            val stopId = it[3]
-//            println("Parsing line ${parser.context.currentLine()}; stopId: $stopId")
-            if (it[6] != "1") {
-                if (trips[stopId] == null)
-                    trips[stopId] = HashSet()
-                trips[stopId]!!.add(it[0])
-            }
+        while (cursor.moveToNext()) {
+            stopsIndex[cursor.getInt(0)] = cursor.getString(1)
         }
 
-        if (tripsCache.isEmpty())
-            createTripCache()
-        tripsCache.forEach {
-            routes[it.key] = Pair(it.value[0], it.value[3])
+        cursor.close()
+
+        cursor = db.rawQuery("select stop_id, route_id, trip_headsign " +
+                "from stop_times natural join trips " +
+                where, stops.map { it.toString() }.toTypedArray())
+
+        while (cursor.moveToNext()) {
+            val stop = cursor.getInt(0)
+            val stopId = AgencyAndId(stop.toString())
+            val route = cursor.getString(1)
+            val headsign = cursor.getString(2)
+            if (stopId !in headsigns)
+                headsigns[stopId] = Pair(stopsIndex[stop]!!, HashSet())
+            headsigns[stopId]!!.second.add("$route → $headsign")
         }
 
-
-        trips.forEach {
-            val headsign = HashSet<String>()
-            it.value.forEach {
-                headsign.add("${routes[it]!!.first} → ${routes[it]!!.second}")
-            }
-            headsigns[AgencyAndId(it.key)] = Pair(getStopCode(AgencyAndId(it.key)), headsign)
-        }
+        cursor.close()
 
         return headsigns
+
         /*
         1435 -> (AWF03, {232 → Os. Rusa})
         1436 -> (AWF04, {232 → Rondo Kaponiera})
@@ -230,37 +200,23 @@ class Timetable private constructor() { //fixme uses much too much RAM
     }
 
     fun getStopName(stopId: AgencyAndId): String {
-        val file = File(filesDir, "gtfs_files/stops.txt")
-        val mapReader = CsvMapReader(FileReader(file), CsvPreference.STANDARD_PREFERENCE)
-        val header = mapReader.getHeader(true)
+        val cursor = db.rawQuery("select stop_name from stops where stop_id = ?",
+                arrayOf(stopId.id))
+        cursor.moveToNext()
+        val name = cursor.getString(0)
+        cursor.close()
 
-        var row: Map<String, Any>? = null
-        val processors = Array<CellProcessor?>(header.size, { null })
-        while ({ row = mapReader.read(header, processors); row }() != null) {
-            if ((row!!["stop_id"] as String) == stopId.id) {
-                mapReader.close()
-                return row!!["stop_name"] as String
-            }
-        }
-        mapReader.close()
-        throw IllegalArgumentException("Stop $stopId not in store")
+        return name
     }
 
     fun getStopCode(stopId: AgencyAndId): String {
-        val file = File(filesDir, "gtfs_files/stops.txt")
-        val mapReader = CsvMapReader(FileReader(file), CsvPreference.STANDARD_PREFERENCE)
-        val header = mapReader.getHeader(true)
+        val cursor = db.rawQuery("select stop_code from stops where stop_id = ?",
+                arrayOf(stopId.id))
+        cursor.moveToNext()
+        val code = cursor.getString(0)
+        cursor.close()
 
-        var row: Map<String, Any>? = null
-        val processors = Array<CellProcessor?>(header.size, { null })
-        while ({ row = mapReader.read(header, processors); row }() != null) {
-            if ((row!!["stop_id"] as String) == stopId.id) {
-                mapReader.close()
-                return row!!["stop_code"] as String
-            }
-        }
-        mapReader.close()
-        throw IllegalArgumentException("Stop $stopId not in store")
+        return code
     }
 
     fun getLineNumber(lineId: AgencyAndId): String {
@@ -281,22 +237,65 @@ class Timetable private constructor() { //fixme uses much too much RAM
     }
 
     fun getStopDepartures(stopId: AgencyAndId): Map<AgencyAndId, List<Departure>> {
-        println("getStopDepartures: ${JCalendar.getInstance().timeInMillis}")
-//        val trips = getTripsForStop(stopId)
-        val trips = HashMap<String, Trip>()
-        tripsCache.forEach {
-            trips[it.key] = tripFromCache(it.key)
+        val map = HashMap<AgencyAndId, ArrayList<Departure>>()
+        val measure = measureTimeMillis {
+
+            val cursor = db.rawQuery("select route_id, service_id, departure_time, " +
+                    "wheelchair_accessible, stop_sequence, trip_id, trip_headsign, route_desc " +
+                    "from stop_times natural join trips natural join routes where stop_id = ?",
+                    arrayOf(stopId.id))
+
+            while (cursor.moveToNext()) {
+                val line = AgencyAndId(cursor.getString(0))
+                val service = AgencyAndId(cursor.getInt(1).toString())
+                val mode = calendarToMode(service)
+                val time = parseTime(cursor.getString(2))
+                val lowFloor = cursor.getInt(3) == 1
+                val stopSequence = cursor.getInt(4)
+                val tripId = createTripId(cursor.getString(5))
+                val headsign = cursor.getString(6)
+                val desc = cursor.getString(7)
+
+                val modifications = Route.createModifications(desc)
+
+                val modification = explainModification(tripId, stopSequence, modifications)
+                val departure = Departure(line, mode, time, lowFloor, modification, headsign)
+                if (map[service] == null)
+                    map[service] = ArrayList()
+                map[service]!!.add(departure)
+            }
+
+            cursor.close()
+            map.forEach { it.value.sortBy { it.time } }
         }
-        val segment = StopSegment(stopId, null)
-        segment.fillPlates()
-        return getStopDeparturesBySegment(segment, trips)
+
+        //println(measure)
+
+        return map
+    }
+
+    fun getTrip(id: String): Trip {
+        val cursor = db.rawQuery("select * from trips where trip_id = ?", arrayOf(id))
+
+        val trip = Trip(
+                AgencyAndId(cursor.getString(0)),
+                AgencyAndId(cursor.getInt(1).toString()),
+                createTripId(cursor.getString(2)),
+                cursor.getString(3),
+                cursor.getInt(4),
+                AgencyAndId(cursor.getInt(5).toString()),
+                cursor.getInt(6) == 1
+        )
+
+        cursor.close()
+        return trip
     }
 
     fun getStopDeparturesBySegment(segment: StopSegment) = getStopDeparturesBySegment(segment, getTripsForStop(segment.stop))
 
     private fun getStopDeparturesBySegment(segment: StopSegment, trips: Map<String, Trip>): HashMap<AgencyAndId, List<Departure>> {
         println("getStopDeparturesBySegment: ${JCalendar.getInstance().timeInMillis}")
-        val departures = HashMap<AgencyAndId, ArrayList<Departure>>()
+        /*val departures = HashMap<AgencyAndId, ArrayList<Departure>>()
 
         val tripsInStop = HashMap<String, Pair<Int, Int>>()
 
@@ -329,7 +328,8 @@ class Timetable private constructor() { //fixme uses much too much RAM
         }
         println("</>: ${JCalendar.getInstance().timeInMillis}")
         println("</>: ${JCalendar.getInstance().timeInMillis}")
-        return sortedDepartures
+        return sortedDepartures*/
+        TODO("FIXME")
     }
 
     private fun parseTime(time: String): Int {
@@ -342,45 +342,27 @@ class Timetable private constructor() { //fixme uses much too much RAM
     }
 
     fun calendarToMode(serviceId: AgencyAndId): List<Int> {
-        val file = File(filesDir, "gtfs_files/calendar.txt")
-        val mapReader = CsvMapReader(FileReader(file), CsvPreference.STANDARD_PREFERENCE)
-        val header = mapReader.getHeader(true)
+        val days = ArrayList<Int>()
+        val cursor = db.rawQuery("select * from calendar where service_id = ?",
+                arrayOf(serviceId.id))
 
-        var row: Map<String, Any>? = null
-        val processors = Array<CellProcessor?>(header.size, { null })
-        while ({ row = mapReader.read(header, processors); row }() != null) {
-            if ((row!!["service_id"] as String) == serviceId.id) {
-                mapReader.close()
-                val calendar = Calendar(row!!["monday"] as String == "1", row!!["tuesday"] as String == "1",
-                        row!!["wednesday"] as String == "1", row!!["thursday"] as String == "1", row!!["friday"] as String == "1",
-                        row!!["saturday"] as String == "1", row!!["sunday"] as String == "1")
-                val days = ArrayList<Int>()
-                if (calendar.monday) days.add(0)
-                if (calendar.tuesday) days.add(1)
-                if (calendar.wednesday) days.add(2)
-                if (calendar.thursday) days.add(3)
-                if (calendar.friday) days.add(4)
-                if (calendar.saturday) days.add(5)
-                if (calendar.sunday) days.add(6)
-
-                return days
-            }
+        cursor.moveToNext()
+        (1 until 7).forEach {
+            if (cursor.getInt(it) == 1) days.add(it - 1)
         }
-        mapReader.close()
-        throw IllegalArgumentException("Service $serviceId not in store")
+
+        cursor.close()
+        return days
     }
 
-    private fun explainModification(trip: Trip, stopSequence: Int): List<String> { //todo<p:1> "kurs obsługiwany taborem niskopodłogowym" -> ignore
-        val route = getRouteForTrip(trip)
-        val definitions = route.modifications
-
+    private fun explainModification(tripId: Trip.ID, stopSequence: Int, routeModifications: Map<String, String>): List<String> { //todo<p:1> "kurs obsługiwany taborem niskopodłogowym" -> ignore
         val explanations = ArrayList<String>()
-        trip.id.modification.forEach {
+        tripId.modification.forEach {
             if (it.stopRange != null) {
                 if (stopSequence in it.stopRange)
-                    explanations.add(definitions[it.id.id]!!)
+                    explanations.add(routeModifications[it.id.id]!!)
             } else {
-                explanations.add(definitions[it.id.id]!!)
+                explanations.add(routeModifications[it.id.id]!!)
             }
         }
 
@@ -388,59 +370,26 @@ class Timetable private constructor() { //fixme uses much too much RAM
     }
 
     private fun getRouteForTrip(trip: Trip): Route {
-        if (tripsCache.isEmpty())
-            createTripCache()
-        val routeId = tripsCache[trip.id.rawId]!![0]
+        val cursor = db.rawQuery("select * from routes natural join trips where trip_id = ?",
+                arrayOf(trip.id.rawId))
 
-        val tripsFile = File(filesDir, "gtfs_files/routes.txt")
-        val mapReader = CsvMapReader(FileReader(tripsFile), CsvPreference.STANDARD_PREFERENCE)
-        val header = mapReader.getHeader(true)
-
-        var routeRow: Map<String, Any>? = null
-        val processors = Array<CellProcessor?>(header.size, { null })
-        while ({ routeRow = mapReader.read(header, processors); routeRow }() != null) {
-            if ((routeRow!!["route_id"] as String) == routeId) {
-                mapReader.close()
-                val id = routeRow!!["route_id"] as String
-                val agency = routeRow!!["agency_id"] as String
-                val shortName = routeRow!!["route_short_name"] as String
-                val longName = routeRow!!["route_long_name"] as String
-                val desc = routeRow!!["route_desc"] as String
-                val type = Integer.parseInt(routeRow!!["route_type"] as String)
-                val colour = Integer.parseInt(routeRow!!["route_color"] as String, 16)
-                val textColour = Integer.parseInt(routeRow!!["route_text_color"] as String, 16)
-                return createRoute(id, agency, shortName, longName, desc, type, colour, textColour)
-            }
-        }
-        mapReader.close()
-        throw IllegalArgumentException("Trip ${trip.id.rawId} not in store")
+        cursor.moveToNext()
+        val route = createRouteFromCursorRow(cursor)
+        cursor.close()
+        return route
     }
 
-    private fun createRoute(id: String, agency: String, shortName: String, longName: String,
-                            desc: String, type: Int, colour: Int, textColour: Int): Route {
-        if (desc.contains("|")) {
-            val (to, from) = desc.split("|")
-            val fromSplit = from.split("^")
-            val toSplit = to.split("^")
-            val description = "${toSplit[0]}|${fromSplit[0]}"
-            val modifications = HashMap<String, String>()
-            toSplit.slice(1 until toSplit.size).forEach {
-                val (k, v) = it.split(" - ")
-                modifications[k] = v
-            }
-            return Route(AgencyAndId(id), AgencyAndId(agency), shortName, longName, description,
-                    type, colour, textColour, modifications)
-        } else {
-            val toSplit = desc.split("^")
-            val description = toSplit[0]
-            val modifications = HashMap<String, String>()
-            toSplit.slice(1 until toSplit.size).forEach {
-                val (k, v) = it.split(" - ")
-                modifications[k] = v
-            }
-            return Route(AgencyAndId(id), AgencyAndId(agency), shortName, longName, description,
-                    type, colour, textColour, modifications)
-        }
+    private fun createRouteFromCursorRow(cursor: Cursor): Route {
+        val routeId = cursor.getString(0)
+        val agencyId = cursor.getInt(1).toString()
+        val shortName = cursor.getString(2)
+        val longName = cursor.getString(3)
+        val desc = cursor.getString(4)
+        val type = cursor.getInt(5)
+        val colour = cursor.getString(6).toInt(16)
+        val textColour = cursor.getString(7).toInt(16)
+
+        return Route.create(routeId, agencyId, shortName, longName, desc, type, colour, textColour)
     }
 
     fun getTripsForStop(stopId: AgencyAndId): HashMap<String, Trip> {
@@ -491,36 +440,33 @@ class Timetable private constructor() { //fixme uses much too much RAM
     }
 
     fun isEmpty(): Boolean {
-        try {
-            val file = File(filesDir, "gtfs_files/feed_info.txt").readText()
-            if (file == "")
-                return true
-            return false
+        return try {
+            File(filesDir, "timetable.db")
+            //todo check if not empty
+            false
         } catch (e: Exception) {
-            return true
+            true
         }
     }
 
     fun getValidSince(): String {
-        val file = File(filesDir, "gtfs_files/feed_info.txt")
-        val mapReader = CsvMapReader(FileReader(file), CsvPreference.STANDARD_PREFERENCE)
-        val header = mapReader.getHeader(true)
+        val cursor = db.rawQuery("select feed_start_date from feed_info", null)
 
-        val processors = Array<CellProcessor?>(header.size, { null })
-        val row = mapReader.read(header, processors)
-        mapReader.close()
-        return row["feed_start_date"] as String
+        cursor.moveToNext()
+        val validTill = cursor.getString(0)
+
+        cursor.close()
+        return validTill
     }
 
     fun getValidTill(): String {
-        val file = File(filesDir, "gtfs_files/feed_info.txt")
-        val mapReader = CsvMapReader(FileReader(file), CsvPreference.STANDARD_PREFERENCE)
-        val header = mapReader.getHeader(true)
+        val cursor = db.rawQuery("select feed_end_date from feed_info", null)
 
-        val processors = Array<CellProcessor?>(header.size, { null })
-        val row = mapReader.read(header, processors)
-        mapReader.close()
-        return row["feed_end_date"] as String
+        cursor.moveToNext()
+        val validTill = cursor.getString(0)
+
+        cursor.close()
+        return validTill
     }
 
     fun getServiceForToday(): AgencyAndId {
@@ -536,22 +482,18 @@ class Timetable private constructor() { //fixme uses much too much RAM
     }
 
     fun getServiceFor(day: Int): AgencyAndId {
-        val dayColumn = ((day + 5) % 7) + 1
-        val file = File(filesDir, "gtfs_files/calendar.txt")
+        val dayColumn = arrayOf("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")[((day + 5) % 7)]
+        val cursor = db.rawQuery("select service_id from calendar where $dayColumn = 1", null)
 
-        val settings = CsvParserSettings()
-        settings.format.quote = '"'
-        settings.format.setLineSeparator("\r\n")
-        settings.isHeaderExtractionEnabled = true
-        val parser = CsvParser(settings)
-
-        parser.parseAll(file).forEach {
-            if ((it[dayColumn] as String) == "1") {
-                return AgencyAndId(it[0] as String)
-            }
+        val service: Int
+        cursor.moveToNext()
+        try {
+            service = cursor.getInt(0)
+            cursor.close()
+            return AgencyAndId(service.toString())
+        } catch (e: CursorIndexOutOfBoundsException) {
+            throw IllegalArgumentException()
         }
-        throw IllegalArgumentException("Day $day not in calendar")
-
     }
 
     fun getLineForNumber(number: String): AgencyAndId {
@@ -572,18 +514,19 @@ class Timetable private constructor() { //fixme uses much too much RAM
     }
 
     fun getPlatesForStop(stop: AgencyAndId): Set<Plate.ID> {
-        val tripIds = HashSet<String>()
+        val plates = HashSet<Plate.ID>()
+        val cursor = db.rawQuery("select route_id, trip_headsign " +
+                "from stop_times natural join trips where stop_id = ? " +
+                "group by route_id, trip_headsign", arrayOf(stop.id))
 
-        parseStopTimesWithStopIndex(listOf(stop.id)) {
-            tripIds.add(it[0])
+        while (cursor.moveToNext()) {
+            val routeId = AgencyAndId(cursor.getString(0))
+            val headsign = cursor.getString(1)
+            plates.add(Plate.ID(routeId, stop, headsign))
         }
 
-        val filteredPlates = HashSet<Plate.ID>()
-        tripIds.forEach {
-            filteredPlates.add(Plate.ID(AgencyAndId(tripsCache[it]!![0]), stop, tripsCache[it]!![3]))
-        }
-
-        return filteredPlates
+        cursor.close()
+        return plates
     }
 
     fun getTripGraphs(id: AgencyAndId): List<Map<Int, List<Int>>> {

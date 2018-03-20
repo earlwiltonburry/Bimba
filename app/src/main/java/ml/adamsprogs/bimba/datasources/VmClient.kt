@@ -6,7 +6,6 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
 import android.os.Process.THREAD_PRIORITY_BACKGROUND
-import android.util.Log
 import com.google.gson.Gson
 import ml.adamsprogs.bimba.NetworkStateReceiver
 import ml.adamsprogs.bimba.calendarFromIso
@@ -26,29 +25,36 @@ class VmClient : Service() {
         const val ACTION_READY = "ml.adamsprogs.bimba.action.vm.ready"
         const val EXTRA_DEPARTURES = "ml.adamsprogs.bimba.extra.vm.departures"
         const val EXTRA_PLATE_ID = "ml.adamsprogs.bimba.extra.vm.plate"
+        const val TICK_6_ZINA_TIM = 12500L
     }
 
     private var handler: Handler? = null
     private val tick6ZinaTim: Runnable = object : Runnable {
         override fun run() {
-            handler!!.postDelayed(this, (12.5 * 1000).toLong())
+            handler!!.postDelayed(this, TICK_6_ZINA_TIM)
             for (plateId in requests.keys)
                 downloadVM()
         }
     }
     private val requests = HashMap<AgencyAndId, Set<Request>>()
     private val vms = HashMap<AgencyAndId, HashSet<Plate>>() //HashSet<Departure>?
-    private val timetable = Timetable.getTimetable(this)
+    private val timetable = try {
+        Timetable.getTimetable(this)
+    } catch (e: NullPointerException) {
+        null
+    }
 
 
     override fun onCreate() {
         val thread = HandlerThread("ServiceStartArguments", THREAD_PRIORITY_BACKGROUND)
         thread.start()
         handler = Handler(thread.looper)
-        handler!!.postDelayed(tick6ZinaTim, (12.5 * 1000).toLong())
+        handler!!.postDelayed(tick6ZinaTim, TICK_6_ZINA_TIM)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (timetable == null)
+            return START_NOT_STICKY
         val stopSegment = intent?.getParcelableExtra<StopSegment>("stop")!!
         if (stopSegment.plates == null)
             throw EmptyStopSegmentException()
@@ -107,7 +113,7 @@ class VmClient : Service() {
     }
 
     private fun today(): AgencyAndId {
-        return timetable.getServiceForToday()
+        return timetable!!.getServiceForToday()
     }
 
     private fun incrementRequest(stopSegment: StopSegment) {
@@ -148,13 +154,14 @@ class VmClient : Service() {
 
     private fun downloadVM(stopSegment: StopSegment) {
         if (!NetworkStateReceiver.isNetworkAvailable(this)) {
+            vms[stopSegment.stop] = stopSegment.plates!!.map { Plate(it, null) }.toSet() as HashSet<Plate>
             stopSegment.plates!!.forEach {
                 sendResult(it, null)
             }
             return
         }
 
-        val stopSymbol = timetable.getStopCode(stopSegment.stop)
+        val stopSymbol = timetable!!.getStopCode(stopSegment.stop)
         val client = OkHttpClient()
         val url = "http://www.peka.poznan.pl/vm/method.vm?ts=${Calendar.getInstance().timeInMillis}"
         val formBody = FormBody.Builder()
@@ -166,8 +173,6 @@ class VmClient : Service() {
                 .post(formBody)
                 .build()
 
-        Log.i("VM", "created http request")
-
         val responseBody: String?
         try {
             responseBody = client.newCall(request).execute().body()?.string()
@@ -177,8 +182,6 @@ class VmClient : Service() {
             }
             return
         }
-
-        Log.i("VM", "received http response")
 
         if (responseBody?.get(0) == '<') {
             stopSegment.plates!!.forEach {
@@ -196,12 +199,12 @@ class VmClient : Service() {
     private fun downloadVM(plateId: Plate.ID, times: List<*>) {
         val date = Calendar.getInstance()
         val todayDay = "${date.get(Calendar.DATE)}".padStart(2, '0')
-        val todayMode = timetable.calendarToMode(AgencyAndId(timetable.getServiceForToday().id))
+        val todayMode = timetable!!.calendarToMode(AgencyAndId(timetable.getServiceForToday().id))
 
         val departures = HashSet<Departure>()
 
         times.forEach {
-            val thisLine = timetable.getLineForNumber((it as Map<*, *>)["line"] as String)
+            val thisLine = AgencyAndId((it as Map<*, *>)["line"] as String)
             val thisHeadsign = it["direction"] as String
             val thisPlateId = Plate.ID(thisLine, plateId.stop, thisHeadsign)
             if (plateId == thisPlateId) {

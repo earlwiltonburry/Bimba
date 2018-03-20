@@ -21,11 +21,19 @@ class StopSuggestion(name: String, val ids: Set<AgencyAndId>, private val zone: 
     }
 
     override fun getBody(): String {
-        return "$name <small><font color=\"$zoneColour\">$zone</font></small>"
+        return name
     }
 
     override fun getIcon(): Int {
         return R.drawable.ic_stop
+    }
+
+    override fun getColour(): Int {
+        return zoneColour.filter { it in "0123456789abcdef" }.toInt(16)
+    }
+
+    override fun getBgColour(): Int {
+        return "ffffff".toInt(16)
     }
 
     override fun compareTo(other: GtfsSuggestion): Int {

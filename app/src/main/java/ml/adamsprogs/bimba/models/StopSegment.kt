@@ -3,11 +3,12 @@ package ml.adamsprogs.bimba.models
 import android.os.Parcel
 import android.os.Parcelable
 import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
+import ml.adamsprogs.bimba.safeSplit
 
 data class StopSegment(val stop: AgencyAndId, var plates: Set<Plate.ID>?) : Parcelable {
     constructor(parcel: Parcel) : this(
             parcel.readSerializable() as AgencyAndId,
-            parcel.readString().split(";").map { Plate.ID.fromString(it) }.toSet()
+            parcel.readString().safeSplit(";").map { Plate.ID.fromString(it) }.toSet()
     )
 
     companion object CREATOR : Parcelable.Creator<StopSegment> {
@@ -28,6 +29,8 @@ data class StopSegment(val stop: AgencyAndId, var plates: Set<Plate.ID>?) : Parc
         dest?.writeSerializable(stop)
         if (plates != null)
             dest?.writeString(plates!!.joinToString(";") { it.toString() })
+        else
+            dest?.writeString("")
     }
 
     override fun describeContents(): Int {

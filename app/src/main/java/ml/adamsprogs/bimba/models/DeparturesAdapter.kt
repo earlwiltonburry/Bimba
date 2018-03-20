@@ -24,6 +24,12 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
         const val VIEW_TYPE_EMPTY: Int = 2
     }
 
+//    init {
+//        departures?.forEach {
+//            println("${it.line} -> ${it.headsign} @${it.time} (${if (it.isModified) it.modification[0] else{} })")
+//        }
+//    }
+
     override fun getItemCount(): Int {
         if (departures == null || departures.isEmpty())
             return 1
@@ -50,6 +56,7 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
             return
         }
         val departure = departures[position]
+        //println("${departure.line} -> ${departure.headsign} @${departure.time} (${if (departure.isModified) departure.modification[0] else {}})")
         val now = Calendar.getInstance()
         val departureTime = Calendar.getInstance().rollTime(departure.time)
         if (departure.tomorrow)

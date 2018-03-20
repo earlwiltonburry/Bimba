@@ -31,9 +31,17 @@ class LineSuggestion(name: String, private val route: Route) : GtfsSuggestion(na
         return name
     }
 
+    override fun getColour(): Int {
+        return route.colour
+    }
+
+    override fun getBgColour(): Int {
+        return route.textColour
+    }
+
     override fun compareTo(other: GtfsSuggestion): Int {
         return if (other is LineSuggestion)
-            name.toInt().compareTo(other.name.toInt())
+            name.padStart(3, '0').compareTo(other.name.padStart(3, '0'))
         else
             name.compareTo(other.name)
     }

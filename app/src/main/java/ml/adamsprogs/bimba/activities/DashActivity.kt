@@ -38,7 +38,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     val context: Context = this
     private val receiver = MessageReceiver.getMessageReceiver()
     lateinit var timetable: Timetable
-    var suggestions: List<GtfsSuggestion>? = null
+    private var suggestions: List<GtfsSuggestion>? = null
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var drawerView: NavigationView
     lateinit var favouritesList: RecyclerView
@@ -98,10 +98,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         searchView.setOnFocusChangeListener(object : FloatingSearchView.OnFocusChangeListener {
             override fun onFocus() {
                 favouritesList.visibility = View.GONE
-                thread {
-                    val newStops = suggestions!!.filter { deAccent(it.name).contains(deAccent(searchView.query), true) } //todo sorted by similarity
-                    runOnUiThread { searchView.swapSuggestions(newStops) }
-                }
+                filterSuggestions(searchView.query)
             }
 
             override fun onFocusCleared() {
@@ -112,10 +109,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         searchView.setOnQueryChangeListener({ oldQuery, newQuery ->
             if (oldQuery != "" && newQuery == "")
                 searchView.clearSuggestions()
-            thread {
-                val newStops = suggestions!!.filter { deAccent(it.name).contains(deAccent(newQuery), true) } //todo sorted by similarity
-                runOnUiThread { searchView.swapSuggestions(newStops) }
-            }
+            filterSuggestions(newQuery)
         })
 
         searchView.setOnSearchListener(object : FloatingSearchView.OnSearchListener {
@@ -156,6 +150,13 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         searchView.attachNavigationDrawerToMenuButton(drawer_layout as DrawerLayout)
     }
 
+    private fun filterSuggestions(newQuery: String) {
+        thread {
+            val newStops = suggestions!!.filter { deAccent(it.name).contains(deAccent(newQuery), true) } //todo sorted by similarity
+            runOnUiThread { searchView.swapSuggestions(newStops) }
+        }
+    }
+
     private fun warnTimetableValidity() {
         val validTill = timetable.getValidTill()
         val today = Calendar.getInstance().toIsoDate()
@@ -165,13 +166,17 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         try {
             timetable.getServiceForToday()
-            if (today >= validTill) {
-                notifyTimetableValidity()
+            if (today > validTill) {
+                notifyTimetableValidity(-1)
                 suggestions = ArrayList()
                 return
             }
+            if (today == validTill) {
+                notifyTimetableValidity(0)
+                return
+            }
         } catch (e: IllegalArgumentException) {
-            notifyTimetableValidity()
+            notifyTimetableValidity(-1)
             suggestions = ArrayList()
             return
         }
@@ -179,20 +184,22 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         try {
             timetable.getServiceForTomorrow()
             if (tomorrow == validTill) {
-                notifyTimetableValidity(true)
+                notifyTimetableValidity(1)
                 return
             }
         } catch (e: IllegalArgumentException) {
-            notifyTimetableValidity(true)
+            notifyTimetableValidity(1)
             return
         }
     }
 
-    private fun notifyTimetableValidity(warning: Boolean = false) {
-        val message = if (warning)
-            getString(R.string.timetable_validity_warning)
-        else
-            getString(R.string.timetable_validity_finished)
+    private fun notifyTimetableValidity(daysTillInvalid: Int) {
+        val message = when(daysTillInvalid) {
+            -1 -> getString (R.string.timetable_validity_finished)
+            0 -> getString(R.string.timetable_validity_today)
+            1 -> getString(R.string.timetable_validity_tomorrow)
+            else -> return
+        }
         AlertDialog.Builder(context)
                 .setPositiveButton(context.getText(android.R.string.ok),
                         { dialog: DialogInterface, _: Int -> dialog.cancel() })

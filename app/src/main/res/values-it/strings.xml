@@ -62,6 +62,7 @@
     <string name="no_departures">Nessune partenze</string>
     <string name="tab_text_line_to">Avanti</string>
     <string name="tab_text_line_fro">Indietro</string>
-    <string name="timetable_validity_warning">L’orario è valido solo fino ad oggi.</string>
+    <string name="timetable_validity_today">L’orario è valido solo fino ad oggi.</string>
     <string name="timetable_validity_finished">"La validità dell’orario è terminata. Connetti a Internet per scaricarne uno nuovo e continuare. "</string>
+    <string name="timetable_validity_tomorrow">L’orario è valido solo fino a domani.</string>
 </resources>
