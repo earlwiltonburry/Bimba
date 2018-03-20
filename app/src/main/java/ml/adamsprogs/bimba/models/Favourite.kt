@@ -16,13 +16,13 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
     private var isRegisteredOnVmListener: Boolean = false
     var name: String
         private set
-    var timetables: HashSet<StopSegment>
+    var segments: HashSet<StopSegment>
         private set
-    private var vmDepartures = HashMap<Plate.ID, Set<Departure>>()
+    private var vmDepartures = HashMap<Plate.ID, List<Departure>>()
     val timetable = Timetable.getTimetable()
 
     val size
-        get() = timetables.sumBy {
+        get() = segments.sumBy {
             it.size
         }
 
@@ -44,12 +44,12 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         array.forEach {
             set.add(it as StopSegment)
         }
-        this.timetables = set
+        this.segments = set
     }
 
     constructor(name: String, timetables: HashSet<StopSegment>) {
         this.name = name
-        this.timetables = timetables
+        this.segments = timetables
 
     }
 
@@ -59,20 +59,20 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
 
     override fun writeToParcel(dest: Parcel?, flags: Int) {
         dest?.writeString(name)
-        val parcelableSegments = timetables.map { it }.toTypedArray()
+        val parcelableSegments = segments.map { it }.toTypedArray()
         dest?.writeParcelableArray(parcelableSegments, flags)
     }
 
     private fun filterVmDepartures() {
         this.vmDepartures.forEach {
-            val newSet = it.value
-                    .filter { it.timeTill(true) >= 0 }.toSet()
-            this.vmDepartures[it.key] = newSet
+            val newVms = it.value
+                    .filter { it.timeTill(true) >= 0 }.sortedBy { it.timeTill() }
+            this.vmDepartures[it.key] = newVms
         }
     }
 
     fun delete(plateId: Plate.ID) {
-        timetables.forEach {
+        segments.forEach {
             it.remove(plateId)
         }
     }
@@ -83,7 +83,7 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
             isRegisteredOnVmListener = true
 
 
-            timetables.forEach {
+            segments.forEach {
                 val intent = Intent(context, VmClient::class.java)
                 intent.putExtra("stop", it)
                 intent.action = "request"
@@ -97,7 +97,7 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
             receiver.removeOnVmListener(this)
             isRegisteredOnVmListener = false
 
-            timetables.forEach {
+            segments.forEach {
                 val intent = Intent(context, VmClient::class.java)
                 intent.putExtra("stop", it)
                 intent.action = "remove"
@@ -122,7 +122,7 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
 
     fun nextDeparture(): Departure? {
         filterVmDepartures()
-        if (timetables.isEmpty() && vmDepartures.isEmpty())
+        if (segments.isEmpty() && vmDepartures.isEmpty())
             return null
 
         if (vmDepartures.isNotEmpty()) {
@@ -142,7 +142,7 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
                 .minBy { it.timeTill(true) }
     }
 
-    private fun nowDepartures(): ArrayList<Departure> {
+    private fun nowDepartures(): List<Departure> {
         val today = timetable.getServiceForToday()
         val tomorrowCal = Calendar.getInstance()
         tomorrowCal.add(Calendar.DAY_OF_MONTH, 1)
@@ -154,18 +154,14 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
 
         val departures = fullTimetable()
 
-        println(departures.keys.joinToString(","))
         val todayDepartures = departures[today]!!
-        val tomorrowDepartures = ArrayList<Departure>()
-        val twoDayDepartures = ArrayList<Departure>()
+        val tomorrowDepartures = ArrayList<Departure>() /** todo as in {@link Departure.rollDeparture rollDeparture} **/
         if (tomorrow != -1) {
             departures[tomorrow]!!.mapTo(tomorrowDepartures) { it.copy() }
             tomorrowDepartures.forEach { it.tomorrow = true }
         }
 
-        todayDepartures.forEach { twoDayDepartures.add(it) }
-        tomorrowDepartures.forEach { twoDayDepartures.add(it) }
-        return twoDayDepartures
+        return todayDepartures + tomorrowDepartures
     }
 
     fun allDepartures(): Map<AgencyAndId, List<Departure>> {
@@ -180,27 +176,20 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         return Departure.rollDepartures(departures)
     }
 
-    fun fullTimetable(): Map<AgencyAndId, List<Departure>> {
-        val departureSet = HashSet<Map<AgencyAndId, List<Departure>>>()
-        timetables.forEach { departureSet.add(timetable.getStopDeparturesBySegment(it)) }
-        val departures = HashMap<AgencyAndId, List<Departure>>()
-        departureSet.forEach {
-            val map = it
-            it.keys.forEach {
-                departures[it] = (departures[it] ?: ArrayList()) + (map[it] ?: ArrayList())
-            }
-        }
-        return departures
-    }
+    fun fullTimetable() = timetable.getStopDeparturesBySegments(segments)
 
     override fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID) {
-        if (timetables.any { it.contains(plateId) }) {
+        if (segments.any { it.contains(plateId) }) {
             if (vmDepartures == null)
                 this.vmDepartures.remove(plateId)
             else
-                this.vmDepartures[plateId] = vmDepartures
+                this.vmDepartures[plateId] = vmDepartures.sortedBy { it.timeTill() }
         }
         filterVmDepartures()
+        //todo<p:1> think about tick
+        onVmPreparedListeners.forEach {
+            it.onVmPrepared()
+        }
     }
 
     interface OnVmPreparedListener {

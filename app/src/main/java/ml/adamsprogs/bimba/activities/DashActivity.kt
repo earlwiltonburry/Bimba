@@ -1,36 +1,29 @@
 package ml.adamsprogs.bimba.activities
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.*
 import android.os.*
-import android.support.design.widget.Snackbar
-import android.support.v7.app.*
-import android.text.Html
-import com.arlib.floatingsearchview.FloatingSearchView
-import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
-import ml.adamsprogs.bimba.models.*
-import kotlin.concurrent.thread
-import android.app.Activity
-import android.support.design.widget.NavigationView
+import android.support.design.widget.*
 import android.support.v4.widget.*
 import android.support.v7.widget.*
+import android.support.v7.app.*
+import android.text.Html
 import android.view.*
 import android.view.inputmethod.InputMethodManager
-import ml.adamsprogs.bimba.*
-import android.os.Bundle
-import android.util.Log
-import kotlinx.android.synthetic.main.activity_dash.*
-import ml.adamsprogs.bimba.datasources.TimetableDownloader
-import ml.adamsprogs.bimba.datasources.VmClient
-import ml.adamsprogs.bimba.models.suggestions.GtfsSuggestion
-import ml.adamsprogs.bimba.models.suggestions.LineSuggestion
-import ml.adamsprogs.bimba.models.suggestions.StopSuggestion
-import android.support.v7.widget.DefaultItemAnimator
-import android.content.Intent
-import java.util.*
+import kotlin.concurrent.thread
 import kotlin.collections.ArrayList
+import kotlinx.android.synthetic.main.activity_dash.*
+import java.util.*
 
-//todo cards https://enoent.fr/blog/2015/01/18/recyclerview-basics/
+import ml.adamsprogs.bimba.models.*
+import ml.adamsprogs.bimba.*
+import ml.adamsprogs.bimba.datasources.*
+import ml.adamsprogs.bimba.models.suggestions.*
+
+import com.arlib.floatingsearchview.FloatingSearchView
+import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
+
 //todo searchView integration
 class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener,
         FavouritesAdapter.OnMenuItemClickListener, Favourite.OnVmPreparedListener,
@@ -194,8 +187,8 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun notifyTimetableValidity(daysTillInvalid: Int) {
-        val message = when(daysTillInvalid) {
-            -1 -> getString (R.string.timetable_validity_finished)
+        val message = when (daysTillInvalid) {
+            -1 -> getString(R.string.timetable_validity_finished)
             0 -> getString(R.string.timetable_validity_today)
             1 -> getString(R.string.timetable_validity_tomorrow)
             else -> return
@@ -210,6 +203,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     private fun prepareFavourites() {
         favourites = FavouriteStorage.getFavouriteStorage(context)
+        favourites.forEach {
+            it.addOnVmPreparedListener(this)
+        }
         val layoutManager = LinearLayoutManager(context)
         favouritesList = favourites_list
         adapter = FavouritesAdapter(context, favourites, this, this)
@@ -219,12 +215,11 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     override fun onVmPrepared() {
-        Log.i("VM", "DataSetChange")
         favouritesList.adapter.notifyDataSetChanged()
     }
 
     private fun getSuggestions() {
-        suggestions = (timetable.getStopSuggestions(context) + timetable.getLineSuggestions()).sorted() //todo<p:v+1> + bike stations, &c
+        suggestions = (timetable.getStopSuggestions(context) + timetable.getLineSuggestions()).sorted() //todo<p:v+1> + bike stations, train stations, &c
     }
 
     private fun prepareListeners() {
@@ -263,7 +258,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         unregisterReceiver(receiver)
     }
 
-    fun deAccent(str: String): String {
+    private fun deAccent(str: String): String {
         var result = str.replace('ę', 'e')
         result = result.replace('ó', 'o')
         result = result.replace('ą', 'a')
@@ -304,7 +299,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
         if (requestCode == REQUEST_EDIT_FAVOURITE) {
-            if (resultCode == Activity.RESULT_OK) {
+            if (resultCode == Activity.RESULT_OK) { // todo change favourite content (shown) immediately
                 val name = data.getStringExtra(EditFavouriteActivity.EXTRA_NEW_NAME)
                 val positionBefore = data.getIntExtra(EditFavouriteActivity.EXTRA_POSITION_BEFORE, -1)
                 //adapter.favourites = favourites.favouritesList
@@ -335,9 +330,12 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     override fun onItemClicked(position: Int) {
         if (actionMode != null) {
             toggleSelection(position)
+        } else {
+            val intent = Intent(context, StopActivity::class.java)
+            intent.putExtra(StopActivity.SOURCE_TYPE, StopActivity.SOURCE_TYPE_FAV)
+            intent.putExtra(StopActivity.EXTRA_FAVOURITE, favourites[position])
+            startActivity(intent)
         }
-
-        //todo else -> StopActivity
     }
 
     override fun onItemLongClicked(position: Int): Boolean {

@@ -80,7 +80,7 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
         val rootObject = JsonObject()
         for ((name, favourite) in favourites) {
             val timetables = JsonArray()
-            for (timetable in favourite.timetables) {
+            for (timetable in favourite.segments) {
                 val segment = JsonObject()
                 segment.addProperty("stop", timetable.stop.id)
                 val plates = JsonArray()
@@ -119,7 +119,7 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
             return
         val newFavourite = Favourite(names[0], HashSet())
         for (name in names) {
-            newFavourite.timetables.addAll(favourites[name]!!.timetables)
+            newFavourite.segments.addAll(favourites[name]!!.segments)
             favourites.remove(name)
         }
         favourites[names[0]] = newFavourite

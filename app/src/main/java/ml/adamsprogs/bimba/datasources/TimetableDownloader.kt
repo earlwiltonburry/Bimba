@@ -12,8 +12,6 @@ import android.os.Build
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.univocity.parsers.csv.CsvParser
-import com.univocity.parsers.csv.CsvParserSettings
 import ir.mahdi.mzip.zip.ZipArchive
 import ml.adamsprogs.bimba.NetworkStateReceiver
 import ml.adamsprogs.bimba.NotificationChannels
@@ -122,7 +120,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
     }
 
     private fun createIndices() {
-        val settings = CsvParserSettings()
+        /*val settings = CsvParserSettings()
         settings.format.setLineSeparator("\r\n")
         settings.format.quote = '"'
         settings.isHeaderExtractionEnabled = true
@@ -161,6 +159,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
 
         serialiseIndex(stopsIndex, stopIndexFile)
         serialiseIndex(tripsIndex, tripIndexFile)
+        */
     }
 
     private fun serialiseIndex(index: HashMap<String, List<Long>>, file: File) {

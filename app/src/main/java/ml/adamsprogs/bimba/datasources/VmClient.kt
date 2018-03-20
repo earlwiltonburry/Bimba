@@ -37,7 +37,7 @@ class VmClient : Service() {
         }
     }
     private val requests = HashMap<AgencyAndId, Set<Request>>()
-    private val vms = HashMap<AgencyAndId, HashSet<Plate>>() //HashSet<Departure>?
+    private val vms = HashMap<AgencyAndId, Set<Plate>>() //HashSet<Departure>?
     private val timetable = try {
         Timetable.getTimetable(this)
     } catch (e: NullPointerException) {
@@ -154,7 +154,7 @@ class VmClient : Service() {
 
     private fun downloadVM(stopSegment: StopSegment) {
         if (!NetworkStateReceiver.isNetworkAvailable(this)) {
-            vms[stopSegment.stop] = stopSegment.plates!!.map { Plate(it, null) }.toSet() as HashSet<Plate>
+            vms[stopSegment.stop] = HashSet(stopSegment.plates!!.map { Plate(it, null) }.toSet())
             stopSegment.plates!!.forEach {
                 sendResult(it, null)
             }
@@ -221,10 +221,10 @@ class VmClient : Service() {
         departuresForPlate[timetable.getServiceForToday()] = departures
         val vm = vms[plateId.stop] ?: HashSet()
         try {
-            vm.remove(vm.filter { it.id == plateId }[0])
+            (vm as HashSet).remove(vm.filter { it.id == plateId }[0])
         } catch (e: IndexOutOfBoundsException) {
         }
-        vm.add(Plate(plateId, departuresForPlate))
+        (vm as HashSet).add(Plate(plateId, departuresForPlate))
         vms[plateId.stop] = vm
         if (departures.isEmpty())
             sendResult(plateId, null)
