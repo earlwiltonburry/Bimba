@@ -272,7 +272,7 @@ class TimetableConverter:
                                     ?)''', row)
 
     def __create_tables(self):
-        self.__cursor.execute('''create table agency(agency_id INTEGER PRIMARY KEY
+        self.__cursor.execute('''create table agency(agency_id INTEGER PRIMARY KEY,
                    agency_name TEXT,
                    agency_url TEXT,
                    agency_timezone TEXT,
@@ -284,9 +284,9 @@ class TimetableConverter:
                    stop_lat DOUBLE,
                    stop_lon DOUBLE,
                    zone_id TEXT)''')
-        self.__cursor.execute('''create table routes(route_id INTEGER PRIMARY KEY,
+        self.__cursor.execute('''create table routes(route_id TEXT PRIMARY KEY,
                    agency_id INTEGER,
-                   route_short_name INTEGER,
+                   route_short_name TEXT,
                    route_long_name TEXT,
                    route_desc TEXT,
                    route_type INTEGER,

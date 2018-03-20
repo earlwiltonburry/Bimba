@@ -26,7 +26,9 @@ if ($etag == $current) {
     http_response_code(304);
 } else {
     header("ETag: $current");
-    // todo send file
-    echo $current;
+    header('Content-Type: application/octet-stream');
+    header('Content-Disposition: attachment; filename="timetable.db.gz"');
+    header('Content-Length: ' . filesize("$current.db.gz"));
+    readfile("$current.db.gz");
 }
 ?>
