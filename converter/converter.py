@@ -123,13 +123,27 @@ dla-deweloperow/getGTFSFile?file={}.zip'
                  self.__metadata]
         to_stay = [name for name in names if self.__is_valid(name)
                    or self.__will_valid(name)]
+        print(to_stay)
         to_stay = self.__clean_overlapping(to_stay)
+        print(to_stay)
         to_remove = [name for name in names if name not in to_stay]
         to_remove = [row['id'] for row in self.__metadata
                      if '_'.join((row['start'], row['end'])) in to_remove]
+        print(to_remove)
+        print(self.__metadata)
+
+        new_metadata = []
+        for item in self.__metadata:
+            if item['id'] not in to_remove:
+                new_metadata.append(item)
+
+        self.__metadata = new_metadata
+
+        print(new_metadata)
 
         for name in to_remove:
-            Path('{}.db.gz'.format(name)).unlink
+            print('{}.db.gz'.format(name))
+            Path('{}.db.gz'.format(name)).unlink()
 
 
 class TimetableConverter:
