@@ -65,4 +65,5 @@
     <string name="timetable_validity_today">L’orario è valido solo fino ad oggi.</string>
     <string name="timetable_validity_finished">"La validità dell’orario è terminata. Connetti a Internet per scaricarne uno nuovo e continuare. "</string>
     <string name="timetable_validity_tomorrow">L’orario è valido solo fino a domani.</string>
+    <string name="just_departed">Appena partito</string>
 </resources>

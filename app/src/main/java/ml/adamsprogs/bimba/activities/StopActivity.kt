@@ -30,11 +30,13 @@ import ml.adamsprogs.bimba.datasources.VmClient
 import ml.adamsprogs.bimba.getMode
 import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 import ml.adamsprogs.bimba.models.*
+import ml.adamsprogs.bimba.secondsAfterMidnight
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.concurrent.thread
 
 //todo<p:1> on click show time (HH:MM)
+//todo does not show departures when favourite (force works, not by default)
 class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, MessageReceiver.OnVmListener, Favourite.OnVmPreparedListener {
 
     private var sectionsPagerAdapter: SectionsPagerAdapter? = null
@@ -105,9 +107,10 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun refreshAdapterFromStop() {
+        val now = Calendar.getInstance().secondsAfterMidnight()
         val departures = HashMap<AgencyAndId, List<Departure>>()
         if (this.vmDepartures.isNotEmpty()) {
-            departures[timetable.getServiceForToday()] = this.vmDepartures.flatMap { it.value }.sortedBy { it.timeTill(true) }
+            departures[timetable.getServiceForToday()] = this.vmDepartures.flatMap { it.value }.sortedBy { it.timeTill(now) }
             refreshAdapter(departures)
         } else {
             refreshAdapter(Departure.createDepartures(stopSegment!!.stop))
@@ -170,8 +173,10 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     override fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID) {
+        println("OnVM")
         if (vmDepartures == null && this.vmDepartures.isEmpty() && hasDepartures) {
             if (ticked()) {
+                println("tick")
                 refreshAdapterFromStop()
             }
             return

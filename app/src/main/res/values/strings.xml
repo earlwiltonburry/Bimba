@@ -81,4 +81,5 @@
     <string name="timetable_validity_finished">Timetable validity has ended. Connect to the Internet to download a new one in order to continue.</string>
     <string name="timetable_validity_today">Timetable validity ends today.</string>
     <string name="timetable_validity_tomorrow">Timetable validity ends tomorrow.</string>
+    <string name="just_departed">Just departed</string>
 </resources>

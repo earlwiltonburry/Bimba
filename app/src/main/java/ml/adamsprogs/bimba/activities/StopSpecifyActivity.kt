@@ -15,7 +15,7 @@ import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 
-
+//todo in night dark on dark
 class StopSpecifyActivity : AppCompatActivity() {
 
     companion object {
@@ -42,7 +42,7 @@ class StopSpecifyActivity : AppCompatActivity() {
         supportActionBar?.title = name
     }
 
-    class ShedAdapter(val context: Context, val values: Map<AgencyAndId, Pair<String, Set<String>>>) :
+    class ShedAdapter(val context: Context, private val values: Map<AgencyAndId, Pair<String, Set<String>>>) :
             RecyclerView.Adapter<ShedAdapter.ViewHolder>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
             val context = parent.context

@@ -15,7 +15,7 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
         fun getFavouriteStorage(context: Context? = null): FavouriteStorage {
             return if (favouriteStorage == null) {
                 if (context == null)
-                    throw IllegalArgumentException("requested new storage context not given")
+                    throw IllegalArgumentException("requested new storage appContext not given")
                 else {
                     favouriteStorage = FavouriteStorage(context)
                     favouriteStorage as FavouriteStorage

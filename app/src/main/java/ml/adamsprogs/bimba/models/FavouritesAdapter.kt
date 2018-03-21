@@ -1,6 +1,5 @@
 package ml.adamsprogs.bimba.models
 
-import android.app.Activity
 import android.content.Context
 import android.support.v4.content.res.ResourcesCompat
 import android.support.v7.widget.*
@@ -10,19 +9,23 @@ import android.view.*
 import android.widget.*
 import ml.adamsprogs.bimba.R
 import android.view.LayoutInflater
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.android.UI
+import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.launch
 import java.util.*
-import kotlin.concurrent.thread
 import ml.adamsprogs.bimba.Declinator
+import ml.adamsprogs.bimba.secondsAfterMidnight
 
 
-class FavouritesAdapter(val context: Context, var favourites: FavouriteStorage,
+class FavouritesAdapter(val appContext: Context, var favourites: FavouriteStorage,
                         private val onMenuItemClickListener: OnMenuItemClickListener,
                         private val onClickListener: ViewHolder.OnClickListener) :
         RecyclerView.Adapter<FavouritesAdapter.ViewHolder>() {
 
     private val selectedItems = SparseBooleanArray()
 
-    fun isSelected(position: Int) = getSelectedItems().contains(position)
+    private fun isSelected(position: Int) = getSelectedItems().contains(position)
 
     fun toggleSelection(position: Int) {
         if (selectedItems.get(position, false)) {
@@ -52,51 +55,49 @@ class FavouritesAdapter(val context: Context, var favourites: FavouriteStorage,
     override fun getItemCount() = favourites.size
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.selectedOverlay.visibility = if (isSelected(position)) View.VISIBLE else View.INVISIBLE
-
-        thread {
+        launch(UI) {
             val favourite = favourites[position]!!
-            val nextDeparture: Departure?
-            try {
-                nextDeparture = favourite.nextDeparture()
-            } catch (e: ConcurrentModificationException) {
-                return@thread
+
+            holder.selectedOverlay.visibility = if (isSelected(position)) View.VISIBLE else View.INVISIBLE
+            holder.moreButton.setOnClickListener {
+                val popup = PopupMenu(appContext, it)
+                val inflater = popup.menuInflater
+                popup.setOnMenuItemClickListener {
+                    when (it.itemId) {
+                        R.id.favourite_edit -> onMenuItemClickListener.edit(favourite.name)
+                        R.id.favourite_delete -> onMenuItemClickListener.delete(favourite.name)
+                        else -> false
+                    }
+                }
+                inflater.inflate(R.menu.favourite_actions, popup.menu)
+                popup.show()
             }
+
+            val nextDeparture = async(CommonPool) {
+                favourite.nextDeparture()
+            }.await()
+
             val nextDepartureText: String
             val nextDepartureLineText: String
             if (nextDeparture != null) {
-                val interval = nextDeparture.timeTill(true)
-                if (interval < 0)
-                    return@thread
-                nextDepartureText = context.getString(Declinator.decline(interval), interval.toString())
-                nextDepartureLineText = context.getString(R.string.departure_to_line, nextDeparture.line, nextDeparture.headsign)
+                val interval = nextDeparture.timeTill(Calendar.getInstance().secondsAfterMidnight())
+                nextDepartureLineText = appContext.getString(R.string.departure_to_line, nextDeparture.line, nextDeparture.headsign)
+                nextDepartureText = if (interval < 0)
+                    appContext.getString(R.string.just_departed)
+                else
+                    appContext.getString(Declinator.decline(interval), interval.toString())
             } else {
-                nextDepartureText = context.getString(R.string.no_next_departure)
+                nextDepartureText = appContext.getString(R.string.no_next_departure)
                 nextDepartureLineText = ""
             }
-            (context as Activity).runOnUiThread {
-                holder.nameTextView.text = favourite.name
-                holder.timeTextView.text = nextDepartureText
-                holder.lineTextView.text = nextDepartureLineText
-                if (nextDeparture != null) {
-                    if (nextDeparture.vm)
-                        holder.typeIcon.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_vm, context.theme))
-                    else
-                        holder.typeIcon.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_departure_timetable, context.theme))
-                }
-                holder.moreButton.setOnClickListener {
-                    val popup = PopupMenu(context, it)
-                    val inflater = popup.menuInflater
-                    popup.setOnMenuItemClickListener {
-                        when (it.itemId) {
-                            R.id.favourite_edit -> onMenuItemClickListener.edit(favourite.name)
-                            R.id.favourite_delete -> onMenuItemClickListener.delete(favourite.name)
-                            else -> false
-                        }
-                    }
-                    inflater.inflate(R.menu.favourite_actions, popup.menu)
-                    popup.show()
-                }
+            holder.nameTextView.text = favourite.name
+            holder.timeTextView.text = nextDepartureText
+            holder.lineTextView.text = nextDepartureLineText
+            if (nextDeparture != null) {
+                if (nextDeparture.vm)
+                    holder.typeIcon.setImageDrawable(ResourcesCompat.getDrawable(appContext.resources, R.drawable.ic_departure_vm, appContext.theme))
+                else
+                    holder.typeIcon.setImageDrawable(ResourcesCompat.getDrawable(appContext.resources, R.drawable.ic_departure_timetable, appContext.theme))
             }
         }
     }

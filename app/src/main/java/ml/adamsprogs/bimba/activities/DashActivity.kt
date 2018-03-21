@@ -24,7 +24,8 @@ import ml.adamsprogs.bimba.models.suggestions.*
 import com.arlib.floatingsearchview.FloatingSearchView
 import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
 
-//todo searchView integration
+//todo<p:1> searchView integration
+//todo something devours RAM
 class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener,
         FavouritesAdapter.OnMenuItemClickListener, Favourite.OnVmPreparedListener,
         FavouritesAdapter.ViewHolder.OnClickListener {
@@ -145,7 +146,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     private fun filterSuggestions(newQuery: String) {
         thread {
-            val newStops = suggestions!!.filter { deAccent(it.name).contains(deAccent(newQuery), true) } //todo sorted by similarity
+            val newStops = suggestions!!.filter { deAccent(it.name).contains(deAccent(newQuery), true) } //todo<p:2> sorted by similarity
             runOnUiThread { searchView.swapSuggestions(newStops) }
         }
     }
@@ -299,7 +300,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
         if (requestCode == REQUEST_EDIT_FAVOURITE) {
-            if (resultCode == Activity.RESULT_OK) { // todo change favourite content (shown) immediately
+            if (resultCode == Activity.RESULT_OK) { // todo change favourite content (shown) immediately [applies to other situations as well]
                 val name = data.getStringExtra(EditFavouriteActivity.EXTRA_NEW_NAME)
                 val positionBefore = data.getIntExtra(EditFavouriteActivity.EXTRA_POSITION_BEFORE, -1)
                 //adapter.favourites = favourites.favouritesList

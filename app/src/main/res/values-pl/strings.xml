@@ -67,4 +67,5 @@
     <string name="timetable_validity_today">Rozkład obowiązuje tylko do dzisiaj.</string>
     <string name="timetable_validity_finished">Rozkład przestał obowiązywać. Połącz się z Internetem, aby pobrać nowy i kontynuować.</string>
     <string name="timetable_validity_tomorrow">Rozkład obowiązuje tylko do jutra.</string>
+    <string name="just_departed">Właśnie odjechał</string>
 </resources>

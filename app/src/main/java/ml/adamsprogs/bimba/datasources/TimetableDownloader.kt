@@ -146,7 +146,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
         parser.beginParsing(File(getSecondaryExternalFilesDir(), "gtfs_files/stop_times.txt"))
         var line: Array<String>? = null
         while ({ line = parser.parseNext(); line }() != null) {
-            val lineNumber = parser.context.currentLine()
+            val lineNumber = parser.appContext.currentLine()
             (tripsIndex[line!![0]] as ArrayList).add(lineNumber)
             (stopsIndex[line!![3]] as ArrayList).add(lineNumber)
             if (lineNumber % 10_300 == 0L)

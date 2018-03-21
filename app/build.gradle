@@ -38,6 +38,8 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:3.8.1'
     implementation 'com.github.ghost1372:Mzip-Android:0.4.0'
     implementation 'io.requery:sqlite-android:3.22.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.22.5'
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:0.22.5"
     testImplementation 'junit:junit:4.12'
 }
 repositories {

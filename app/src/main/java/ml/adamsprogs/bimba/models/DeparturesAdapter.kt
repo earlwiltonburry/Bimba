@@ -62,7 +62,7 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
         if (departure.tomorrow)
             departureTime.add(Calendar.DAY_OF_MONTH, 1)
 
-        val departureIn = (departureTime.timeInMillis - now.timeInMillis) / (1000 * 60)
+        val departureIn = ((departureTime.timeInMillis - now.timeInMillis) / (1000 * 60)).toInt()
         val timeString: String
 
         timeString = if (departureIn > 60 || departureIn < 0 || !relativeTime)

@@ -7,6 +7,7 @@ import android.os.Parcelable
 import ml.adamsprogs.bimba.MessageReceiver
 import ml.adamsprogs.bimba.datasources.VmClient
 import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
+import ml.adamsprogs.bimba.secondsAfterMidnight
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
@@ -64,9 +65,10 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
     }
 
     private fun filterVmDepartures() {
+        val now = Calendar.getInstance().secondsAfterMidnight()
         this.vmDepartures.forEach {
             val newVms = it.value
-                    .filter { it.timeTill(true) >= 0 }.sortedBy { it.timeTill() }
+                    .filter { it.timeTill(now) >= 0 }.sortedBy { it.timeTill(now) }
             this.vmDepartures[it.key] = newVms
         }
     }
@@ -121,6 +123,7 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
     }
 
     fun nextDeparture(): Departure? {
+        val now = Calendar.getInstance().secondsAfterMidnight()
         filterVmDepartures()
         if (segments.isEmpty() && vmDepartures.isEmpty())
             return null
@@ -128,40 +131,34 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         if (vmDepartures.isNotEmpty()) {
             return vmDepartures.flatMap { it.value }
                     .minBy {
-                        it.timeTill(true)
+                        it.timeTill(now)
                     }
         }
 
-        val twoDayDepartures = nowDepartures()
+        val full = fullTimetable()
+        /*println("full:")
+        full.forEach {
+            println("${it.key}:")
+            it.value.forEach {
+                println("\t$it")
+            }
+        }*/
 
-        if (twoDayDepartures.isEmpty())
+        val twoDayDepartures = Departure.rollDepartures(full)[timetable.getServiceForToday()]
+
+        println("NextDep: is empty? ${twoDayDepartures?.isEmpty()}")
+
+        if (twoDayDepartures?.isEmpty() != false)
             return null
 
-        return twoDayDepartures
-                .filter { it.timeTill(true) >= 0 }
-                .minBy { it.timeTill(true) }
-    }
-
-    private fun nowDepartures(): List<Departure> {
-        val today = timetable.getServiceForToday()
-        val tomorrowCal = Calendar.getInstance()
-        tomorrowCal.add(Calendar.DAY_OF_MONTH, 1)
-        val tomorrow = try {
-            timetable.getServiceForTomorrow()
-        } catch (e: IllegalArgumentException) {
-            -1
+        println("NextDep: twoDays:")
+        twoDayDepartures.forEach {
+            println("\t$it")
         }
 
-        val departures = fullTimetable()
+        println("NextDep: ${twoDayDepartures[0]}")
 
-        val todayDepartures = departures[today]!!
-        val tomorrowDepartures = ArrayList<Departure>() /** todo as in {@link Departure.rollDeparture rollDeparture} **/
-        if (tomorrow != -1) {
-            departures[tomorrow]!!.mapTo(tomorrowDepartures) { it.copy() }
-            tomorrowDepartures.forEach { it.tomorrow = true }
-        }
-
-        return todayDepartures + tomorrowDepartures
+        return twoDayDepartures[0]
     }
 
     fun allDepartures(): Map<AgencyAndId, List<Departure>> {
@@ -179,11 +176,12 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
     fun fullTimetable() = timetable.getStopDeparturesBySegments(segments)
 
     override fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID) {
+        val now = Calendar.getInstance().secondsAfterMidnight()
         if (segments.any { it.contains(plateId) }) {
             if (vmDepartures == null)
                 this.vmDepartures.remove(plateId)
             else
-                this.vmDepartures[plateId] = vmDepartures.sortedBy { it.timeTill() }
+                this.vmDepartures[plateId] = vmDepartures.sortedBy { it.timeTill(now) }
         }
         filterVmDepartures()
         //todo<p:1> think about tick

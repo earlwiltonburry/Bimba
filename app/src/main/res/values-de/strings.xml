@@ -67,4 +67,5 @@
     <string name="timetable_validity_today">Fahrplan gilt nur bis heute.</string>
     <string name="timetable_validity_finished">Die Gültigkeit des Zeitplans ist beendet. Verbind mit dem Internet, um eine neue herunterzuladen und um fortzufahren.</string>
     <string name="timetable_validity_tomorrow">Fahrplan gilt nur bis morgen.</string>
+    <string name="just_departed">Gerade gegangen</string>
 </resources>

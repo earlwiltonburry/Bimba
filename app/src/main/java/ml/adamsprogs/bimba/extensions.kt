@@ -1,5 +1,6 @@
 package ml.adamsprogs.bimba
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.os.Build
@@ -36,11 +37,11 @@ internal fun Calendar.toIsoDate(): String {
 
 const val ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
 
-fun calendarFromIso(iso: String): Calendar { // check
+@SuppressLint("SimpleDateFormat")
+fun calendarFromIso(iso: String): Calendar {
     val calendar = Calendar.getInstance()
     val dateFormat = SimpleDateFormat(ISO_8601_DATE_FORMAT)
     val date = dateFormat.parse(iso)
-    //date.hours = date.getHours() - 1 //fixme why?
     calendar.time = date
     return calendar
 }

@@ -24,7 +24,7 @@ class Timetable private constructor() {
                     timetable!!.db = SQLiteDatabase.openDatabase(dbFile.path, null, SQLiteDatabase.OPEN_READONLY)
                     timetable!!
                 } else
-                    throw IllegalArgumentException("new timetable requested and no context given")
+                    throw IllegalArgumentException("new timetable requested and no appContext given")
             else
                 timetable!!
         }
