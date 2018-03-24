@@ -15,6 +15,7 @@ import ml.adamsprogs.bimba.Declinator
 import ml.adamsprogs.bimba.rollTime
 import java.util.*
 
+//todo<p:1> on click show time (HH:MM)
 class DeparturesAdapter(val context: Context, private val departures: List<Departure>?, private val relativeTime: Boolean) :
         RecyclerView.Adapter<DeparturesAdapter.ViewHolder>() {
 

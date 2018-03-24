@@ -1,42 +1,22 @@
 package ml.adamsprogs.bimba.activities
 
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.support.design.widget.TabLayout
-import android.support.design.widget.Snackbar
-import android.support.v7.app.AppCompatActivity
-
-import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentManager
+import android.content.*
+import android.support.design.widget.*
 import android.os.Bundle
-import android.support.v4.app.FragmentStatePagerAdapter
-import android.support.v4.content.res.ResourcesCompat
+import android.view.*
+import android.support.v4.app.*
 import android.support.v4.view.PagerAdapter
-import android.support.v7.widget.DividerItemDecoration
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
-import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
-import android.view.ViewGroup
+import android.support.v4.content.res.ResourcesCompat
+import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.*
 
+import java.util.Calendar
 import kotlinx.android.synthetic.main.activity_stop.*
-import ml.adamsprogs.bimba.MessageReceiver
-import ml.adamsprogs.bimba.R
-import ml.adamsprogs.bimba.datasources.TimetableDownloader
-import ml.adamsprogs.bimba.datasources.VmClient
-import ml.adamsprogs.bimba.getMode
+import ml.adamsprogs.bimba.*
+import ml.adamsprogs.bimba.datasources.*
 import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 import ml.adamsprogs.bimba.models.*
-import ml.adamsprogs.bimba.secondsAfterMidnight
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.concurrent.thread
 
-//todo<p:1> on click show time (HH:MM)
-//todo does not show departures when favourite (force works, not by default)
 class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, MessageReceiver.OnVmListener, Favourite.OnVmPreparedListener {
 
     private var sectionsPagerAdapter: SectionsPagerAdapter? = null
@@ -101,9 +81,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun getFavouriteDepartures() {
-        thread {
-            refreshAdapter(favourite!!.allDepartures())
-        }
+        refreshAdapter(favourite!!.allDepartures())
     }
 
     private fun refreshAdapterFromStop() {
@@ -121,15 +99,15 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     private fun refreshAdapter(departures: Map<AgencyAndId, List<Departure>>?) {
         if (departures != null)
             sectionsPagerAdapter?.departures = departures
-        runOnUiThread {
-            sectionsPagerAdapter?.notifyDataSetChanged()
-            selectTodayPage()
-            lastUpdated = Calendar.getInstance().timeInMillis
-        }
+        sectionsPagerAdapter?.notifyDataSetChanged()
+        selectTodayPage()
+        lastUpdated = Calendar.getInstance().timeInMillis
     }
 
     override fun onVmPrepared() {
-        getFavouriteDepartures()
+        if (favourite!!.isBackedByVm || ticked()) {
+            getFavouriteDepartures()
+        }
     }
 
     private fun showFab() {
@@ -173,10 +151,8 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     override fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID) {
-        println("OnVM")
         if (vmDepartures == null && this.vmDepartures.isEmpty() && hasDepartures) {
             if (ticked()) {
-                println("tick")
                 refreshAdapterFromStop()
             }
             return
@@ -190,7 +166,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         }
     }
 
-    private fun ticked() = Calendar.getInstance().timeInMillis - lastUpdated >= VmClient.TICK_6_ZINA_TIM
+    private fun ticked() = Calendar.getInstance().timeInMillis - lastUpdated >= VmClient.TICK_6_ZINA_TIM_WITH_MARGIN
 
     override fun onTimetableDownload(result: String?) {
         val message: String = when (result) {

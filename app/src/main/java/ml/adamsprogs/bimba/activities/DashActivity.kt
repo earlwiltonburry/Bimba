@@ -26,6 +26,7 @@ import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
 
 //todo<p:1> searchView integration
 //todo something devours RAM
+//todo onResume -> refresh favourites
 class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener,
         FavouritesAdapter.OnMenuItemClickListener, Favourite.OnVmPreparedListener,
         FavouritesAdapter.ViewHolder.OnClickListener {

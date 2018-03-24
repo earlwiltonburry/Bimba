@@ -26,6 +26,8 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         get() = segments.sumBy {
             it.size
         }
+    val isBackedByVm
+        get() = vmDepartures.isNotEmpty()
 
     private val onVmPreparedListeners = HashSet<OnVmPreparedListener>()
 
@@ -136,36 +138,21 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         }
 
         val full = fullTimetable()
-        /*println("full:")
-        full.forEach {
-            println("${it.key}:")
-            it.value.forEach {
-                println("\t$it")
-            }
-        }*/
 
         val twoDayDepartures = Departure.rollDepartures(full)[timetable.getServiceForToday()]
 
-        println("NextDep: is empty? ${twoDayDepartures?.isEmpty()}")
-
         if (twoDayDepartures?.isEmpty() != false)
             return null
-
-        println("NextDep: twoDays:")
-        twoDayDepartures.forEach {
-            println("\t$it")
-        }
-
-        println("NextDep: ${twoDayDepartures[0]}")
 
         return twoDayDepartures[0]
     }
 
     fun allDepartures(): Map<AgencyAndId, List<Departure>> {
         if (vmDepartures.isNotEmpty()) {
-            val departures = HashMap<AgencyAndId, ArrayList<Departure>>()
+            val now = Calendar.getInstance().secondsAfterMidnight()
+            val departures = HashMap<AgencyAndId, List<Departure>>()
             val today = timetable.getServiceForToday()
-            departures[today] = vmDepartures.flatMap { it.value } as ArrayList<Departure>
+            departures[today] = vmDepartures.flatMap { it.value }.sortedBy { it.timeTill(now) }
             return departures
         }
 

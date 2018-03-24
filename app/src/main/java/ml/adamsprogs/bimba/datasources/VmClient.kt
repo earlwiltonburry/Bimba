@@ -26,6 +26,7 @@ class VmClient : Service() {
         const val EXTRA_DEPARTURES = "ml.adamsprogs.bimba.extra.vm.departures"
         const val EXTRA_PLATE_ID = "ml.adamsprogs.bimba.extra.vm.plate"
         const val TICK_6_ZINA_TIM = 12500L
+        const val TICK_6_ZINA_TIM_WITH_MARGIN = TICK_6_ZINA_TIM * 3 / 4
     }
 
     private var handler: Handler? = null

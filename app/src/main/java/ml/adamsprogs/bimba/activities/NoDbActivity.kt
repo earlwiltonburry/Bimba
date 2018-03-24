@@ -8,6 +8,7 @@ import ml.adamsprogs.bimba.*
 import kotlinx.android.synthetic.main.activity_nodb.*
 import ml.adamsprogs.bimba.datasources.TimetableDownloader
 
+//todo onResume check again
 class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityChangeListener, MessageReceiver.OnTimetableDownloadListener {
     private val networkStateReceiver = NetworkStateReceiver()
     private val timetableDownloadReceiver = MessageReceiver.getMessageReceiver()
