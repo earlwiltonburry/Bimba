@@ -26,7 +26,7 @@ With Bimba You can check the public transport timetable in Poznań agglomeration
 * [ ] searching by line number
 * [ ] stops on map
 * [ ] refreshing on wakeup
-* [ ] VM times immediately if online, not through offline timetable
+* [x] VM times immediately if online, not through offline timetable
 * [x] detecting holiday
 * [ ] ticket machines on map
 * [ ] ever-present searchbar
@@ -35,11 +35,23 @@ With Bimba You can check the public transport timetable in Poznań agglomeration
 Also
 * efficiency
 
-### Timetable
-
-* [ ] use official GTFS timetable (#3)
-
 ---
+
+Bimba
+Copyright (C) 2017–2018  Adam Pioterek
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Dachshund for low-floor icon derived from [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Short-haired-Dachshund.jpg), (c) Igor Bredikhin CC-BY 3.0.
 
