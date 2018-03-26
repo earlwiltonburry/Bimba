@@ -48,6 +48,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 return
             }
 
+            //todo download timetable
             sendResult(RESULT_UP_TO_DATE)
             return
 
