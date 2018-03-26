@@ -7,6 +7,8 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import ml.adamsprogs.bimba.MessageReceiver
 import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
+import ml.adamsprogs.bimba.secondsAfterMidnight
+import java.util.Calendar
 
 
 class FavouriteStorage private constructor(context: Context) : Iterable<Favourite> {
@@ -26,6 +28,7 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
     }
 
     val favourites = HashMap<String, Favourite>()
+    private val positionIndex = ArrayList<String>()
     private val preferences: SharedPreferences = context.getSharedPreferences("ml.adamsprogs.bimba.prefs", Context.MODE_PRIVATE)
 
     init {
@@ -45,7 +48,9 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
                 stopSegment
             }
             favourites[name] = Favourite(name, timetables)
+            positionIndex.add(name)
         }
+        positionIndex.sort()
     }
 
     override fun iterator(): Iterator<Favourite> = favourites.values.iterator()
@@ -55,6 +60,7 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
     fun add(name: String, timetables: HashSet<StopSegment>) {
         if (favourites[name] == null) {
             favourites[name] = Favourite(name, timetables)
+            addIndex(name)
             serialize()
         }
     }
@@ -62,12 +68,21 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
     fun add(name: String, favourite: Favourite) {
         if (favourites[name] == null) {
             favourites[name] = favourite
+            addIndex(name)
             serialize()
+        }
+    }
+
+    private fun addIndex(name:String) {
+        positionIndex.apply {
+            this.add(name)
+            this.sort()
         }
     }
 
     fun delete(name: String) {
         favourites.remove(name)
+        positionIndex.remove(name)
         serialize()
     }
 
@@ -103,26 +118,30 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
 
     }
 
-    fun detach(name: String, plate: Plate.ID, newName: String) {
-        val plates = HashSet<Plate.ID>()
-        plates.add(plate)
-        val segments = HashSet<StopSegment>()
-        segments.add(StopSegment(plate.stop, plates))
-        favourites[newName] = Favourite(newName, segments)
-        serialize()
-
-        delete(name, plate)
-    }
-
     fun merge(names: List<String>) {
         if (names.size < 2)
             return
-        val newFavourite = Favourite(names[0], HashSet())
+
+        val newCache = HashMap<AgencyAndId, ArrayList<Departure>>()
+        names.forEach {
+            favourites[it]!!.fullDepartures.forEach {
+                if (newCache[it.key] == null)
+                    newCache[it.key] = ArrayList()
+                newCache[it.key]!!.addAll(it.value)
+            }
+        }
+        val now = Calendar.getInstance().secondsAfterMidnight()
+        newCache.forEach {
+            it.value.sortBy { it.timeTill(now) }
+        }
+        val newFavourite = Favourite(names[0], HashSet(), newCache)
         for (name in names) {
             newFavourite.segments.addAll(favourites[name]!!.segments)
             favourites.remove(name)
+            positionIndex.remove(name)
         }
         favourites[names[0]] = newFavourite
+        addIndex(names[0])
 
         serialize()
     }
@@ -131,7 +150,9 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
         val favourite = favourites[oldName] ?: return
         favourite.rename(newName)
         favourites.remove(oldName)
+        positionIndex.remove(oldName)
         favourites[newName] = favourite
+        addIndex(newName)
         serialize()
     }
 
@@ -152,12 +173,11 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
     }
 
     operator fun get(position: Int): Favourite? {
-        return favourites.entries.sortedBy { it.key }[position].value
+        return favourites[positionIndex[position]]
     }
 
     fun indexOf(name: String): Int {
-        val favourite = favourites[name]
-        return favourites.values.sortedBy { it.name }.indexOf(favourite)
+        return positionIndex.indexOf(name)
     }
 
     val size

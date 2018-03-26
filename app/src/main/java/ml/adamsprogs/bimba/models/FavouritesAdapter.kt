@@ -57,6 +57,7 @@ class FavouritesAdapter(val appContext: Context, var favourites: FavouriteStorag
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         launch(UI) {
             val favourite = favourites[position]!!
+            holder.nameTextView.text = favourite.name
 
             holder.selectedOverlay.visibility = if (isSelected(position)) View.VISIBLE else View.INVISIBLE
             holder.moreButton.setOnClickListener {
@@ -90,7 +91,6 @@ class FavouritesAdapter(val appContext: Context, var favourites: FavouriteStorag
                 nextDepartureText = appContext.getString(R.string.no_next_departure)
                 nextDepartureLineText = ""
             }
-            holder.nameTextView.text = favourite.name
             holder.timeTextView.text = nextDepartureText
             holder.lineTextView.text = nextDepartureLineText
             if (nextDeparture != null) {

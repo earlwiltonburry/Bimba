@@ -1,17 +1,12 @@
 package ml.adamsprogs.bimba.models
 
-import android.content.Context
-import android.content.Intent
-import android.os.Parcel
-import android.os.Parcelable
-import ml.adamsprogs.bimba.MessageReceiver
+import android.content.*
+import android.os.*
+import ml.adamsprogs.bimba.*
 import ml.adamsprogs.bimba.datasources.VmClient
 import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
-import ml.adamsprogs.bimba.secondsAfterMidnight
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
-import kotlin.collections.HashSet
+import java.util.Calendar
+import kotlin.collections.*
 
 class Favourite : Parcelable, MessageReceiver.OnVmListener {
     private var isRegisteredOnVmListener: Boolean = false
@@ -20,6 +15,8 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
     var segments: HashSet<StopSegment>
         private set
     private var vmDepartures = HashMap<Plate.ID, List<Departure>>()
+    var fullDepartures: Map<AgencyAndId, List<Departure>> = HashMap()
+        private set
     val timetable = Timetable.getTimetable()
 
     val size
@@ -48,6 +45,19 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
             set.add(it as StopSegment)
         }
         this.segments = set
+        val mapString = parcel.readString()
+        val map = HashMap<AgencyAndId, List<Departure>>()
+        mapString.safeSplit("\n").forEach {
+            val (k, v) = it.split(":")
+            map[AgencyAndId(k)] = v.split(",").map { Departure.fromString(it) }
+        }
+        this.fullDepartures = map
+    }
+
+    constructor(name :String, segments: HashSet<StopSegment>, cache:Map<AgencyAndId, List<Departure>>) {
+        this.fullDepartures = cache
+        this.name = name
+        this.segments = segments
     }
 
     constructor(name: String, timetables: HashSet<StopSegment>) {
@@ -64,6 +74,17 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         dest?.writeString(name)
         val parcelableSegments = segments.map { it }.toTypedArray()
         dest?.writeParcelableArray(parcelableSegments, flags)
+        var isFirst = true
+        var map = ""
+        fullDepartures.forEach {
+            if (isFirst)
+                isFirst = false
+            else
+                map += '\n'
+
+            map += "${it.key}:${it.value.joinToString(",") { it.toString() }}"
+        }
+        dest?.writeString(map)
     }
 
     private fun filterVmDepartures() {
@@ -160,7 +181,15 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         return Departure.rollDepartures(departures)
     }
 
-    fun fullTimetable() = timetable.getStopDeparturesBySegments(segments)
+    fun fullTimetable() =
+            if (fullDepartures.isNotEmpty())
+                fullDepartures
+            else {
+                fullDepartures = timetable.getStopDeparturesBySegments(segments)
+                fullDepartures
+
+            }
+
 
     override fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID) {
         val now = Calendar.getInstance().secondsAfterMidnight()
@@ -171,7 +200,6 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
                 this.vmDepartures[plateId] = vmDepartures.sortedBy { it.timeTill(now) }
         }
         filterVmDepartures()
-        //todo<p:1> think about tick
         onVmPreparedListeners.forEach {
             it.onVmPrepared()
         }
