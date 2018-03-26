@@ -7,8 +7,9 @@ import android.content.IntentFilter
 import ml.adamsprogs.bimba.*
 import kotlinx.android.synthetic.main.activity_nodb.*
 import ml.adamsprogs.bimba.datasources.TimetableDownloader
+import ml.adamsprogs.bimba.models.Timetable
 
-//todo onResume check again
+//todo onResume check again // check
 class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityChangeListener, MessageReceiver.OnTimetableDownloadListener {
     private val networkStateReceiver = NetworkStateReceiver()
     private val timetableDownloadReceiver = MessageReceiver.getMessageReceiver()
@@ -35,6 +36,11 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
 
     override fun onResume() {
         super.onResume()
+        val timetable = Timetable.getTimetable(this)
+        if (!timetable.isEmpty()){
+            startActivity(Intent(this, DashActivity::class.java))
+            finish()
+        }
         var filter = IntentFilter(TimetableDownloader.ACTION_DOWNLOADED)
         filter.addCategory(Intent.CATEGORY_DEFAULT)
         registerReceiver(timetableDownloadReceiver, filter)

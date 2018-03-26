@@ -12,16 +12,11 @@ class SplashActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        try {
-            val timetable = Timetable.getTimetable(this)
-            if (timetable.isEmpty())
-                startActivity(Intent(this, NoDbActivity::class.java))
-            else
-                startActivity(Intent(this, DashActivity::class.java))
-        } catch(e: Exception) {
-            e.printStackTrace()
+        val timetable = Timetable.getTimetable(this)
+        if (timetable.isEmpty())
             startActivity(Intent(this, NoDbActivity::class.java))
-        }
+        else
+            startActivity(Intent(this, DashActivity::class.java))
         finish()
     }
 }
