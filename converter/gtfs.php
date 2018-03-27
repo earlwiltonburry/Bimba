@@ -29,6 +29,7 @@ if ($etag == $current) {
     header('Content-Type: application/octet-stream');
     header('Content-Disposition: attachment; filename="timetable.db.gz"');
     header('Content-Length: ' . filesize("$current.db.gz"));
+    header('X-Uncompressed-Content-Length: ' . $sizeU);
     readfile("$current.db.gz");
 }
 ?>
