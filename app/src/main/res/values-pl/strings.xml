@@ -59,7 +59,6 @@
     <string name="valid_since">Ważny od %1$s</string>
     <string name="valid_till">Ważny do %1$s</string>
     <string name="refreshing_cache">Odświeżanie pamięci podręcznej. Może chwilę potrwać…</string>
-    <string name="timetable_converting">Konwertowanie rozkładu</string>
     <string name="today">Dzisiaj</string>
     <string name="no_departures">Brak odjazdów</string>
     <string name="tab_text_line_to">Tam</string>
@@ -68,4 +67,5 @@
     <string name="timetable_validity_finished">Rozkład przestał obowiązywać. Połącz się z Internetem, aby pobrać nowy i kontynuować.</string>
     <string name="timetable_validity_tomorrow">Rozkład obowiązuje tylko do jutra.</string>
     <string name="just_departed">Właśnie odjechał</string>
+    <string name="timetable_uncompressing">%1$d/%2$d, dekompresja: %3$f%</string>
 </resources>

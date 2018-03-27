@@ -1,4 +1,4 @@
-package ml.adamsprogs.bimba.models
+package ml.adamsprogs.bimba.models.adapters
 
 import android.app.AlertDialog
 import android.content.Context
@@ -12,6 +12,7 @@ import android.widget.TextView
 import ml.adamsprogs.bimba.R
 import android.view.LayoutInflater
 import ml.adamsprogs.bimba.Declinator
+import ml.adamsprogs.bimba.models.Departure
 import ml.adamsprogs.bimba.rollTime
 import java.util.*
 

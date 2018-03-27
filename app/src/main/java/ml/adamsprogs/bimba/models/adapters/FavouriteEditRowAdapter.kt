@@ -1,4 +1,4 @@
-package ml.adamsprogs.bimba.models
+package ml.adamsprogs.bimba.models.adapters
 
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
@@ -7,6 +7,10 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import ml.adamsprogs.bimba.R
+import ml.adamsprogs.bimba.collections.FavouriteStorage
+import ml.adamsprogs.bimba.models.Favourite
+import ml.adamsprogs.bimba.models.Plate
+import ml.adamsprogs.bimba.models.Timetable
 
 class FavouriteEditRowAdapter(private var favourite: Favourite) :
         RecyclerView.Adapter<FavouriteEditRowAdapter.ViewHolder>() {
@@ -18,7 +22,7 @@ class FavouriteEditRowAdapter(private var favourite: Favourite) :
         val timetable = Timetable.getTimetable()
         val favourites = FavouriteStorage.getFavouriteStorage()
         val id = favourite.segments.flatMap { it.plates!! }.sortedBy { "${it.line}${it.stop}"}[position]
-        val plate = Plate(id,null)
+        val plate = Plate(id, null)
         val favouriteElement = "${timetable.getStopName(plate.id.stop)} ( ${timetable.getStopCode(plate.id.stop)}):\n${plate.id.line} → ${plate.id.headsign}"
         holder.rowTextView.text = favouriteElement
 //        holder?.splitButton?.setOnClickListener {

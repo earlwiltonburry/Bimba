@@ -13,9 +13,11 @@ import android.support.v7.widget.*
 import java.util.Calendar
 import kotlinx.android.synthetic.main.activity_stop.*
 import ml.adamsprogs.bimba.*
+import ml.adamsprogs.bimba.collections.FavouriteStorage
 import ml.adamsprogs.bimba.datasources.*
 import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 import ml.adamsprogs.bimba.models.*
+import ml.adamsprogs.bimba.models.adapters.DeparturesAdapter
 
 class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, MessageReceiver.OnVmListener, Favourite.OnVmPreparedListener {
 
@@ -170,7 +172,6 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     override fun onTimetableDownload(result: String?) {
         val message: String = when (result) {
-            TimetableDownloader.RESULT_DOWNLOADED -> getString(R.string.refreshing_cache)
             TimetableDownloader.RESULT_NO_CONNECTIVITY -> getString(R.string.no_connectivity)
             TimetableDownloader.RESULT_UP_TO_DATE -> getString(R.string.timetable_up_to_date)
             TimetableDownloader.RESULT_FINISHED -> getString(R.string.timetable_downloaded)

@@ -59,7 +59,6 @@
         "Sei sicher, die Nachrichten auf\nhttps://www.ztm.poznan.pl/en\nkonsultieren.\n\n"
     </string>
     <string name="refreshing_cache">Cache wird aktualisiert. Es kann einige Zeit dauern…</string>
-    <string name="timetable_converting">Fahrplan wird umgewandelt…</string>
     <string name="today">Heute</string>
     <string name="no_departures">Keine Abfahrten</string>
     <string name="tab_text_line_to">Hin</string>
@@ -68,4 +67,5 @@
     <string name="timetable_validity_finished">Die Gültigkeit des Zeitplans ist beendet. Verbind mit dem Internet, um eine neue herunterzuladen und um fortzufahren.</string>
     <string name="timetable_validity_tomorrow">Fahrplan gilt nur bis morgen.</string>
     <string name="just_departed">Gerade gegangen</string>
+    <string name="timetable_uncompressing">%1$d/%2$d, dekompression: %3$f%</string>
 </resources>

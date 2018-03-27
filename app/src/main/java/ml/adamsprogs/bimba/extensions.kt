@@ -5,7 +5,7 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.os.Build
 import ml.adamsprogs.bimba.activities.StopActivity
-import java.io.File
+import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
@@ -80,4 +80,17 @@ internal fun Context.getSecondaryExternalFilesDir(): File {
     val dirs = this.getExternalFilesDirs(null)
     return dirs[0]
 //    return dirs[dirs.size - 1]
+}
+
+internal fun InputStream.listenableCopyTo(out: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE, listener: (Long) -> Unit): Long {
+    var bytesCopied: Long = 0
+    val buffer = ByteArray(bufferSize)
+    var bytes = read(buffer)
+    while (bytes >= 0) {
+        out.write(buffer, 0, bytes)
+        bytesCopied += bytes
+        listener(bytesCopied)
+        bytes = read(buffer)
+    }
+    return bytesCopied
 }

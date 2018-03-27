@@ -1,4 +1,4 @@
-package ml.adamsprogs.bimba.models
+package ml.adamsprogs.bimba.models.adapters
 
 import android.content.Context
 import android.support.v4.content.res.ResourcesCompat
@@ -15,6 +15,7 @@ import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.launch
 import java.util.*
 import ml.adamsprogs.bimba.Declinator
+import ml.adamsprogs.bimba.collections.FavouriteStorage
 import ml.adamsprogs.bimba.secondsAfterMidnight
 
 

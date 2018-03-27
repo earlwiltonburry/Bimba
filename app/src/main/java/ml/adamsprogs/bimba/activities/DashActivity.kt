@@ -23,6 +23,8 @@ import ml.adamsprogs.bimba.models.suggestions.*
 
 import com.arlib.floatingsearchview.FloatingSearchView
 import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
+import ml.adamsprogs.bimba.collections.FavouriteStorage
+import ml.adamsprogs.bimba.models.adapters.FavouritesAdapter
 
 //todo<p:1> searchView integration
 //todo something devours RAM
@@ -275,7 +277,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     override fun onTimetableDownload(result: String?) {
         val message: String = when (result) {
-            TimetableDownloader.RESULT_DOWNLOADED -> getString(R.string.refreshing_cache)
             TimetableDownloader.RESULT_NO_CONNECTIVITY -> getString(R.string.no_connectivity)
             TimetableDownloader.RESULT_UP_TO_DATE -> getString(R.string.timetable_up_to_date)
             TimetableDownloader.RESULT_FINISHED -> getString(R.string.timetable_downloaded)

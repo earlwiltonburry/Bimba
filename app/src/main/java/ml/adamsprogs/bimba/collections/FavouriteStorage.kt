@@ -1,13 +1,10 @@
-package ml.adamsprogs.bimba.models
+package ml.adamsprogs.bimba.collections
 
-import android.content.Context
-import android.content.SharedPreferences
-import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
-import ml.adamsprogs.bimba.MessageReceiver
+import android.content.*
+import com.google.gson.*
+import ml.adamsprogs.bimba.*
+import ml.adamsprogs.bimba.models.*
 import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
-import ml.adamsprogs.bimba.secondsAfterMidnight
 import java.util.Calendar
 
 
@@ -28,7 +25,7 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
     }
 
     val favourites = HashMap<String, Favourite>()
-    private val positionIndex = ArrayList<String>()
+    private val positionIndex = IndexableTreeSet<String>()
     private val preferences: SharedPreferences = context.getSharedPreferences("ml.adamsprogs.bimba.prefs", Context.MODE_PRIVATE)
 
     init {
@@ -50,7 +47,6 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
             favourites[name] = Favourite(name, timetables)
             positionIndex.add(name)
         }
-        positionIndex.sort()
     }
 
     override fun iterator(): Iterator<Favourite> = favourites.values.iterator()
@@ -76,7 +72,6 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
     private fun addIndex(name:String) {
         positionIndex.apply {
             this.add(name)
-            this.sort()
         }
     }
 

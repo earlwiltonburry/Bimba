@@ -36,7 +36,6 @@ dependencies {
     implementation 'com.github.arimorty:floatingsearchview:2.1.1'
     implementation 'com.google.code.gson:gson:2.8.1'
     implementation 'com.squareup.okhttp3:okhttp:3.8.1'
-    implementation 'com.github.ghost1372:Mzip-Android:0.4.0'
     implementation 'io.requery:sqlite-android:3.22.0'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.22.5'
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:0.22.5"

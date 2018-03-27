@@ -15,6 +15,7 @@
     <string name="no_db_connect">Connect to the Internet to download the timetable</string>
     <string name="no_db_downloading">Timetable is being downloaded…</string>
     <string name="timetable_downloading">Downloading timetable</string>
+    <string name="timetable_uncompressing">%1$d/%2$d, uncompressing: %3$f%</string>
     <string name="search_placeholder">Stop or line…</string>
     <string name="no_connectivity">No connectivity – can’t update timetable</string>
     <string name="timetable_up_to_date">Timetable is up-to-date</string>
@@ -71,7 +72,6 @@
     <string name="departure_floor" translatable="false">departure floor type (lowFloor)</string>
     <string name="departure_info" translatable="false">departure info icon</string>
     <string name="refreshing_cache">Refreshing cache. May take some time…</string>
-    <string name="timetable_converting">Converting timetable…</string>
 
     <string name="today">Today</string>
     <string name="no_departures">No departures</string>

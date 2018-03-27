@@ -57,7 +57,6 @@
         "Assicurati di consultare le notifiche su\nhttps://www.ztm.poznan.pl/en.\n\n"
     </string>
     <string name="refreshing_cache">Cache sta essendo aggiornato. Può richiedere un certo tempo…</string>
-    <string name="timetable_converting">L’orario e stando convertito</string>
     <string name="today">Oggi</string>
     <string name="no_departures">Nessune partenze</string>
     <string name="tab_text_line_to">Avanti</string>
@@ -66,4 +65,5 @@
     <string name="timetable_validity_finished">"La validità dell’orario è terminata. Connetti a Internet per scaricarne uno nuovo e continuare. "</string>
     <string name="timetable_validity_tomorrow">L’orario è valido solo fino a domani.</string>
     <string name="just_departed">Appena partito</string>
+    <string name="timetable_uncompressing">%1$d/%2$d, decompressione: %3$f%</string>
 </resources>

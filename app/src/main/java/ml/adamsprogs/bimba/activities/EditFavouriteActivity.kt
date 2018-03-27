@@ -7,8 +7,8 @@ import android.support.v7.widget.LinearLayoutManager
 import android.widget.EditText
 import ml.adamsprogs.bimba.R
 import ml.adamsprogs.bimba.models.Favourite
-import ml.adamsprogs.bimba.models.FavouriteEditRowAdapter
-import ml.adamsprogs.bimba.models.FavouriteStorage
+import ml.adamsprogs.bimba.models.adapters.FavouriteEditRowAdapter
+import ml.adamsprogs.bimba.collections.FavouriteStorage
 import kotlinx.android.synthetic.main.activity_edit_favourite.*
 import android.app.Activity
 import android.content.Intent

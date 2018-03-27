@@ -77,8 +77,6 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
                 startActivity(Intent(this, DashActivity::class.java))
                 finish()
             }
-            TimetableDownloader.RESULT_DOWNLOADED ->
-                no_db_caption.text = getString(R.string.timetable_converting)
             else -> no_db_caption.text = getString(R.string.error_try_later)
         }
     }
