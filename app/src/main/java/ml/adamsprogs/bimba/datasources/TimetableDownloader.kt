@@ -9,7 +9,7 @@ import android.os.Build
 import ml.adamsprogs.bimba.*
 import java.net.*
 import java.util.zip.GZIPInputStream
-import javax.net.ssl.HttpsURLConnection
+import javax.net.ssl.*
 
 class TimetableDownloader : IntentService("TimetableDownloader") {
     companion object {
@@ -37,12 +37,19 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
 
             val localETag = prefs.getString("etag", "")
 
-            val httpCon: HttpsURLConnection
+            var httpCon: HttpURLConnection
             try {
-                val url = URL("https://adamsprogs.ml/gtfs") //todo if https fails -> http
-                httpCon = url.openConnection() as HttpsURLConnection
-                httpCon.addRequestProperty("ETag", localETag)
-                httpCon.connect()
+                try {
+                    val url = URL("https://adamsprogs.ml/gtfs")
+                    httpCon = url.openConnection() as HttpsURLConnection
+                    httpCon.addRequestProperty("ETag", localETag)
+                    httpCon.connect()
+                } catch (e:SSLException) {
+                    val url = URL("http://adamsprogs.ml/gtfs")
+                    httpCon = url.openConnection() as HttpURLConnection
+                    httpCon.addRequestProperty("ETag", localETag)
+                    httpCon.connect()
+                }
                 if (httpCon.responseCode == HttpsURLConnection.HTTP_NOT_MODIFIED) {
                     sendResult(RESULT_UP_TO_DATE)
                     return
