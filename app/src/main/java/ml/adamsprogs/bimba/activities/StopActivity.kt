@@ -19,7 +19,6 @@ import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 import ml.adamsprogs.bimba.models.*
 import ml.adamsprogs.bimba.models.adapters.DeparturesAdapter
 
-//todo fab hide when scrolling
 class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, MessageReceiver.OnVmListener, Favourite.OnVmPreparedListener {
 
     private var sectionsPagerAdapter: SectionsPagerAdapter? = null

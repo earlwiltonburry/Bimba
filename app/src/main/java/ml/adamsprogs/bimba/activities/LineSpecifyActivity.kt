@@ -3,19 +3,15 @@ package ml.adamsprogs.bimba.activities
 import android.support.design.widget.TabLayout
 import android.support.v7.app.AppCompatActivity
 
-import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentManager
-import android.support.v4.app.FragmentPagerAdapter
+import android.support.v4.app.*
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 
-import ml.adamsprogs.bimba.R
 import kotlinx.android.synthetic.main.activity_line_specify.*
 import kotlinx.android.synthetic.main.fragment_line_specify.view.*
+import ml.adamsprogs.bimba.R
 import ml.adamsprogs.bimba.models.Timetable
-import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
+import ml.adamsprogs.bimba.models.gtfs.*
 
 class LineSpecifyActivity : AppCompatActivity() {
     companion object {
@@ -40,11 +36,15 @@ class LineSpecifyActivity : AppCompatActivity() {
 
         container.adapter = sectionsPagerAdapter
 
+        for (i in 0 until tabs.tabCount) {
+            tabs.getTabAt(i)?.text = graphs[i].second
+        }
+
         container.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tabs))
         tabs.addOnTabSelectedListener(TabLayout.ViewPagerOnTabSelectedListener(container))
     }
 
-    inner class SectionsPagerAdapter(fm: FragmentManager, private val graphs: List<Map<Int, List<Int>>>) : FragmentPagerAdapter(fm) {
+    inner class SectionsPagerAdapter(fm: FragmentManager, private val graphs: Array<Pair<HashMap<Int, HashSet<Int>>, String>>) : FragmentPagerAdapter(fm) {
 
         override fun getItem(position: Int): Fragment {
             return PlaceholderFragment.newInstance(position + 1, graphs[position])
@@ -65,11 +65,11 @@ class LineSpecifyActivity : AppCompatActivity() {
         companion object {
             private const val ARG_SECTION_NUMBER = "section_number"
 
-            fun newInstance(sectionNumber: Int, graph: Map<Int, List<Int>>): PlaceholderFragment {
+            fun newInstance(sectionNumber: Int, graph: Pair<HashMap<Int, HashSet<Int>>, String>): PlaceholderFragment {
                 val fragment = PlaceholderFragment()
                 val args = Bundle()
                 args.putInt(ARG_SECTION_NUMBER, sectionNumber)
-                args.putString("graph", graph.map { "${it.key}: ${it.value.joinToString(", ")}" }.joinToString("\n"))
+                args.putString("graph", graph.first.map { "${it.key}: ${it.value.joinToString(", ")}" }.joinToString("\n"))
                 fragment.arguments = args
                 return fragment
             }

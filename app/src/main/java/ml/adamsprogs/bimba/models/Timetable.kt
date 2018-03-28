@@ -373,8 +373,52 @@ class Timetable private constructor() {
         return plates
     }
 
-    fun getTripGraphs(id: AgencyAndId): List<Map<Int, List<Int>>> {
-        TODO("create graph")
+    fun getTripGraphs(id: AgencyAndId): Array<Pair<HashMap<Int, HashSet<Int>>, String>> {
+        val trips = arrayOf(HashMap<String, HashMap<Int, Int>>(), HashMap())
+        val headsigns = arrayOf("", "")
+        val cursor = db.rawQuery("select trip_id, trip_headsign, direction_id, stop_id, stop_sequence " +
+                "from trips natural join stop_times " +
+                "where route_id = ?", arrayOf(id.id))
+
+        while (cursor.moveToNext()) {
+            val trip = cursor.getString(0)
+            val headsign = cursor.getString(1)
+            val direction = cursor.getInt(2)
+            val stopId = cursor.getInt(3)
+            val sequence = cursor.getInt(4)
+            if (trips[direction][trip] == null)
+                trips[direction][trip] = HashMap()
+            trips[direction][trip]!![sequence] = stopId
+            if (trip[trip.length - 1] == '+')
+                headsigns[direction] = headsign
+        }
+
+        cursor.close()
+
+        val result = arrayOf(Pair<HashMap<Int, HashSet<Int>>, String>(HashMap(), headsigns[0]), Pair(HashMap(), headsigns[1]))
+
+        var tripNo = 0
+        trips.forEach {
+            it.forEach {
+                var i = 0
+                val size = it.value.size
+                val list = it.value
+                it.value.toSortedMap(
+                        Comparator { o1, o2 ->
+                            o1.compareTo(o2)
+                        }
+                ).values.forEach {
+                    if (i < size - 1) {
+                        if (result[tripNo].first[it] == null)
+                            result[tripNo].first[it] = HashSet()
+                        result[tripNo].first[it]!!.add(list[i + 1]!!)
+                    }
+                    i++
+                }
+            }
+            tripNo++
+        }
+        return result
     }
 }
 

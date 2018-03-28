@@ -27,7 +27,6 @@ import ml.adamsprogs.bimba.collections.FavouriteStorage
 import ml.adamsprogs.bimba.models.adapters.FavouritesAdapter
 
 //todo<p:1> searchView integration
-//todo something devours RAM
 class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener,
         FavouritesAdapter.OnMenuItemClickListener, Favourite.OnVmPreparedListener,
         FavouritesAdapter.ViewHolder.OnClickListener {
