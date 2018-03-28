@@ -100,6 +100,7 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         segments.forEach {
             it.remove(plateId)
         }
+        removeFromCache(plateId)
     }
 
     fun registerOnVm(receiver: MessageReceiver, context: Context) {
@@ -203,6 +204,15 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         onVmPreparedListeners.forEach {
             it.onVmPrepared()
         }
+    }
+
+    private fun removeFromCache(plate: Plate.ID) {
+        val map = HashMap<AgencyAndId, List<Departure>>()
+        fullDepartures
+        fullDepartures.forEach {
+            map[it.key] = it.value.filter { plate.line != it.line || plate.headsign != it.headsign }
+        }
+        fullDepartures = map
     }
 
     interface OnVmPreparedListener {

@@ -28,7 +28,6 @@ import ml.adamsprogs.bimba.models.adapters.FavouritesAdapter
 
 //todo<p:1> searchView integration
 //todo something devours RAM
-//todo onResume -> refresh favourites
 class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener,
         FavouritesAdapter.OnMenuItemClickListener, Favourite.OnVmPreparedListener,
         FavouritesAdapter.ViewHolder.OnClickListener {
@@ -302,7 +301,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
         if (requestCode == REQUEST_EDIT_FAVOURITE) {
-            if (resultCode == Activity.RESULT_OK) { // todo change favourite content (shown) immediately [applies to other situations as well]
+            if (resultCode == Activity.RESULT_OK) {
                 val name = data.getStringExtra(EditFavouriteActivity.EXTRA_NEW_NAME)
                 val positionBefore = data.getIntExtra(EditFavouriteActivity.EXTRA_POSITION_BEFORE, -1)
                 //adapter.favourites = favourites.favouritesList

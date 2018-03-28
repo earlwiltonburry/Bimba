@@ -69,10 +69,8 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
         }
     }
 
-    private fun addIndex(name:String) {
-        positionIndex.apply {
-            this.add(name)
-        }
+    private fun addIndex(name: String) {
+        positionIndex.add(name)
     }
 
     fun delete(name: String) {
