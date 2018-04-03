@@ -40,12 +40,12 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
             var httpCon: HttpURLConnection
             try {
                 try {
-                    val url = URL("https://adamsprogs.ml/gtfs")
+                    val url = URL("https://adamsprogs.tk/gtfs")
                     httpCon = url.openConnection() as HttpsURLConnection
-                    httpCon.addRequestProperty("ETag", localETag)
+                    httpCon.addRequestProperty("ETag", localETag) //todo if not matches
                     httpCon.connect()
                 } catch (e:SSLException) {
-                    val url = URL("http://adamsprogs.ml/gtfs")
+                    val url = URL("http://adamsprogs.tk/gtfs")
                     httpCon = url.openConnection() as HttpURLConnection
                     httpCon.addRequestProperty("ETag", localETag)
                     httpCon.connect()
