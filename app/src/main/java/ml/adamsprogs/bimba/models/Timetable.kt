@@ -377,7 +377,7 @@ class Timetable private constructor() {
         val trips = arrayOf(HashMap<String, HashMap<Int, Int>>(), HashMap())
         val headsigns = arrayOf("", "")
         val cursor = db.rawQuery("select trip_id, trip_headsign, direction_id, stop_id, stop_sequence " +
-                "from trips natural join stop_times " +
+                "from stop_times natural join trips " +
                 "where route_id = ?", arrayOf(id.id))
 
         while (cursor.moveToNext()) {
