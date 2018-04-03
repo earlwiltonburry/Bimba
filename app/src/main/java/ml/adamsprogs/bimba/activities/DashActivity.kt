@@ -261,15 +261,15 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun deAccent(str: String): String {
-        var result = str.replace('ę', 'e')
-        result = result.replace('ó', 'o')
-        result = result.replace('ą', 'a')
-        result = result.replace('ś', 's')
-        result = result.replace('ł', 'l')
-        result = result.replace('ż', 'z')
-        result = result.replace('ź', 'z')
-        result = result.replace('ć', 'c')
-        result = result.replace('ń', 'n')
+        var result = str.replace('ę', 'e', true)
+        result = result.replace('ó', 'o', true)
+        result = result.replace('ą', 'a', true)
+        result = result.replace('ś', 's', true)
+        result = result.replace('ł', 'l', true)
+        result = result.replace('ż', 'z', true)
+        result = result.replace('ź', 'z', true)
+        result = result.replace('ć', 'c', true)
+        result = result.replace('ń', 'n', true)
         return result
     }
 
