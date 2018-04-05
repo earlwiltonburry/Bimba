@@ -20,7 +20,7 @@ foreach($metadata as $row) {
 }
 unset($row);
 
-$etag = $_SERVER['HTTP_ETAG'];
+$etag = $_SERVER['HTTP_IF_NONE_MATCH'];
 
 if ($etag == $current) {
     http_response_code(304);

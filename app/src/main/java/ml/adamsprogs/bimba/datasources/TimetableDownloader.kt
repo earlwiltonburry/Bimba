@@ -42,7 +42,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                 try {
                     val url = URL("https://adamsprogs.tk/gtfs")
                     httpCon = url.openConnection() as HttpsURLConnection
-                    httpCon.addRequestProperty("ETag", localETag) //todo if not matches
+                    httpCon.addRequestProperty("If-None-Match", localETag)
                     httpCon.connect()
                 } catch (e:SSLException) {
                     val url = URL("http://adamsprogs.tk/gtfs")
@@ -105,9 +105,10 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
     }
 
     private fun notify(progress: Int, titleId: Int, messageId: Int, sizeCompressed: Int, sizeUncompressed: Int) {
-        val quotient = sizeCompressed.toFloat() / sizeUncompressed.toFloat()
+        /*val quotient = sizeCompressed.toFloat() / sizeUncompressed.toFloat()
         val message = getString(messageId, Math.max(progress * quotient, sizeCompressed.toFloat()),
-                sizeCompressed, (progress.toFloat() / sizeUncompressed.toFloat()) * 100)
+                sizeCompressed, ((progress.toFloat() / sizeUncompressed.toFloat()) * 100)) fixme format error*/
+        val message = ""
         val title = getString(titleId)
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
             notifyCompat(progress, title, message, sizeUncompressed)
