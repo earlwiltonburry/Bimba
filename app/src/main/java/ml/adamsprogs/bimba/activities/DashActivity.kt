@@ -49,9 +49,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO) //fixme on first run after kill Dash is night (but just background)
         setContentView(R.layout.activity_dash)
 
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO)
         setSupportActionBar(toolbar)
 
         timetable = Timetable.getTimetable(this)
@@ -221,7 +221,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun getSuggestions() {
-        suggestions = (timetable.getStopSuggestions(context) + timetable.getLineSuggestions()).sorted() //todo<p:v+1> + bike stations, train stations, &c
+        suggestions = (timetable.getStopSuggestions(context)).sorted() //+ timetable.getLineSuggestions()).sorted() //todo<p:v+1> + bike stations, train stations, &c
     }
 
     private fun prepareListeners() {
