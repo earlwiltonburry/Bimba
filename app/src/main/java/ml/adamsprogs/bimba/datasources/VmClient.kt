@@ -33,12 +33,15 @@ class VmClient : Service() {
     private val tick6ZinaTim: Runnable = object : Runnable {
         override fun run() {
             handler!!.postDelayed(this, TICK_6_ZINA_TIM)
-            for (plateId in requests.keys)
-                downloadVM()
+            try {
+                for (plateId in requests.keys)
+                    downloadVM()
+            } catch (e: ConcurrentModificationException) { //fixme
+            }
         }
     }
     private val requests = HashMap<AgencyAndId, Set<Request>>()
-    private val vms = HashMap<AgencyAndId, Set<Plate>>() //HashSet<Departure>?
+    private val vms = HashMap<AgencyAndId, Set<Plate>>()
     private val timetable = try {
         Timetable.getTimetable(this)
     } catch (e: NullPointerException) {
