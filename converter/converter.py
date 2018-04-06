@@ -24,6 +24,8 @@ class TimetableDownloader:
         self.__download()
         self.__tidy_up()
 
+        print(self.__metadata)
+
         with open('metadata.yml', 'w') as metadata_file:
             yaml.dump(self.__metadata, metadata_file, default_flow_style=False)
 
@@ -131,6 +133,8 @@ dla-deweloperow/getGTFSFile?file={}.zip'
         for item in self.__metadata:
             if item['id'] not in to_remove:
                 new_metadata.append(item)
+            else:
+                Path('{}.db.gz'.format(item['id'])).unlink()
 
         self.__metadata = new_metadata
 
