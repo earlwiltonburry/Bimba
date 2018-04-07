@@ -37,14 +37,14 @@ class LineSpecifyActivity : AppCompatActivity() {
         container.adapter = sectionsPagerAdapter
 
         for (i in 0 until tabs.tabCount) {
-            tabs.getTabAt(i)?.text = graphs[i].second
+            tabs.getTabAt(i)?.text = graphs[i].headsign
         }
 
         container.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tabs))
         tabs.addOnTabSelectedListener(TabLayout.ViewPagerOnTabSelectedListener(container))
     }
 
-    inner class SectionsPagerAdapter(fm: FragmentManager, private val graphs: Array<Pair<HashMap<Int, HashSet<Int>>, String>>) : FragmentPagerAdapter(fm) {
+    inner class SectionsPagerAdapter(fm: FragmentManager, private val graphs: Array<Timetable.TripGraph>) : FragmentPagerAdapter(fm) {
 
         override fun getItem(position: Int): Fragment {
             return PlaceholderFragment.newInstance(position + 1, graphs[position])
@@ -65,11 +65,14 @@ class LineSpecifyActivity : AppCompatActivity() {
         companion object {
             private const val ARG_SECTION_NUMBER = "section_number"
 
-            fun newInstance(sectionNumber: Int, graph: Pair<HashMap<Int, HashSet<Int>>, String>): PlaceholderFragment {
+            fun newInstance(sectionNumber: Int, graph: Timetable.TripGraph): PlaceholderFragment {
                 val fragment = PlaceholderFragment()
                 val args = Bundle()
                 args.putInt(ARG_SECTION_NUMBER, sectionNumber)
-                args.putString("graph", graph.first.map { "${it.key}: ${it.value.joinToString(", ")}" }.joinToString("\n"))
+
+                //todo serialise graph // or draw and pass image
+                //args.putString("graph", graph.first.map { "${it.key}: ${it.value.joinToString(", ")}" }.joinToString("\n"))
+
                 fragment.arguments = args
                 return fragment
             }
