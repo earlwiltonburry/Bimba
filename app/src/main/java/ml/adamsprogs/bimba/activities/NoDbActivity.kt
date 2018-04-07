@@ -36,11 +36,13 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
 
     override fun onResume() {
         super.onResume()
-        val timetable = Timetable.getTimetable(this)
-        if (!timetable.isEmpty()){
-            startActivity(Intent(this, DashActivity::class.java))
-            finish()
-        }
+        try {
+            val timetable = Timetable.getTimetable(this, true)
+            if (!timetable.isEmpty()) {
+                startActivity(Intent(this, DashActivity::class.java))
+                finish()
+            }
+        } catch (e:Exception){}
         var filter = IntentFilter(TimetableDownloader.ACTION_DOWNLOADED)
         filter.addCategory(Intent.CATEGORY_DEFAULT)
         registerReceiver(timetableDownloadReceiver, filter)

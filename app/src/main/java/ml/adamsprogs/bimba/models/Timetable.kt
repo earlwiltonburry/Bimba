@@ -305,7 +305,7 @@ class Timetable private constructor() {
         } catch (e: Exception) {
             result = true
         } finally {
-            cursor!!.close()
+            cursor?.close()
         }
         return result
     }
@@ -373,11 +373,12 @@ class Timetable private constructor() {
         return plates
     }
 
-    fun getTripGraphs(id: AgencyAndId): Array<Pair<HashMap<Int, HashSet<Int>>, String>> {
-        val trips = arrayOf(HashMap<String, HashMap<Int, Int>>(), HashMap())
-        val headsigns = arrayOf("", "")
-        val cursor = db.rawQuery("select trip_id, trip_headsign, direction_id, stop_id, stop_sequence " +
-                "from stop_times natural join trips " +
+    fun getTripGraphs(id: AgencyAndId): Array<TripGraph> {
+        val graphs = arrayOf(TripGraph(), TripGraph())
+
+        val cursor = db.rawQuery("select trip_id, trip_headsign, direction_id, stop_id, " +
+                "stop_sequence, pickup_type, stop_name, zone_id " +
+                "from stop_times natural join trips natural join stops" +
                 "where route_id = ?", arrayOf(id.id))
 
         while (cursor.moveToNext()) {
@@ -386,39 +387,50 @@ class Timetable private constructor() {
             val direction = cursor.getInt(2)
             val stopId = cursor.getInt(3)
             val sequence = cursor.getInt(4)
-            if (trips[direction][trip] == null)
-                trips[direction][trip] = HashMap()
-            trips[direction][trip]!![sequence] = stopId
-            if (trip[trip.length - 1] == '+')
-                headsigns[direction] = headsign
+            val pickupType = cursor.getInt(5)
+            val stopName = cursor.getString(6)
+            val zone = cursor.getString(7)
+
+            if (trip.contains('+')) {
+                graphs[direction].mainTrip[stopId] = sequence
+                graphs[direction].headsign = headsign
+            }
+
+            if (graphs[direction].otherTrips[trip] == null)
+                graphs[direction].otherTrips[trip] = HashMap()
+            graphs[direction].otherTrips[trip]?.put(sequence, Stop(stopId, null, stopName, null, null, zone[0], pickupType == 3))
         }
 
         cursor.close()
 
-        val result = arrayOf(Pair<HashMap<Int, HashSet<Int>>, String>(HashMap(), headsigns[0]), Pair(HashMap(), headsigns[1]))
-
-        var tripNo = 0
-        trips.forEach {
-            it.forEach {
-                var i = 0
-                val size = it.value.size
-                val list = it.value
-                it.value.toSortedMap(
-                        Comparator { o1, o2 ->
-                            o1.compareTo(o2)
+        graphs.forEach {
+            val thisTripGraph = it
+            it.otherTrips.forEach {
+                val tripId = it.key
+                val trip = it.value
+                it.value.keys.sortedBy { it }.forEach {
+                    if (thisTripGraph.tripsMetadata[tripId] == "" || thisTripGraph.tripsMetadata[tripId] == "o")
+                        if (thisTripGraph.mainTrip[trip[it]!!.id] != null) {
+                            val mainLayer = thisTripGraph.mainTrip[trip[it]!!.id]!!
+                            if (it == 0 || thisTripGraph.tripsMetadata[tripId]!![0] == 'o') {
+                                thisTripGraph.tripsMetadata[tripId] = "o|$mainLayer|$it"
+                            } else {
+                                val startingLayer = mainLayer - it + 1
+                                thisTripGraph.tripsMetadata[tripId] = "i|$startingLayer|$it"
+                            }
                         }
-                ).values.forEach {
-                    if (i < size - 1) {
-                        if (result[tripNo].first[it] == null)
-                            result[tripNo].first[it] = HashSet()
-                        result[tripNo].first[it]!!.add(list[i + 1]!!)
-                    }
-                    i++
                 }
             }
-            tripNo++
         }
-        return result
+
+        return graphs
+    }
+
+    class TripGraph {
+        var headsign = ""
+        val mainTrip = HashMap<Int, Int>()
+        val otherTrips = HashMap<String, HashMap<Int, Stop>>()
+        val tripsMetadata = HashMap<String, String>()
     }
 }
 

@@ -49,7 +49,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO) //fixme on first run after kill Dash is night (but just background)
         setContentView(R.layout.activity_dash)
 
         setSupportActionBar(toolbar)
@@ -153,6 +152,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun warnTimetableValidity() {
+        //todo not on turn
         val validTill = timetable.getValidTill()
         val today = Calendar.getInstance().toIsoDate()
         val tomorrow = Calendar.getInstance().apply {
