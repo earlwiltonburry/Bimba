@@ -1,6 +1,6 @@
 Mit dieser App kannst du den Fahrplan des öffentlichen Verkehrs in der Posener Agglomeration (von ZTM Poznań betrieben) überprüfen und dank des Virtuellen Monitors kannst du sehen, wann genau ein Bus oder eine Straßenbahn ankommen wird.
 
 Aktuelle Funktionen:
-* Abfahrtszeiten an der Haltestellen ermitteln (basierend auf Fahrplan und Virtuelle Monitor),
+* Abfahrtszeiten an der Haltestellen ermitteln (basierend auf offline Fahrplan und Virtuelle Monitor),
 * Erstellen von Lieblingshaltestellen mit der nächsten Abfahrt auf der Startseite,
 * Abfahrten an der Favoriten ermitteln

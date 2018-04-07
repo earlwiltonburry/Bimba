@@ -1,7 +1,6 @@
-- ikona jamnika przy odjeździe, gdy pojazd jest niskopodłogowy,
-- ikona (i) przy odjeździe, kiedy nie jest standardowy — kliknięcie pokazuje zawartość,
-- ulubione mogą być kliknięte, pokazują wtedy więcej, niż tylko następny odjazd,
-- optymalizacja: lepsze cache’owanie i szybsze wczytywanie przystanków,
-- optymalizacja: szybsze wczytywanie VM
-- tłumaczenia: niemiecki i włoski (co razem z angielskim i polskim daje 4 języki)
-- naprawa błędów: VM przełącza się na rozkład w ulubionych an ekranie głównym, kiedy nie ma połączenia z Internetem.
+- oficjalny rozkład od ZTM
+- VM jest szybszy i pewniejszy (ponieważ jest generowany w ten sam sposób, co odjazdy offline)
+- ulubione przepisane od zera
+- aplikacja może być przenoszona do pamięci zewnętrznej
+- nowe kolory — szary i zielony — pasujące do nowego stylu Poznania
+- naprawiono wiele błędów

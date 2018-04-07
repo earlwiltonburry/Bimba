@@ -1,6 +1,6 @@
 With this app You can check the public transport timetable in Poznań agglomeration (run by ZTM Poznań), and thanks to the Virtual Monitor You can see when exactly a bus or tram will arrive.
 
 Current features:
-* checking departures by stop (based on timetable and Virtual Monitor),
+* checking departures by stop (based on offline timetable and Virtual Monitor),
 * creating favourite stops with next departure visible on main screen,
 * checking departures by favourite

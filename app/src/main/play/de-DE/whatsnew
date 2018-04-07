@@ -1,7 +1,6 @@
-- Dackel-Symbol neben einer Abfahrt, wenn das Fahrzeug Niederflur ist
-- (i) Symbol neben einer Abfahrt, wenn sie nicht standard ist - klick, um Inhalte anzuzeigen.
-- Lieblingshaltestelle können angeklickt werden und zeigen mehr als nur die nächste Abfahrt
-- Optimierung: besseres Caching und schnelleres haltestellen Abrufen,
-- Optimierung: schnellerer VM-Abruf,
-- Übersetzungen: Deutsch und Italienisch (das macht 4 Sprachen zusammen mit Englisch und Polnisch),
-- Fehlerbehebung: Die VM wechselt jetzt zum Zeitplan, nachdem die Verbindung auf dem Hauptbildschirm in den Favoriten verloren gegangen ist.
+- offizieller Fahrplan von ZTM
+- VM ist schneller und mehr zuverlässig (da es genauso berechnet wird wie Offline-Abfahrten)
+- Lieblingshaltestellen von Grund auf umgeschrieben
+- App ist auf externen Speicher bewegbar
+- neue Farben — grau und grün — die zum neuen Posener Stil passen
+- mehrere Fehler behoben 
