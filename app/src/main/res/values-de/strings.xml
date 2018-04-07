@@ -16,7 +16,7 @@
     <string name="no_db_connect">Verbind mit dem Internet, um den Fahrplan herunterzuladen</string>
     <string name="no_db_downloading">Fahrplan wird heruntergeladen…</string>
     <string name="timetable_downloading">Fahrplan wird heruntergeladen</string>
-    <string name="search_placeholder">Haltestelle oder Linie…</string>
+    <string name="search_placeholder">Haltestelle…</string>
     <string name="no_connectivity">Kein Verbindung – kann nicht den Fahrplan aktualisieren</string>
     <string name="timetable_up_to_date">Fahrplan ist aktuell</string>
     <string name="validity_failed">Der heruntergeladene Fahrplan ist geschädigt – kann nicht aktualisieren</string>

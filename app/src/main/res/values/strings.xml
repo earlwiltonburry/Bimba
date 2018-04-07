@@ -16,7 +16,7 @@
     <string name="no_db_downloading">Timetable is being downloaded…</string>
     <string name="timetable_downloading">Downloading timetable</string>
     <string name="timetable_uncompressing">%1$d/%2$d, uncompressing: %3$f%</string>
-    <string name="search_placeholder">Stop or line…</string>
+    <string name="search_placeholder">Stop…</string>
     <string name="no_connectivity">No connectivity – can’t update timetable</string>
     <string name="timetable_up_to_date">Timetable is up-to-date</string>
     <string name="validity_failed">Downloaded timetable is corrupted – can’t update</string>

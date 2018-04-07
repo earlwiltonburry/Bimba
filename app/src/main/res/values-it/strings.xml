@@ -19,7 +19,7 @@
     <string name="no_db_connect">Connetti a Internet per scaricare l’orario</string>
     <string name="no_db_downloading">L’orario è stando scaricato</string>
     <string name="timetable_downloading">Scaricando l’orario</string>
-    <string name="search_placeholder">Fermata o linea…</string>
+    <string name="search_placeholder">Fermata…</string>
     <string name="no_connectivity">Nessuna connettività – non si riesce aggiornare l’orario</string>
     <string name="timetable_up_to_date">L’orario sta aggiornato</string>
     <string name="validity_failed">L’orario scaricato sta corrotto – non si riesce aggiornare</string>
