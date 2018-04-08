@@ -37,24 +37,25 @@ Also
 
 ---
 
-Bimba
-Copyright (C) 2017–2018  Adam Pioterek
+    Bimba
+    Copyright (C) 2017–2018  Adam Pioterek
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Dachshund for low-floor icon derived from [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Short-haired-Dachshund.jpg), (c) Igor Bredikhin CC-BY 3.0.
-
-All other icons [Material](https://material.io/icons), (c) Google Apache 2.0.
-
-Feature image [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Poznan._Kaponiera_finally_opened_(44).jpg) (c) MOs810 CC BY-SA 4.0.
+- Icons [Material](https://material.io/icons), (c) Google Apache 2.0
+- Feature image [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Poznan._Kaponiera_finally_opened_(44).jpg), (c) MOs810 CC BY-SA 4.0
+- [Search View](https://github.com/arimorty/floatingsearchview), (c) arimorty Apache 2.0
+- JSON [gson](https://github.com/google/gson), (c) Google Apache 2.0
+- HTTP [okhttp](https://github.com/square/okhttp), (c) square Apache 2.0
+- [SQLite](https://github.com/requery/sqlite-android), (c) requery Apache 2.0
