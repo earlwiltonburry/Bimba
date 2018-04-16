@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">Bimba beta</string>
+    <string name="app_name" translatable="false">Bimba</string>
     <string name="no_timetable">No timetable found. Connect to the Internet and wait for a timetable to be downloaded</string>
     <string name="timetable_downloaded">New timetable downloaded</string>
     <string name="title_activity_stop" translatable="false">StopActivity</string>
