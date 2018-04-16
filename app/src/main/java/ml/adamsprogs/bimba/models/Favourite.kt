@@ -54,7 +54,7 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         this.fullDepartures = map
     }
 
-    constructor(name :String, segments: HashSet<StopSegment>, cache:Map<AgencyAndId, List<Departure>>) {
+    constructor(name: String, segments: HashSet<StopSegment>, cache: Map<AgencyAndId, List<Departure>>) {
         this.fullDepartures = cache
         this.name = name
         this.segments = segments
@@ -161,7 +161,11 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
 
         val full = fullTimetable()
 
-        val twoDayDepartures = Departure.rollDepartures(full)[timetable.getServiceForToday()]
+        val twoDayDepartures = try {
+            Departure.rollDepartures(full)[timetable.getServiceForToday()]
+        } catch (e: IllegalArgumentException) {
+            listOf<Departure>()
+        }
 
         if (twoDayDepartures?.isEmpty() != false)
             return null
