@@ -36,11 +36,21 @@ internal fun Calendar.toIsoDate(): String {
 }
 
 const val ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+const val ISO_8601_DATE_ONLY_FORMAT = "yyyyMMdd"
 
 @SuppressLint("SimpleDateFormat")
 fun calendarFromIso(iso: String): Calendar {
     val calendar = Calendar.getInstance()
     val dateFormat = SimpleDateFormat(ISO_8601_DATE_FORMAT)
+    val date = dateFormat.parse(iso)
+    calendar.time = date
+    return calendar
+}
+
+@SuppressLint("SimpleDateFormat")
+fun calendarFromIsoD(iso: String): Calendar {
+    val calendar = Calendar.getInstance()
+    val dateFormat = SimpleDateFormat(ISO_8601_DATE_ONLY_FORMAT)
     val date = dateFormat.parse(iso)
     calendar.time = date
     return calendar
@@ -82,7 +92,7 @@ internal fun Context.getSecondaryExternalFilesDir(): File {
 //    return dirs[dirs.size - 1]
 }
 
-internal fun InputStream.listenableCopyTo(out: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE, listener: (Long) -> Unit): Long {
+internal fun InputStream.listenableCopyTo(out: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE, listener: (Long) -> Unit): Long { //fixme may devour RAM?
     var bytesCopied: Long = 0
     val buffer = ByteArray(bufferSize)
     var bytes = read(buffer)

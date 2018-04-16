@@ -15,16 +15,17 @@ import kotlin.concurrent.thread
 import kotlin.collections.ArrayList
 import kotlinx.android.synthetic.main.activity_dash.*
 import java.util.*
+import java.text.*
 
 import ml.adamsprogs.bimba.models.*
 import ml.adamsprogs.bimba.*
 import ml.adamsprogs.bimba.datasources.*
 import ml.adamsprogs.bimba.models.suggestions.*
+import ml.adamsprogs.bimba.models.adapters.*
+import ml.adamsprogs.bimba.collections.*
 
 import com.arlib.floatingsearchview.FloatingSearchView
 import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
-import ml.adamsprogs.bimba.collections.FavouriteStorage
-import ml.adamsprogs.bimba.models.adapters.FavouritesAdapter
 
 //todo<p:1> searchView integration
 class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener,
@@ -82,10 +83,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             super.onOptionsItemSelected(item)
         }
 
-        val validSince = timetable.getValidSince()
-        val validTill = timetable.getValidTill()
-        drawerView.menu.findItem(R.id.drawer_validity_since).title = getString(R.string.valid_since, validSince) //todo date format
-        drawerView.menu.findItem(R.id.drawer_validity_till).title = getString(R.string.valid_till, validTill) //todo date format
+        showValidityInDrawer()
 
         searchView = search_view
 
@@ -142,6 +140,16 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         }
 
         searchView.attachNavigationDrawerToMenuButton(drawer_layout as DrawerLayout)
+    }
+
+    private fun showValidityInDrawer() {
+        val formatter = DateFormat.getDateInstance(DateFormat.SHORT)
+        var calendar = calendarFromIsoD(timetable.getValidSince())
+        formatter.timeZone = calendar.timeZone
+        drawerView.menu.findItem(R.id.drawer_validity_since).title = getString(R.string.valid_since, formatter.format(calendar.time))
+        calendar = calendarFromIsoD(timetable.getValidTill())
+        formatter.timeZone = calendar.timeZone
+        drawerView.menu.findItem(R.id.drawer_validity_till).title = getString(R.string.valid_till, formatter.format(calendar.time))
     }
 
     private fun filterSuggestions(newQuery: String) {
@@ -285,8 +293,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             timetable = Timetable.getTimetable(this, true)
             getSuggestions()
 
-            drawerView.menu.findItem(R.id.drawer_validity_since).title = getString(R.string.valid_since, timetable.getValidSince())
-            drawerView.menu.findItem(R.id.drawer_validity_till).title = getString(R.string.valid_since, timetable.getValidTill())
+            showValidityInDrawer()
         }
     }
 
