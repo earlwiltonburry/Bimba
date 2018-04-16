@@ -18,21 +18,32 @@ class Timetable private constructor() {
         fun getTimetable(context: Context? = null, force: Boolean = false): Timetable {
             return if (timetable == null || force)
                 if (context != null) {
-                    timetable = Timetable()
-                    timetable!!.filesDir = context.getSecondaryExternalFilesDir()
-                    val dbFile = File(timetable!!.filesDir, "timetable.db")
-                    timetable!!.db = SQLiteDatabase.openDatabase(dbFile.path, null, SQLiteDatabase.OPEN_READONLY)
+                    constructTimetable(context)
                     timetable!!
                 } else
-                    throw IllegalArgumentException("new timetable requested and no appContext given")
-            else
+                    throw IllegalArgumentException("new timetable requested and no `context` given")
+            else if (context != null) {
+                try {
+                    constructTimetable(context)
+                    timetable!!
+                } catch (e: Exception) {
+                    timetable!!
+                }
+            } else
                 timetable!!
+        }
+
+        private fun constructTimetable(context: Context) {
+            val timetable = Timetable()
+            val filesDir = context.getSecondaryExternalFilesDir()
+            val dbFile = File(filesDir, "timetable.db")
+            timetable.db = SQLiteDatabase.openDatabase(dbFile.path, null, SQLiteDatabase.OPEN_READONLY)
+            this.timetable = timetable
         }
     }
 
     private lateinit var db: SQLiteDatabase
     private var _stops: List<StopSuggestion>? = null
-    private lateinit var filesDir: File
 
     fun refresh() {
     }

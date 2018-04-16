@@ -50,7 +50,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stop)
 
-        timetable = Timetable.getTimetable()
+        timetable = Timetable.getTimetable(this)
 
         sourceType = intent.getStringExtra(SOURCE_TYPE)
 

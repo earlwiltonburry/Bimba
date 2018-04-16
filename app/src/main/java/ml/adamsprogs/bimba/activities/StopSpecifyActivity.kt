@@ -15,7 +15,6 @@ import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 
-//todo in night dark on dark
 class StopSpecifyActivity : AppCompatActivity() {
 
     companion object {
@@ -29,7 +28,7 @@ class StopSpecifyActivity : AppCompatActivity() {
 
         val ids = intent.getStringExtra(EXTRA_STOP_IDS).split(",").map { AgencyAndId(it) }.toSet()
         val name = intent.getStringExtra(EXTRA_STOP_NAME)
-        val timetable = Timetable.getTimetable()
+        val timetable = Timetable.getTimetable(this)
         val headlines = timetable.getHeadlinesForStop(ids)
 
         val layoutManager = LinearLayoutManager(this)
