@@ -76,7 +76,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
             notify(0, R.string.timetable_downloading, R.string.timetable_uncompressing, sizeCompressed, sizeUncompressed)
 
 
-            val gtfsDb = File(getSecondaryExternalFilesDir(), "timetable.db")
+            val gtfsDb = File(getSecondaryExternalFilesDir(), "timetable_new.db")
 
             val inputStream = httpCon.inputStream
             val gzipInputStream = GZIPInputStream(inputStream)
@@ -89,6 +89,9 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
             val prefsEditor = prefs.edit()
             prefsEditor.putString("etag", newETag)
             prefsEditor.apply()
+
+            val oldDb = File(getSecondaryExternalFilesDir(), "timetable.db")
+            gtfsDb.renameTo(oldDb) // todo delete old before downloading (may require stopping VmClient)
 
             cancelNotification()
 

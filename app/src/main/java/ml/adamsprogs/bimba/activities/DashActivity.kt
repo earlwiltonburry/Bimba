@@ -84,8 +84,8 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         val validSince = timetable.getValidSince()
         val validTill = timetable.getValidTill()
-        drawerView.menu.findItem(R.id.drawer_validity_since).title = getString(R.string.valid_since, validSince)
-        drawerView.menu.findItem(R.id.drawer_validity_till).title = getString(R.string.valid_till, validTill)
+        drawerView.menu.findItem(R.id.drawer_validity_since).title = getString(R.string.valid_since, validSince) //todo date format
+        drawerView.menu.findItem(R.id.drawer_validity_till).title = getString(R.string.valid_till, validTill) //todo date format
 
         searchView = search_view
 
@@ -282,6 +282,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         }
         Snackbar.make(findViewById(R.id.drawer_layout), message, Snackbar.LENGTH_LONG).show()
         if (result == TimetableDownloader.RESULT_FINISHED) {
+            timetable = Timetable.getTimetable(this, true)
             getSuggestions()
 
             drawerView.menu.findItem(R.id.drawer_validity_since).title = getString(R.string.valid_since, timetable.getValidSince())
