@@ -36,7 +36,7 @@ class VmClient : Service() {
             try {
                 for (plateId in requests.keys)
                     downloadVM()
-            } catch (e: ConcurrentModificationException) { //fixme
+            } catch (e: IllegalArgumentException) {
             }
         }
     }
@@ -150,6 +150,7 @@ class VmClient : Service() {
     override fun onDestroy() {
     }
 
+    @Synchronized
     private fun downloadVM() {
         vms.forEach {
             downloadVM(StopSegment(it.key, it.value.map { it.id }.toSet()))
@@ -203,7 +204,7 @@ class VmClient : Service() {
     private fun downloadVM(plateId: Plate.ID, times: List<*>) {
         val date = Calendar.getInstance()
         val todayDay = "${date.get(Calendar.DATE)}".padStart(2, '0')
-        val todayMode = timetable!!.calendarToMode(AgencyAndId(timetable.getServiceForToday().id))
+        val todayMode = timetable!!.calendarToMode(AgencyAndId(timetable.getServiceForToday().id)) // fixme when no timetable use service == -1 for `today`
 
         val departures = HashSet<Departure>()
 
