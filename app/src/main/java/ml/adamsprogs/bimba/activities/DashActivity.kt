@@ -389,7 +389,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 R.id.action_merge -> {
                     val selectedPositions = adapter.getSelectedItems()
                     val selectedNames = selectedPositions.map { favourites[it]?.name }.filter { it != null }.map { it!! }
-                    favourites.merge(selectedNames)
+                    favourites.merge(selectedNames, this@DashActivity)
 
                     adapter.notifyItemChanged(selectedPositions.min()!!)
                     (1 until selectedPositions.size).forEach {

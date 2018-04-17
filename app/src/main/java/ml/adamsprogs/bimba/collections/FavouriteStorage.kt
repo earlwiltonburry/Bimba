@@ -44,7 +44,7 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
                 stopSegment.plates = plates
                 stopSegment
             }
-            favourites[name] = Favourite(name, timetables)
+            favourites[name] = Favourite(name, timetables, context)
             positionIndex.add(name)
         }
     }
@@ -53,9 +53,9 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
 
     fun has(name: String): Boolean = favourites.contains(name)
 
-    fun add(name: String, timetables: HashSet<StopSegment>) {
+    fun add(name: String, timetables: HashSet<StopSegment>, context: Context) {
         if (favourites[name] == null) {
-            favourites[name] = Favourite(name, timetables)
+            favourites[name] = Favourite(name, timetables, context)
             addIndex(name)
             serialize()
         }
@@ -111,7 +111,7 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
 
     }
 
-    fun merge(names: List<String>) {
+    fun merge(names: List<String>, context: Context) {
         if (names.size < 2)
             return
 
@@ -127,7 +127,7 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
         newCache.forEach {
             it.value.sortBy { it.timeTill(now) }
         }
-        val newFavourite = Favourite(names[0], HashSet(), newCache)
+        val newFavourite = Favourite(names[0], HashSet(), newCache, context)
         for (name in names) {
             newFavourite.segments.addAll(favourites[name]!!.segments)
             favourites.remove(name)

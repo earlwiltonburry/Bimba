@@ -5,11 +5,15 @@ import android.os.*
 import ml.adamsprogs.bimba.*
 import ml.adamsprogs.bimba.datasources.VmClient
 import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
+import java.io.File
+import java.math.BigInteger
+import java.security.SecureRandom
 import java.util.Calendar
 import kotlin.collections.*
 
 class Favourite : Parcelable, MessageReceiver.OnVmListener {
     private var isRegisteredOnVmListener: Boolean = false
+    private val cacheDir: File
     var name: String
         private set
     var segments: HashSet<StopSegment>
@@ -45,24 +49,37 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
             set.add(it as StopSegment)
         }
         this.segments = set
-        val mapString = parcel.readString()
+        this.cacheDir = File(parcel.readString())
+        val mapDir = File(parcel.readString())
+
+        val mapString = mapDir.readText()
+        val ile = mapString.length / 1024
+
+        for (i in 0 until ile) {
+            println(mapString.slice(1024 * i until 1024 * (i+1)))
+        }
+
+        println(mapString)
         val map = HashMap<AgencyAndId, List<Departure>>()
-        mapString.safeSplit("\n").forEach {
-            val (k, v) = it.split(":")
-            map[AgencyAndId(k)] = v.split(",").map { Departure.fromString(it) }
+        mapString.safeSplit("%").forEach {
+            val (k, v) = it.split("#")
+            map[AgencyAndId(k)] = v.split("&").map { Departure.fromString(it) }
         }
         this.fullDepartures = map
+        mapDir.delete()
     }
 
-    constructor(name: String, segments: HashSet<StopSegment>, cache: Map<AgencyAndId, List<Departure>>) {
+    constructor(name: String, segments: HashSet<StopSegment>, cache: Map<AgencyAndId, List<Departure>>, context: Context) {
         this.fullDepartures = cache
         this.name = name
         this.segments = segments
+        this.cacheDir = context.cacheDir
     }
 
-    constructor(name: String, timetables: HashSet<StopSegment>) {
+    constructor(name: String, timetables: HashSet<StopSegment>, context: Context) {
         this.name = name
         this.segments = timetables
+        this.cacheDir = context.cacheDir
 
     }
 
@@ -74,17 +91,24 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         dest?.writeString(name)
         val parcelableSegments = segments.map { it }.toTypedArray()
         dest?.writeParcelableArray(parcelableSegments, flags)
+        dest?.writeString(cacheDir.absolutePath)
+
+        val bytes = ByteArray(4) { 0 }
+        SecureRandom().nextBytes(bytes)
+        val mapFile = File(cacheDir, BigInteger(1, bytes).toString(16))
+        dest?.writeString(mapFile.absolutePath)
+
         var isFirst = true
         var map = ""
         fullDepartures.forEach {
             if (isFirst)
                 isFirst = false
             else
-                map += '\n'
+                map += '%'
 
-            map += "${it.key}:${it.value.joinToString(",") { it.toString() }}"
+            map += "${it.key}#${it.value.joinToString("&") { it.toString() }}"
         }
-        dest?.writeString(map)
+        mapFile.writeText(map)
     }
 
     private fun filterVmDepartures() {

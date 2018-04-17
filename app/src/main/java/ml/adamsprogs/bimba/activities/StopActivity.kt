@@ -127,7 +127,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             if (!favourites.has(stopSymbol)) {
                 val items = HashSet<StopSegment>()
                 items.add(stopSegment!!)
-                favourites.add(stopSymbol, items)
+                favourites.add(stopSymbol, items, this@StopActivity)
                 fab.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_favourite, this.theme))
             } else {
                 Snackbar.make(it, getString(R.string.stop_already_fav), Snackbar.LENGTH_LONG)
@@ -153,6 +153,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     override fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID) {
+        //fixme do we give up too fast?
         if (vmDepartures == null && this.vmDepartures.isEmpty() && hasDepartures) {
             if (ticked()) {
                 refreshAdapterFromStop()
@@ -181,6 +182,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             Snackbar.make(findViewById(R.id.drawer_layout), message, Snackbar.LENGTH_LONG).show()
         } catch (e: IllegalArgumentException) {
         }
+        timetable = Timetable.getTimetable(this, true)
         refreshAdapterFromStop()
     }
 
