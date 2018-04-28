@@ -35,6 +35,11 @@ With Bimba You can check the public transport timetable in Poznań agglomeration
 Also
 * efficiency
 
+## Thanks to…
+
+* @tebriz159 for new logo (#4)
+* @Vistaus for Dutch translation (#5)
+
 ---
 
     Bimba
