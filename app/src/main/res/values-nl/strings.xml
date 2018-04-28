@@ -1,17 +1,13 @@
 <resources>
-    <string name="app_name" translatable="false">Bimba</string>
     <string name="no_timetable">Geen dienstregeling gevonden. Maak verbinding met internet en wacht tot er een dienstregeling wordt gedownload.</string>
     <string name="timetable_downloaded">De nieuwe dienstregeling is gedownload</string>
-    <string name="title_activity_stop" translatable="false">StopActivity</string>
     <string name="tab_workday_text">Werkdagen</string>
     <string name="tab_saturday_text">Zaterdagen</string>
     <string name="tab_sunday_text">Zondagen</string>
     <string name="action_change_type">Type</string>
-    <string name="departure_type_icon_description" translatable="false">departure type (timetable, VM)</string>
     <string name="departure_to">→ %1$s</string>
     <string name="departure_to_line">%1$s → %2$s</string>
     <string name="departure_at">Op %1$s</string>
-    <string name="no_database_background" translatable="false">no database background</string>
     <string name="no_db_connect">Maak verbinding met internet om de dienstregeling te downloaden.</string>
     <string name="no_db_downloading">De dienstregeling wordt gedownload…</string>
     <string name="timetable_downloading">Bezig met downloaden van dienstregeling</string>
@@ -23,15 +19,12 @@
     <string name="error_try_later">Fout; probeer het later opnieuw.</string>
     <string name="now">Nu</string>
     <string name="stop_already_fav">Deze halte staat al bij je favorieten</string>
-    <string name="favourite_row_more_button" translatable="false">favourite row more button</string>
     <string name="action_edit">Bewerken</string>
     <string name="action_delete">Verwijderen</string>
     <string name="done">Afronden</string>
     <string name="favourite_edit">Favoriet bewerken</string>
     <string name="favourite_name">Naam van favoriet</string>
     <string name="edit_favourite_title">‘%1$s’ bewerken</string>
-    <string name="favourite_element_delete_button" translatable="false">favourite element delete button</string>
-    <string name="favourite_element_split_button" translatable="false">favourite element split button</string>
     <string name="no_next_departure">Geen vertrektijden</string>
     <string name="action_merge">Samenvoegen</string>
     <string name="merge_favourites">Favorieten samenvoegen</string>
@@ -43,9 +36,6 @@
     <string name="home">Startpagina</string>
     <string name="refresh">Verversen</string>
     <string name="help">Hulp</string>
-    <string name="navigation_drawer_home_button" translatable="false">navigation drawer home button</string>
-    <string name="navigation_drawer_refresh_button" translatable="false">navigation drawer refresh button</string>
-    <string name="navigation_drawer_help_button" translatable="false">navigation drawer help button</string>
     <string name="title_activity_help">Hulp</string>
     <string name="help_text">
         "Waarom is er geen zaterdagdienstregeling?\n\n"
@@ -69,13 +59,10 @@
     <string name="departure_row_getting_departures">Bezig met ophalen van vertrektijden…</string>
     <string name="valid_since">Ingegaan op %1$s</string>
     <string name="valid_till">Verloopt op %1$s</string>
-    <string name="departure_floor" translatable="false">departure floor type (lowFloor)</string>
-    <string name="departure_info" translatable="false">departure info icon</string>
     <string name="refreshing_cache">Bezig met verversen van de cache. Dit kan even duren…</string>
 
     <string name="today">Vandaag</string>
     <string name="no_departures">Geen vertrektijden</string>
-    <string name="title_activity_main" translatable="false">LineSpecifyActivity</string>
     <string name="tab_text_line_to">Naar</string>
     <string name="tab_text_line_fro">Van</string>
     <string name="timetable_validity_finished">De dienstregeling is verlopen. Maak verbinding met het internet om een nieuwe te downloaden.</string>
