@@ -68,4 +68,9 @@
     <string name="timetable_validity_tomorrow">Rozkład obowiązuje tylko do jutra.</string>
     <string name="just_departed">Właśnie odjechał</string>
     <string name="timetable_uncompressing">%1$d/%2$d, dekompresja: %3$f%</string>
+    <string name="validity_offline_unavailable">Rozkład offline jest niedostępny</string>
+    <string name="pref_category_timetable">Rozkład</string>
+    <string name="title_timetable_source_url">Źródło rozkładu</string>
+    <string name="title_activity_settings">Ustawienia</string>
+    <string name="settings">Ustawienia</string>
 </resources>

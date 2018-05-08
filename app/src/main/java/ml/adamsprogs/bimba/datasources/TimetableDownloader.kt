@@ -6,6 +6,7 @@ import android.content.*
 import android.support.v4.app.NotificationCompat
 import java.io.*
 import android.os.Build
+import android.preference.PreferenceManager.getDefaultSharedPreferences
 import ml.adamsprogs.bimba.*
 import java.net.*
 import java.util.zip.GZIPInputStream
@@ -39,15 +40,18 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
 
             var httpCon: HttpURLConnection
             try {
+                val sourceUrl = getDefaultSharedPreferences(this).getString(getString(R.string.key_timetable_source_url), getString(R.string.timetable_source_url))
                 try {
-                    val url = URL("https://adamsprogs.tk/gtfs")
+                    if (!sourceUrl.matches(Regex("^https://.*$")))
+                        throw SSLException("Not https address")
+                    val url = URL(sourceUrl)
                     httpCon = url.openConnection() as HttpsURLConnection
                     httpCon.addRequestProperty("If-None-Match", localETag)
                     httpCon.connect()
-                } catch (e:SSLException) {
-                    val url = URL("http://adamsprogs.tk/gtfs")
+                } catch (e: SSLException) {
+                    val url = URL(sourceUrl.replace("https://", "http://"))
                     httpCon = url.openConnection() as HttpURLConnection
-                    httpCon.addRequestProperty("ETag", localETag)
+                    httpCon.addRequestProperty("If-None-Match", localETag)
                     httpCon.connect()
                 }
                 if (httpCon.responseCode == HttpsURLConnection.HTTP_NOT_MODIFIED) {
@@ -91,7 +95,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
             prefsEditor.apply()
 
             val oldDb = File(getSecondaryExternalFilesDir(), "timetable.db")
-            gtfsDb.renameTo(oldDb) // todo delete old before downloading (may require stopping VmClient)
+            gtfsDb.renameTo(oldDb) // todo<p:1> delete old before downloading (may require stopping VmClient), and mutex with VmClient
 
             cancelNotification()
 
@@ -110,7 +114,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
     private fun notify(progress: Int, titleId: Int, messageId: Int, sizeCompressed: Int, sizeUncompressed: Int) {
         /*val quotient = sizeCompressed.toFloat() / sizeUncompressed.toFloat()
         val message = getString(messageId, Math.max(progress * quotient, sizeCompressed.toFloat()),
-                sizeCompressed, ((progress.toFloat() / sizeUncompressed.toFloat()) * 100)) fixme format error*/
+                sizeCompressed, ((progress.toFloat() / sizeUncompressed.toFloat()) * 100)) fixme<p:2> format error*/
         val message = ""
         val title = getString(titleId)
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)

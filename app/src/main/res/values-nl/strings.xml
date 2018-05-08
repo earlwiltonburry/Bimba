@@ -69,4 +69,9 @@
     <string name="timetable_validity_today">De dienstregeling verloopt vandaag.</string>
     <string name="timetable_validity_tomorrow">De dienstregeling verloopt morgen.</string>
     <string name="just_departed">Zojuist vertrokken</string>
+    <string name="validity_offline_unavailable">Offline dienstregeling is niet beschikbaar</string>
+    <string name="pref_category_timetable">Dienstregeling</string>
+    <string name="title_timetable_source_url">Bron van de dienstregeling</string>
+    <string name="title_activity_settings">Instellingen</string>
+    <string name="settings">Instellingen</string>
 </resources>

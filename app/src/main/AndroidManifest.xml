@@ -30,6 +30,15 @@
         <activity android:name=".activities.NoDbActivity" />
         <activity android:name=".activities.EditFavouriteActivity" />
         <activity
+            android:name=".activities.SettingsActivity"
+            android:label="@string/title_activity_settings"
+            android:parentActivityName=".activities.DashActivity"
+            android:theme="@style/AppTheme.ActionBar" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="ml.adamsprogs.bimba.activities.DashActivity" />
+        </activity>
+        <activity
             android:name=".activities.HelpActivity"
             android:label="@string/title_activity_help"
             android:theme="@style/AppTheme" />

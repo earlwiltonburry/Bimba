@@ -6,6 +6,4 @@
 * real-time timetable: http://egov.psnc.pl/node/29#przystanki
 * wireless: http://egov.psnc.pl/node/29#wireless_poznan
 * tourism: http://egov.psnc.pl/node/29#turystyka
-
-# Tube drawing
-* https://github.com/johnwalley/d3-tube-map
+* P&R: https://www.peka.poznan.pl/SOP/parkings/getAvailableSpaces.jspb

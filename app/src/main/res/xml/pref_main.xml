@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="@string/pref_category_timetable">
+        <EditTextPreference
+            android:defaultValue="@string/timetable_source_url"
+            android:key="@string/key_timetable_source_url"
+            android:summary="@string/timetable_source_url"
+            android:title="@string/title_timetable_source_url" />
+
+        <!-- todo intent get file (import) -->
+        <!-- todo reset source -->
+    </PreferenceCategory>
+</PreferenceScreen>

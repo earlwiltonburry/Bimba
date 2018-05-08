@@ -76,6 +76,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 R.id.drawer_help -> {
                     startActivity(Intent(context, HelpActivity::class.java))
                 }
+                R.id.drawer_settings -> {
+                    startActivity(Intent(context, SettingsActivity::class.java))
+                }
                 else -> {
                 }
             }

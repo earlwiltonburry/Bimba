@@ -82,4 +82,11 @@
     <string name="timetable_validity_today">Timetable validity ends today.</string>
     <string name="timetable_validity_tomorrow">Timetable validity ends tomorrow.</string>
     <string name="just_departed">Just departed</string>
+    <string name="validity_offline_unavailable">Offline timetable unavailable</string>
+    <string name="pref_category_timetable">Timetable</string>
+    <string name="timetable_source_url" translatable="false">http://bimba.tk/gtfs</string>
+    <string name="key_timetable_source_url" translatable="false">key_timetable_source_url</string>
+    <string name="title_timetable_source_url">Timetable source</string>
+    <string name="title_activity_settings">Settings</string>
+    <string name="settings">Settings</string>
 </resources>
