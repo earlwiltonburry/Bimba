@@ -31,6 +31,15 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
             networkStateReceiver.addOnConnectivityChangeListener(this)
         } else
             downloadTimetable()
+
+        skip_button.setOnClickListener {
+            /*
+            val editor = getSharedPreferences("ml.adamsprogs.bimba.prefs", Context.MODE_PRIVATE).edit()
+            editor.putBoolean(Timetable.ONLY_ONLINE, true)
+            editor.apply()*/
+            startActivity(Intent(this, DashActivity::class.java))
+            finish()
+        }
     }
 
     override fun onResume() {

@@ -3,6 +3,7 @@ package ml.adamsprogs.bimba.activities
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.*
+import android.database.sqlite.SQLiteException
 import android.os.*
 import android.support.design.widget.*
 import android.support.v4.widget.*
@@ -33,7 +34,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         FavouritesAdapter.ViewHolder.OnClickListener {
     val context: Context = this
     private val receiver = MessageReceiver.getMessageReceiver()
-    lateinit var timetable: Timetable
+    var timetable: Timetable? = null
     private var suggestions: List<GtfsSuggestion>? = null
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var drawerView: NavigationView
@@ -54,7 +55,11 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         setSupportActionBar(toolbar)
 
-        timetable = Timetable.getTimetable(this)
+        timetable = try {
+            Timetable.getTimetable(this)
+        } catch (e: SQLiteException) {
+            null
+        }
 
         getSuggestions()
 
@@ -146,13 +151,17 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun showValidityInDrawer() {
-        val formatter = DateFormat.getDateInstance(DateFormat.SHORT)
-        var calendar = calendarFromIsoD(timetable.getValidSince())
-        formatter.timeZone = calendar.timeZone
-        drawerView.menu.findItem(R.id.drawer_validity_since).title = getString(R.string.valid_since, formatter.format(calendar.time))
-        calendar = calendarFromIsoD(timetable.getValidTill())
-        formatter.timeZone = calendar.timeZone
-        drawerView.menu.findItem(R.id.drawer_validity_till).title = getString(R.string.valid_till, formatter.format(calendar.time))
+        if (timetable == null) {
+            drawerView.menu.findItem(R.id.drawer_validity_since).title = getString(R.string.validity_offline_unavailable)
+        } else {
+            val formatter = DateFormat.getDateInstance(DateFormat.SHORT)
+            var calendar = calendarFromIsoD(timetable!!.getValidSince())
+            formatter.timeZone = calendar.timeZone
+            drawerView.menu.findItem(R.id.drawer_validity_since).title = getString(R.string.valid_since, formatter.format(calendar.time))
+            calendar = calendarFromIsoD(timetable!!.getValidTill())
+            formatter.timeZone = calendar.timeZone
+            drawerView.menu.findItem(R.id.drawer_validity_till).title = getString(R.string.valid_till, formatter.format(calendar.time))
+        }
     }
 
     private fun filterSuggestions(newQuery: String) {
@@ -164,14 +173,16 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     private fun warnTimetableValidity() {
         //todo not on turn
-        val validTill = timetable.getValidTill()
+        if (timetable == null)
+            return
+        val validTill = timetable!!.getValidTill()
         val today = Calendar.getInstance().toIsoDate()
         val tomorrow = Calendar.getInstance().apply {
             this.add(Calendar.DAY_OF_MONTH, 1)
         }.toIsoDate()
 
         try {
-            timetable.getServiceForToday()
+            timetable!!.getServiceForToday()
             if (today > validTill) {
                 notifyTimetableValidity(-1)
                 suggestions = ArrayList()
@@ -188,7 +199,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         }
 
         try {
-            timetable.getServiceForTomorrow()
+            timetable!!.getServiceForTomorrow()
             if (tomorrow == validTill) {
                 notifyTimetableValidity(1)
                 return
@@ -232,7 +243,10 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun getSuggestions() {
-        suggestions = (timetable.getStopSuggestions(context)).sorted() //+ timetable.getLineSuggestions()).sorted() //todo<p:v+1> + bike stations, train stations, &c
+        suggestions = if (timetable != null)
+            (timetable!!.getStopSuggestions(context)).sorted() //+ timetable.getLineSuggestions()).sorted() //todo<p:v+1> + bike stations, train stations, &c
+        else
+            emptyList()
     }
 
     private fun prepareListeners() {
@@ -295,7 +309,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         if (result == TimetableDownloader.RESULT_FINISHED) {
             timetable = Timetable.getTimetable(this, true)
             getSuggestions()
-
             showValidityInDrawer()
         }
     }

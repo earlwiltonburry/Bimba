@@ -19,7 +19,7 @@ With Bimba You can check the public transport timetable in Poznań agglomeration
     * [x] offline timetable
     * [x] Virtual Monitor
     * [x] peek all departures in a favourite
-* [x] less nonintuitive timetable refresh gesture
+* [x] less non-intuitive timetable refresh gesture
 * [ ] nearest stop(s) by GPS
 * [ ] ‘through mid-stop’ on lines with only 1 direction
 * [ ] city bike stations on map
@@ -32,8 +32,22 @@ With Bimba You can check the public transport timetable in Poznań agglomeration
 * [ ] ever-present searchbar
 * [ ] other things on map
 
-Also
-* efficiency
+
+## If You want to help…
+
+### …be sure to…
+
+* check the issues, both closed and open;
+* check the most recent commit. Master contains published snapshots; most recent commit will be on other branch (there’s a branch with upcomming version and branches with betas that are periodically merged into it).
+
+### …then You can…
+
+* add a new translation. Just translate `strings.xml` and make a pull request or an issue;
+* set up Your own converter instance. For more info head to the [converter readme](converter/README.md)
+* help me move my own converter to some PaaS (like Heroku or other I-don’t-know-because-I-cannot-into-cloud)
+* think about any other way
+* <small> donate. More info [there](http://adamsprogs.tk/w/donate/)</small>
+
 
 ## Thanks to…
 
