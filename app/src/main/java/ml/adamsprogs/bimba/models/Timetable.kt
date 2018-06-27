@@ -37,7 +37,7 @@ class Timetable private constructor() {
             val timetable = Timetable()
             val filesDir = context.getSecondaryExternalFilesDir()
             val dbFile = File(filesDir, "timetable.db")
-            timetable.db = SQLiteDatabase.openDatabase(dbFile.path, null, SQLiteDatabase.OPEN_READONLY)
+            timetable.db = SQLiteDatabase.openDatabase(dbFile.path, null, SQLiteDatabase.OPEN_READONLY) // fixme can be null
             this.timetable = timetable
         }
     }

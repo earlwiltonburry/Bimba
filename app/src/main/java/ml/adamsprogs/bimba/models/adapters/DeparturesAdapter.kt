@@ -58,7 +58,6 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
             return
         }
         val departure = departures[position]
-        //println("${departure.line} -> ${departure.headsign} @${departure.time} (${if (departure.isModified) departure.modification[0] else {}})")
         val now = Calendar.getInstance()
         val departureTime = Calendar.getInstance().rollTime(departure.time)
         if (departure.tomorrow)

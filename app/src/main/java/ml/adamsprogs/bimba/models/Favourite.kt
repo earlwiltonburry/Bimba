@@ -55,11 +55,6 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         val mapString = mapDir.readText()
         val ile = mapString.length / 1024
 
-        for (i in 0 until ile) {
-            println(mapString.slice(1024 * i until 1024 * (i+1)))
-        }
-
-        println(mapString)
         val map = HashMap<AgencyAndId, List<Departure>>()
         mapString.safeSplit("%").forEach {
             val (k, v) = it.split("#")

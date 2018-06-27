@@ -41,15 +41,13 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
             var httpCon: HttpURLConnection
             try {
                 val sourceUrl = getDefaultSharedPreferences(this).getString(getString(R.string.key_timetable_source_url), getString(R.string.timetable_source_url))
+                sourceUrl.replace(Regex("^.*://", RegexOption.IGNORE_CASE), "")
+                val url = URL(sourceUrl)
                 try {
-                    if (!sourceUrl.matches(Regex("^https://.*$")))
-                        throw SSLException("Not https address")
-                    val url = URL(sourceUrl)
                     httpCon = url.openConnection() as HttpsURLConnection
                     httpCon.addRequestProperty("If-None-Match", localETag)
                     httpCon.connect()
                 } catch (e: SSLException) {
-                    val url = URL(sourceUrl.replace("https://", "http://"))
                     httpCon = url.openConnection() as HttpURLConnection
                     httpCon.addRequestProperty("If-None-Match", localETag)
                     httpCon.connect()
