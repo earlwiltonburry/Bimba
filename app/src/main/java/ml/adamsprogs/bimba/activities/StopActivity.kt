@@ -183,7 +183,8 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         } catch (e: IllegalArgumentException) {
         }
         timetable = Timetable.getTimetable(this, true)
-        refreshAdapterFromStop()
+        if (sourceType == SOURCE_TYPE_STOP)
+            refreshAdapterFromStop()
     }
 
     private fun selectTodayPage() {
