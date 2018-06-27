@@ -38,25 +38,26 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
 
             val localETag = prefs.getString("etag", "")
 
-            var httpCon: HttpURLConnection
+            val httpCon: HttpURLConnection
             try {
-                val sourceUrl = getDefaultSharedPreferences(this).getString(getString(R.string.key_timetable_source_url), getString(R.string.timetable_source_url))
-                sourceUrl.replace(Regex("^.*://", RegexOption.IGNORE_CASE), "")
+                var sourceUrl = getDefaultSharedPreferences(this).getString(getString(R.string.key_timetable_source_url), getString(R.string.timetable_source_url))
+                sourceUrl = sourceUrl.replace(Regex("^.*://", RegexOption.IGNORE_CASE), "")
+                sourceUrl = "https://$sourceUrl"
                 val url = URL(sourceUrl)
                 try {
                     httpCon = url.openConnection() as HttpsURLConnection
                     httpCon.addRequestProperty("If-None-Match", localETag)
                     httpCon.connect()
                 } catch (e: SSLException) {
-                    httpCon = url.openConnection() as HttpURLConnection
-                    httpCon.addRequestProperty("If-None-Match", localETag)
-                    httpCon.connect()
+                    sendResult(RESULT_NO_CONNECTIVITY)
+                    return
                 }
                 if (httpCon.responseCode == HttpsURLConnection.HTTP_NOT_MODIFIED) {
                     sendResult(RESULT_UP_TO_DATE)
                     return
                 }
                 if (httpCon.responseCode != HttpsURLConnection.HTTP_OK) {
+                    println(httpCon.responseMessage)
                     sendResult(RESULT_NO_CONNECTIVITY)
                     return
                 }
