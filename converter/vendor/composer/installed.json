@@ -50,5 +50,53 @@
             "yaml",
             "yml"
         ]
+    },
+    {
+        "name": "rybakit/msgpack",
+        "version": "v0.5.1",
+        "version_normalized": "0.5.1.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/rybakit/msgpack.php.git",
+            "reference": "837963c0b9481085c5a1c9bf0d15dcf472dce2d1"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/rybakit/msgpack.php/zipball/837963c0b9481085c5a1c9bf0d15dcf472dce2d1",
+            "reference": "837963c0b9481085c5a1c9bf0d15dcf472dce2d1",
+            "shasum": ""
+        },
+        "require": {
+            "php": "^7.1.1"
+        },
+        "require-dev": {
+            "friendsofphp/php-cs-fixer": "^2.11",
+            "phpunit/phpunit": "^7.1"
+        },
+        "time": "2018-05-24T12:30:13+00:00",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "MessagePack\\": "src/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Eugene Leonovich",
+                "email": "gen.work@gmail.com"
+            }
+        ],
+        "description": "A pure PHP implementation of the MessagePack serialization format.",
+        "keywords": [
+            "messagepack",
+            "msgpack",
+            "pure",
+            "streaming"
+        ]
     }
 ]

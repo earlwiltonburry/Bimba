@@ -48,3 +48,5 @@ captures/
 app/release/
 research/localonly
 database/timetable*
+converter/*.gz
+converter/metadata.yml
