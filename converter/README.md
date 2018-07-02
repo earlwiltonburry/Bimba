@@ -32,5 +32,7 @@ key = nacl.signing.SigningKey(
 ## Libraries
 
 YAML [Spyc](https://github.com/mustangostang/spyc), (c) mustangostang MIT
+
 Sodium [Sodium Compat](https://github.com/paragonie/sodium_compat), (c) paragonie ISC
+
 Msgpack [msgpack.php](https://github.com/rybakit/msgpack.php), (c) rybakit MIT
