@@ -1,0 +1,7 @@
+{
+    "require": {
+        "mustangostang/spyc": "0.6.2",
+        "paragonie/sodium_compat": "^1.6",
+        "rybakit/msgpack": "^0.5.3"
+    }
+}

@@ -1,3 +1,18 @@
+## Key file
+
+In order to upload timetables automatically, private key needs to be provided to `uploader.py`.
+`uploader.py` imports `sign_key.py` which needs to be as follows:
+
+```
+import nacl.signing
+
+key = nacl.signing.SigningKey(
+        b'<here goes hexdigest of private key (64 hexadecimal digits)>',
+        encoder=nacl.encoding.HexEncoder)
+```
+
+## License
+
     Converter from gtfs to sqlite database
     Copyright (C) 2018 Adam Pioterek
 
@@ -17,3 +32,5 @@
 ## Libraries
 
 YAML [Spyc](https://github.com/mustangostang/spyc), (c) mustangostang MIT
+Sodium [Sodium Compat](https://github.com/paragonie/sodium_compat), (c) paragonie ISC
+Msgpack [msgpack.php](https://github.com/rybakit/msgpack.php), (c) rybakit MIT

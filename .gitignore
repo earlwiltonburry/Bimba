@@ -48,5 +48,7 @@ captures/
 app/release/
 research/localonly
 database/timetable*
-converter/*.gz
-converter/metadata.yml
+converter/local/*.gz
+converter/local/metadata.yml
+converter/local/__pycache__
+converter/local/sign_key.py
