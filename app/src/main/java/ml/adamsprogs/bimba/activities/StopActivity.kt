@@ -56,19 +56,25 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         setSupportActionBar(toolbar)
 
-        when (sourceType) {
+        val departures = when (sourceType) {
             SOURCE_TYPE_STOP -> {
                 stopSegment = StopSegment(intent.getSerializableExtra(EXTRA_STOP_ID) as AgencyAndId, null).apply { fillPlates() }
                 supportActionBar?.title = timetable.getStopName(stopSegment!!.stop)
+                null
             }
             SOURCE_TYPE_FAV -> {
                 favourite = intent.getParcelableExtra(EXTRA_FAVOURITE)
                 supportActionBar?.title = favourite!!.name
                 favourite!!.addOnVmPreparedListener(this)
+                if (favourite!!.fullDepartures.isNotEmpty())
+                    favourite!!.fullDepartures
+                else
+                    null
             }
+            else -> null
         }
 
-        sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, null)
+        sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, departures)
 
         container.adapter = sectionsPagerAdapter
 
@@ -107,7 +113,8 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     override fun onVmPrepared() {
-        //fixme do we give up too fast?
+        //fixme do we give up too fast? (in testing)
+        // println("onVmPrepared: ticked? ${ticked()}; vmBacked? ${favourite!!.isBackedByVm}")
         if ((favourite!!.isBackedByVm || ticked()) && (timetableType == "departure")) {
             getFavouriteDepartures()
         }
@@ -154,14 +161,18 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     override fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID) {
-        //fixme do we give up too fast?
+        //fixme do we give up too fast? (in testing)
+        // println("onVm")
         if (vmDepartures == null && this.vmDepartures.isEmpty() && hasDepartures) {
+            // println("\tbut noVM")
             if (ticked()) {
+               //  println("\t\tbut ticked")
                 refreshAdapterFromStop()
             }
             return
         }
         if (timetableType == "departure" && stopSegment!!.contains(plateId)) {
+            // println("\tthere’s still vm")
             if (vmDepartures != null)
                 this.vmDepartures[plateId] = vmDepartures
             else

@@ -53,7 +53,6 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         val mapDir = File(parcel.readString())
 
         val mapString = mapDir.readText()
-        val ile = mapString.length / 1024
 
         val map = HashMap<AgencyAndId, List<Departure>>()
         mapString.safeSplit("%").forEach {
