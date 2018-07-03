@@ -15,7 +15,8 @@
     <string name="no_db_connect">Connect to the Internet to download the timetable</string>
     <string name="no_db_downloading">Timetable is being downloaded…</string>
     <string name="timetable_downloading">Downloading timetable</string>
-    <string name="timetable_uncompressing">%1$d/%2$d, uncompressing: %3$f%</string>
+    <string name="timetable_downloading_progress" translatable="false">%1$1.2f MiB/%2$1.2f MiB</string>
+    <string name="timetable_decompressing">Decompressing timetable</string>
     <string name="search_placeholder">Stop…</string>
     <string name="no_connectivity">No connectivity – can’t update timetable</string>
     <string name="timetable_up_to_date">Timetable is up-to-date</string>
@@ -84,7 +85,7 @@
     <string name="just_departed">Just departed</string>
     <string name="validity_offline_unavailable">Offline timetable unavailable</string>
     <string name="pref_category_timetable">Timetable</string>
-    <string name="timetable_source_url" translatable="false">http://bimba.tk/gtfs</string>
+    <string name="timetable_source_url" translatable="false">https://bimba.tk/gtfs</string>
     <string name="key_timetable_source_url" translatable="false">key_timetable_source_url</string>
     <string name="title_timetable_source_url">Timetable source</string>
     <string name="title_activity_settings">Settings</string>

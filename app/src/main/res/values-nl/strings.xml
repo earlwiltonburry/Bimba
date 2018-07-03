@@ -11,7 +11,6 @@
     <string name="no_db_connect">Maak verbinding met internet om de dienstregeling te downloaden.</string>
     <string name="no_db_downloading">De dienstregeling wordt gedownload…</string>
     <string name="timetable_downloading">Bezig met downloaden van dienstregeling</string>
-    <string name="timetable_uncompressing">%1$d/%2$d, bezig met uitpakken: %3$f%</string>
     <string name="search_placeholder">Halte…</string>
     <string name="no_connectivity">Geen internetverbinding – de dienstregeling kan niet worden bijgewerkt.</string>
     <string name="timetable_up_to_date">De dienstregeling is volledig bijgewerkt.</string>
@@ -74,4 +73,5 @@
     <string name="title_timetable_source_url">Bron van de dienstregeling</string>
     <string name="title_activity_settings">Instellingen</string>
     <string name="settings">Instellingen</string>
+    <string name="timetable_decompressing">Bezig met uitpakken van dienstregeling</string>
 </resources>

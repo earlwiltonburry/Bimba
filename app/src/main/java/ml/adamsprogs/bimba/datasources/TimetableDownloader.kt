@@ -76,7 +76,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
             sizeCompressed = httpCon.getHeaderField("Content-Length").toInt() / 1024
             sizeUncompressed = httpCon.getHeaderField("X-Uncompressed-Content-Length").toInt() / 1024
 
-            notify(0, R.string.timetable_downloading, R.string.timetable_uncompressing, sizeCompressed, sizeUncompressed)
+            notify(0, R.string.timetable_downloading, R.string.timetable_downloading_progress, R.string.timetable_decompressing, sizeCompressed, sizeUncompressed)
 
 
             val gtfsDb = File(getSecondaryExternalFilesDir(), "timetable_new.db")
@@ -86,7 +86,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
             val outputStream = FileOutputStream(gtfsDb)
 
             gzipInputStream.listenableCopyTo(outputStream) {
-                notify((it / 1024).toInt(), R.string.timetable_downloading, R.string.timetable_uncompressing, sizeCompressed, sizeUncompressed)
+                notify((it / 1024).toInt(), R.string.timetable_downloading, R.string.timetable_downloading_progress, R.string.timetable_decompressing, sizeCompressed, sizeUncompressed)
             }
 
             val prefsEditor = prefs.edit()
@@ -110,16 +110,21 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
         sendBroadcast(broadcastIntent)
     }
 
-    private fun notify(progress: Int, titleId: Int, messageId: Int, sizeCompressed: Int, sizeUncompressed: Int) {
-        /*val quotient = sizeCompressed.toFloat() / sizeUncompressed.toFloat()
-        val message = getString(messageId, Math.max(progress * quotient, sizeCompressed.toFloat()),
-                sizeCompressed, ((progress.toFloat() / sizeUncompressed.toFloat()) * 100)) fixme<p:2> format error*/
-        val message = ""
-        val title = getString(titleId)
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-            notifyCompat(progress, title, message, sizeUncompressed)
+    private fun notify(downloadedKBytes: Int, titleId: Int, dwdMessageId: Int, dcmMessageId: Int, sizeCompressed: Int, sizeUncompressed: Int) {
+        val progress = Math.min(downloadedKBytes, sizeCompressed)
+        val message = if (progress < sizeCompressed)
+            getString(dwdMessageId,
+                    progress / 1024F, sizeCompressed / 1024F)
         else
-            notifyStandard(progress, title, message, sizeUncompressed)
+            ""
+        val title = if (progress < sizeCompressed)
+            getString(titleId)
+        else
+            getString(dcmMessageId)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+            notifyCompat(downloadedKBytes, title, message, sizeUncompressed)
+        else
+            notifyStandard(downloadedKBytes, title, message, sizeUncompressed)
     }
 
     @Suppress("DEPRECATION")

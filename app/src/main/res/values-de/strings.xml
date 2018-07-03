@@ -67,10 +67,10 @@
     <string name="timetable_validity_finished">Die Gültigkeit des Zeitplans ist beendet. Verbind mit dem Internet, um eine neue herunterzuladen und um fortzufahren.</string>
     <string name="timetable_validity_tomorrow">Fahrplan gilt nur bis morgen.</string>
     <string name="just_departed">Gerade gegangen</string>
-    <string name="timetable_uncompressing">%1$d/%2$d, dekompression: %3$f%</string>
     <string name="validity_offline_unavailable">Offline-Fahrplan ist nicht verfügbar</string>
     <string name="pref_category_timetable">Fahrplan</string>
     <string name="title_timetable_source_url">Quelle des Fahrplans</string>
     <string name="title_activity_settings">Einstellungen</string>
     <string name="settings">Einstellungen</string>
+    <string name="timetable_decompressing">Fahrplan wird entpackt</string>
 </resources>
