@@ -107,7 +107,8 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     override fun onVmPrepared() {
-        if (favourite!!.isBackedByVm || ticked()) {
+        //fixme do we give up too fast?
+        if ((favourite!!.isBackedByVm || ticked()) && (timetableType == "departure")) {
             getFavouriteDepartures()
         }
     }
@@ -179,7 +180,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             else -> getString(R.string.error_try_later)
         }
         try {
-            Snackbar.make(findViewById(R.id.drawer_layout), message, Snackbar.LENGTH_LONG).show()
+            Snackbar.make(findViewById(R.id.stop_layout), message, Snackbar.LENGTH_LONG).show()
         } catch (e: IllegalArgumentException) {
         }
         timetable = Timetable.getTimetable(this, true)
