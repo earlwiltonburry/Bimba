@@ -74,6 +74,8 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             else -> null
         }
 
+        showFab()
+
         sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, departures)
 
         container.adapter = sectionsPagerAdapter
@@ -82,8 +84,6 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         tabs.addOnTabSelectedListener(TabLayout.ViewPagerOnTabSelectedListener(container))
 
         selectTodayPage()
-
-        showFab()
 
         prepareOnDownloadListener()
     }
@@ -144,6 +144,17 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         }
     }
 
+    //fixme<p:5> maybe better effects
+    private fun updateFabVisibility(dy: Int) {
+        if (fab == null)
+            return
+        if (dy > 0) {
+            fab.hide()
+        } else {
+            fab.show()
+        }
+    }
+
     private fun prepareOnDownloadListener() {
         val filter = IntentFilter(TimetableDownloader.ACTION_DOWNLOADED)
         filter.addAction(VmClient.ACTION_READY)
@@ -166,7 +177,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         if (vmDepartures == null && this.vmDepartures.isEmpty() && hasDepartures) {
             // println("\tbut noVM")
             if (ticked()) {
-               //  println("\t\tbut ticked")
+                //  println("\t\tbut ticked")
                 refreshAdapterFromStop()
             }
             return
@@ -254,9 +265,9 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         override fun getItem(position: Int): Fragment {
             if (departures == null)
-                return PlaceholderFragment.newInstance(null, relativeTime)
+                return PlaceholderFragment.newInstance(null, relativeTime) { updateFabVisibility(it) }
             if (departures!!.isEmpty())
-                return PlaceholderFragment.newInstance(ArrayList(), relativeTime)
+                return PlaceholderFragment.newInstance(ArrayList(), relativeTime) { updateFabVisibility(it) }
             val sat = try {
                 timetable.getServiceFor(Calendar.SATURDAY)
             } catch (e: IllegalArgumentException) {
@@ -279,7 +290,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 }
                 else -> throw IndexOutOfBoundsException("No tab at index $position")
             }
-            return PlaceholderFragment.newInstance(list, relativeTime)
+            return PlaceholderFragment.newInstance(list, relativeTime) { updateFabVisibility(it) }
         }
 
         override fun getCount() = 3
@@ -293,7 +304,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         }
     }
 
-    class PlaceholderFragment : Fragment() {
+    class PlaceholderFragment(val updater: (Int) -> Unit) : Fragment() {
         override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
             val rootView = inflater.inflate(R.layout.fragment_stop, container, false)
 
@@ -307,12 +318,20 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             departuresList.adapter = DeparturesAdapter(activity as Context, departures,
                     arguments?.get("relativeTime") as Boolean)
             departuresList.layoutManager = layoutManager
+
+            departuresList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {}
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    updater(dy)
+                    super.onScrolled(recyclerView, dx, dy)
+                }
+            })
             return rootView
         }
 
         companion object {
-            fun newInstance(departures: List<Departure>?, relativeTime: Boolean): PlaceholderFragment {
-                val fragment = PlaceholderFragment()
+            fun newInstance(departures: List<Departure>?, relativeTime: Boolean, updater: (Int) -> Unit): PlaceholderFragment {
+                val fragment = PlaceholderFragment(updater)
                 val args = Bundle()
                 if (departures != null) {
                     if (departures.isNotEmpty()) {
