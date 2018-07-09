@@ -44,6 +44,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     private lateinit var adapter: FavouritesAdapter
     private val actionModeCallback = ActionModeCallback()
     private var actionMode: ActionMode? = null
+    private var isWarned = false
 
     companion object {
         const val REQUEST_EDIT_FAVOURITE = 1
@@ -106,11 +107,11 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             }
         })
 
-        searchView.setOnQueryChangeListener({ oldQuery, newQuery ->
+        searchView.setOnQueryChangeListener { oldQuery, newQuery ->
             if (oldQuery != "" && newQuery == "")
                 searchView.clearSuggestions()
             filterSuggestions(newQuery)
-        })
+        }
 
         searchView.setOnSearchListener(object : FloatingSearchView.OnSearchListener {
             override fun onSuggestionClicked(searchSuggestion: SearchSuggestion) {
@@ -172,7 +173,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun warnTimetableValidity() {
-        //todo not on turn
+        if (isWarned)
+            return
+        isWarned = true
         if (timetable == null)
             return
         val validTill = timetable!!.getValidTill()
@@ -218,8 +221,8 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             else -> return
         }
         AlertDialog.Builder(context)
-                .setPositiveButton(context.getText(android.R.string.ok),
-                        { dialog: DialogInterface, _: Int -> dialog.cancel() })
+                .setPositiveButton(context.getText(android.R.string.ok)
+                ) { dialog: DialogInterface, _: Int -> dialog.cancel() }
                 .setCancelable(true)
                 .setMessage(message)
                 .create().show()
