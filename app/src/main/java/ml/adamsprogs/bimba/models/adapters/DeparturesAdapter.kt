@@ -16,7 +16,6 @@ import ml.adamsprogs.bimba.models.Departure
 import ml.adamsprogs.bimba.rollTime
 import java.util.*
 
-//todo<p:1> on click show time (HH:MM)
 class DeparturesAdapter(val context: Context, private val departures: List<Departure>?, private val relativeTime: Boolean) :
         RecyclerView.Adapter<DeparturesAdapter.ViewHolder>() {
 
@@ -25,12 +24,6 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
         const val VIEW_TYPE_CONTENT: Int = 1
         const val VIEW_TYPE_EMPTY: Int = 2
     }
-
-//    init {
-//        departures?.forEach {
-//            println("${it.line} -> ${it.headsign} @${it.time} (${if (it.isModified) it.modification[0] else{} })")
-//        }
-//    }
 
     override fun getItemCount(): Int {
         if (departures == null || departures.isEmpty())
@@ -86,14 +79,21 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
             holder.floorIcon.visibility = View.VISIBLE
         if (departure.isModified) {
             holder.infoIcon.visibility = View.VISIBLE
-            holder.root.setOnClickListener {
-                AlertDialog.Builder(context)
-                        .setPositiveButton(context.getText(android.R.string.ok),
-                                { dialog: DialogInterface, _: Int -> dialog.cancel() })
-                        .setCancelable(true)
-                        .setMessage(departure.modification.joinToString("; "))
-                        .create().show()
-            }
+        }
+        holder.root.setOnClickListener {
+            AlertDialog.Builder(context)
+                    .setPositiveButton(context.getText(android.R.string.ok)
+                    ) { dialog: DialogInterface, _: Int -> dialog.cancel() }
+                    .setCancelable(true)
+                    .setMessage(
+                            context.getString(R.string.departure_at,
+                                    "${String.format("%02d",
+                                            departureTime.get(Calendar.HOUR_OF_DAY))}:${String.format("%02d",
+                                            departureTime.get(Calendar.MINUTE))}")
+                                    + if (departure.isModified)
+                                " " + departure.modification.joinToString("; ", "(", ")")
+                            else "")
+                    .create().show()
         }
     }
 
