@@ -304,7 +304,8 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         }
     }
 
-    class PlaceholderFragment(val updater: (Int) -> Unit) : Fragment() {
+    class PlaceholderFragment: Fragment() {
+        lateinit var updater: (Int) -> Unit
         override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
             val rootView = inflater.inflate(R.layout.fragment_stop, container, false)
 
@@ -331,7 +332,8 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         companion object {
             fun newInstance(departures: List<Departure>?, relativeTime: Boolean, updater: (Int) -> Unit): PlaceholderFragment {
-                val fragment = PlaceholderFragment(updater)
+                val fragment = PlaceholderFragment()
+                fragment.updater = updater
                 val args = Bundle()
                 if (departures != null) {
                     if (departures.isNotEmpty()) {
