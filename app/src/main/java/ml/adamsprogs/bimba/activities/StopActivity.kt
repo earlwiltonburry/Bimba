@@ -113,7 +113,6 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     override fun onVmPrepared() {
-        //fixme do we give up too fast? (in testing)
         // println("onVmPrepared: ticked? ${ticked()}; vmBacked? ${favourite!!.isBackedByVm}")
         if ((favourite!!.isBackedByVm || ticked()) && (timetableType == "departure")) {
             getFavouriteDepartures()
@@ -172,7 +171,6 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     override fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID) {
-        //fixme do we give up too fast? (in testing)
         // println("onVm")
         if (vmDepartures == null && this.vmDepartures.isEmpty() && hasDepartures) {
             // println("\tbut noVM")

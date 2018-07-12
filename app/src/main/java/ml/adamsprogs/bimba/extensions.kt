@@ -92,7 +92,7 @@ internal fun Context.getSecondaryExternalFilesDir(): File {
 //    return dirs[dirs.size - 1]
 }
 
-internal fun InputStream.listenableCopyTo(out: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE, listener: (Long) -> Unit): Long { //fixme may devour RAM?
+internal fun InputStream.listenableCopyTo(out: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE, listener: (Long) -> Unit): Long {
     var bytesCopied: Long = 0
     val buffer = ByteArray(bufferSize)
     var bytes = read(buffer)
