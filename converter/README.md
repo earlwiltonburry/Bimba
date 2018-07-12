@@ -1,7 +1,7 @@
 ## Key file
 
 In order to upload timetables automatically, private key needs to be provided to `uploader.py`.
-`uploader.py` imports `sign_key.py` which needs to be as follows:
+`uploader.py` imports `config.py` which needs to be as follows:
 
 ```
 import nacl.signing
@@ -9,6 +9,9 @@ import nacl.signing
 key = nacl.signing.SigningKey(
         b'<here goes hexdigest of private key (64 hexadecimal digits)>',
         encoder=nacl.encoding.HexEncoder)
+
+storage = '<url pointing to where timetables lie with {} placeholder for id>'
+receiver = '<url to server script which receives commands to store timetables>'
 ```
 
 ## License

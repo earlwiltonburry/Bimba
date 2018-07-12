@@ -51,4 +51,4 @@ database/timetable*
 converter/local/*.gz
 converter/local/metadata.yml
 converter/local/__pycache__
-converter/local/sign_key.py
+converter/local/config.py

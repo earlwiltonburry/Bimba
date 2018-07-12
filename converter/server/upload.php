@@ -1,5 +1,7 @@
 <?php
 
+set_time_limit(0);
+
 require_once 'vendor/paragonie/sodium_compat/autoload.php';
 require_once 'vendor/mustangostang/spyc/Spyc.php';
 require_once 'vendor/autoload.php';
@@ -34,8 +36,21 @@ $timetables = $post['timetables'];
 foreach ($timetables as $id => $timetable) {
     $t = $timetable['t'];
     $sha = $timetable['sha'];
-    $checksum = hash('sha256', $t);
+
+    // todo if $id in $oldMetadata -> skip
+
+    $fp = fopen(dirname(__FILE__) . "/$id.db.gz", 'wb');
+    $ch = curl_init($t);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 50);
+    curl_setopt($ch, CURLOPT_FILE, $fp);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_exec($ch);
+    curl_close($ch);
+    fclose($fp);
+
+    $checksum = hash_file('sha256', "$id.db.gz");
     if ($checksum != $sha) {
+        unlink("$id.db.gz");
         http_response_code(400);
         die("checksums invalid for $id, expected $sha got $checksum");
     }
@@ -52,9 +67,6 @@ foreach ($newMetadata as $it) {
 $toDelete = array_diff($oldIDs, $newIDs);
 foreach ($toDelete as $it) {
     unlink("$it.db.gz");
-}
-foreach ($timetables as $id => $timetable) {
-    file_put_contents("$id.db.gz", $timetable);
 }
 
 file_put_contents('metadata.yml', $post['metadata']);

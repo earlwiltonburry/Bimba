@@ -7,3 +7,4 @@
 * wireless: http://egov.psnc.pl/node/29#wireless_poznan
 * tourism: http://egov.psnc.pl/node/29#turystyka
 * P&R: https://www.peka.poznan.pl/SOP/parkings/getAvailableSpaces.jspb
+* accidents: https://mympk.mpk.poznan.pl/web/menu

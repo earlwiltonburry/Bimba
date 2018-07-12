@@ -14,6 +14,7 @@ from pathlib import Path
 import hashlib
 import gzip
 import shutil
+import dateutil.parser
 
 import uploader
 
@@ -76,8 +77,18 @@ class TimetableDownloader:
         start, end = name.split('_')
         return today < start
 
+    def __validity_length(self, name1, name2):
+        x = dateutil.parser.parse(name1)
+        y = dateutil.parser.parse(name2)
+        return (y - x).days
+
+    def __sort_key(self, name):
+        s, e = name.split('_')
+        return s + "{0:03}".format(100 - self.__validity_length(s, e))
+
     def __clean_overlapping(self, names):
-        names.sort()
+        names.sort(key=self.__sort_key)
+        print(names)
         if len(names) == 1:
             return names
         return_names = []
@@ -85,8 +96,9 @@ class TimetableDownloader:
         for name in names[1:]:
             this_start, this_end = name.split('_')
             prev_start, prev_end = names[i-1].split('_')
-            if this_start <= prev_start or this_end > prev_end:
+            if not (this_start < prev_end or this_start == prev_start):
                 return_names.append(names[i-1])
+
             i = i + 1
         return_names.append(names[-1])
         return return_names
@@ -111,6 +123,7 @@ dla-deweloperow/getGTFSFile?file={}.zip'
         with open('timetable.db', 'rb') as f_in:
             with gzip.open('{}.db.gz'.format(checksum), 'wb') as f_out:
                 shutil.copyfileobj(f_in, f_out)
+                os.chmod('{}.db.gz'.format(checksum), 0o644)
 
         Path('timetable.db').unlink()
 
