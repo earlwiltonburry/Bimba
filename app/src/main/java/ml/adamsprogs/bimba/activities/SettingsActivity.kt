@@ -2,19 +2,30 @@ package ml.adamsprogs.bimba.activities
 
 import android.preference.*
 import android.os.Bundle
+import android.support.v4.app.NavUtils
+import android.view.MenuItem
+import kotlinx.android.synthetic.main.activity_settings.*
 
 import ml.adamsprogs.bimba.*
 
-// todo create layout with toolbar and fragment; and put fragment here
 class SettingsActivity: AppCompatPreferenceActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_settings)
+        setSupportActionBar(toolbar)
         supportActionBar.setDisplayHomeAsUpEnabled(true)
-
-        fragmentManager.beginTransaction().replace(android.R.id.content, MainPreferenceFragment()).commit()
     }
 
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            android.R.id.home -> {
+                NavUtils.navigateUpFromSameTask(this)
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
 
     class MainPreferenceFragment : PreferenceFragment() {
         override fun onCreate(savedInstanceState: Bundle?) {

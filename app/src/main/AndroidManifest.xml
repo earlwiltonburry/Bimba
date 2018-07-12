@@ -33,7 +33,7 @@
             android:name=".activities.SettingsActivity"
             android:label="@string/title_activity_settings"
             android:parentActivityName=".activities.DashActivity"
-            android:theme="@style/AppTheme.ActionBar" >
+            android:theme="@style/AppTheme" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="ml.adamsprogs.bimba.activities.DashActivity" />
