@@ -6,13 +6,19 @@ With Bimba You can check the public transport timetable in Poznań agglomeration
 <a href="https://f-droid.org/packages/ml.adamsprogs.bimba/" target="_blank">
 <img src="https://f-droid.org/badge/get-it-on.png" alt="Get it on F-Droid" height="80"/></a>
 
+Bimba can be found at [Mastodon](https://floss.social/@bimba)
+
+## Mirror
+
+If You’re reading this on Github, You’re seeing a mirror. Changes are pushed to the mirror only when there’s a push to `master`. The original repo is available on [NotABug](https://notabug.org/apiote/Bimba).
+
+Tags (releases) are published in both services but binary builds after version 2.0 are available only on NotABug.
+
+Issues will be tracked in both services. Pull requests on Github will be asked to be sent via e-mail as `diff`s.
+
 ## Roadmap
 
-### App
-
 *more important higher*
-
-*(tick – released, M – on master, T – testing)*
 
 * [x] incremental timetable generator
 * [x] favourite stops
@@ -32,13 +38,12 @@ With Bimba You can check the public transport timetable in Poznań agglomeration
 * [ ] ever-present searchbar
 * [ ] other things on map
 
-
 ## If You want to help…
 
 ### …be sure to…
 
 * check the issues, both closed and open;
-* check the most recent commit. Master contains published snapshots; most recent commit will be on other branch (there’s a branch with upcomming version and branches with betas that are periodically merged into it).
+* check the most recent commit. Master contains published snapshots; The most recent commit will be on other branch—most likely `develop`, but there may be a release, feature or hotfix branches. For full description of workflow model head to [Nvie’s model](https://nvie.com/posts/a-successful-git-branching-model/).
 
 ### …then You can…
 
@@ -46,13 +51,12 @@ With Bimba You can check the public transport timetable in Poznań agglomeration
 * set up Your own converter instance. For more info head to the [converter readme](converter/README.md)
 * help me move my own converter to some PaaS (like Heroku or other I-don’t-know-because-I-cannot-into-cloud)
 * think about any other way
-* <small> donate. More info [there](http://adamsprogs.tk/w/donate/)</small>
-
+* <small> donate. More info [there](http://apiote.tk/donate/)</small>
 
 ## Thanks to…
 
-* @tebriz159 for new logo (#4)
-* @Vistaus for Dutch translation (#5)
+* [tebriz159@github](https://github.com/tebriz159) for new logo ([#4](https://github.com/apiote/Bimba/issues/4))
+* [Vistaus@github](https://github.com/Vistaus) for Dutch translation ([#5](https://github.com/apiote/Bimba/pull/5))
 
 ---
 
@@ -72,9 +76,9 @@ With Bimba You can check the public transport timetable in Poznań agglomeration
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-- Icons [Material](https://material.io/icons), (c) Google Apache 2.0
-- Feature image [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Poznan._Kaponiera_finally_opened_(44).jpg), (c) MOs810 CC BY-SA 4.0
-- [Search View](https://github.com/arimorty/floatingsearchview), (c) arimorty Apache 2.0
-- JSON [gson](https://github.com/google/gson), (c) Google Apache 2.0
-- HTTP [okhttp](https://github.com/square/okhttp), (c) square Apache 2.0
-- [SQLite](https://github.com/requery/sqlite-android), (c) requery Apache 2.0
+- Icons [Material](https://material.io/icons), ⓒ Google Apache 2.0
+- Feature image [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Poznan._Kaponiera_finally_opened_(44).jpg), ⓒ MOs810 CC BY-SA 4.0
+- [Search View](https://github.com/arimorty/floatingsearchview), ⓒ arimorty Apache 2.0
+- JSON [gson](https://github.com/google/gson), ⓒ Google Apache 2.0
+- HTTP [okhttp](https://github.com/square/okhttp), ⓒ square Apache 2.0
+- [SQLite](https://github.com/requery/sqlite-android), ⓒ requery Apache 2.0
