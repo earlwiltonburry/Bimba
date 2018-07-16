@@ -49,6 +49,7 @@ app/release/
 research/localonly
 database/timetable*
 converter/local/*.gz
+converter/local/*.db
 converter/local/metadata.yml
 converter/local/__pycache__
 converter/local/config.py

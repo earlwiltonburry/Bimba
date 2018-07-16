@@ -1,5 +1,6 @@
 package ml.adamsprogs.bimba.activities
 
+import android.content.Context
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -18,6 +19,10 @@ class NoDbActivity : AppCompatActivity(), NetworkStateReceiver.OnConnectivityCha
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_nodb)
+        val editor = getSharedPreferences("ml.adamsprogs.bimba.prefs", Context.MODE_PRIVATE).edit()
+        editor.putString("etag", "")
+        editor.apply()
+
         var filter = IntentFilter(TimetableDownloader.ACTION_DOWNLOADED)
         filter.addCategory(Intent.CATEGORY_DEFAULT)
         registerReceiver(timetableDownloadReceiver, filter)
