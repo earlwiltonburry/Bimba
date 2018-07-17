@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.database.*
 import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteException
 import ml.adamsprogs.bimba.*
 import ml.adamsprogs.bimba.models.gtfs.*
 import ml.adamsprogs.bimba.models.suggestions.*
@@ -37,25 +38,29 @@ class Timetable private constructor() {
             val timetable = Timetable()
             val filesDir = context.getSecondaryExternalFilesDir()
             val dbFile = File(filesDir, "timetable.db")
-            timetable.db = SQLiteDatabase.openDatabase(dbFile.path, null, SQLiteDatabase.OPEN_READONLY) // fixme can be null
+            timetable.db = try {
+                SQLiteDatabase.openDatabase(dbFile.path, null, SQLiteDatabase.OPEN_READONLY)
+            } catch(e: SQLiteException) {
+                null
+            }
             this.timetable = timetable
         }
     }
 
-    private lateinit var db: SQLiteDatabase
+    private var db: SQLiteDatabase? = null
     private var _stops: List<StopSuggestion>? = null
 
     fun refresh() {
     }
 
-    fun getStopSuggestions(context: Context, force: Boolean = false): List<StopSuggestion> {
+    fun getStopSuggestions(/*context: Context, */force: Boolean = false): List<StopSuggestion> {
         if (_stops != null && !force)
             return _stops!!
 
         val ids = HashMap<String, HashSet<AgencyAndId>>()
         val zones = HashMap<String, String>()
 
-        val cursor = db.rawQuery("select stop_name, stop_id, zone_id from stops", null)
+        val cursor = db!!.rawQuery("select stop_name, stop_id, zone_id from stops", null)
 
         while (cursor.moveToNext()) {
             val name = cursor.getString(0)
@@ -70,20 +75,22 @@ class Timetable private constructor() {
         cursor.close()
 
         _stops = ids.map {
+            /*todo
             val colour = when (zones[it.key]) {
                 "A" -> "#${getColour(R.color.zoneA, context).toString(16)}"
                 "B" -> "#${getColour(R.color.zoneB, context).toString(16)}"
                 "C" -> "#${getColour(R.color.zoneC, context).toString(16)}"
                 else -> "#000000"
             }
-            StopSuggestion(it.key, it.value, zones[it.key]!!, colour)
+            */
+            StopSuggestion(it.key, it.value, zones[it.key]!!, "#000000")
         }.sorted()
         return _stops!!
     }
 
     fun getLineSuggestions(): List<LineSuggestion> {
         val routes = ArrayList<LineSuggestion>()
-        val cursor = db.rawQuery("select * from routes", null)
+        val cursor = db!!.rawQuery("select * from routes", null)
 
         while (cursor.moveToNext()) {
             val routeId = cursor.getString(0)
@@ -100,7 +107,7 @@ class Timetable private constructor() {
 
         val stopsIndex = HashMap<Int, String>()
         val where = stops.joinToString(" or ", "where ") { "stop_id = ?" }
-        var cursor = db.rawQuery("select stop_id, stop_code from stops $where", stops.map { it.toString() }.toTypedArray())
+        var cursor = db!!.rawQuery("select stop_id, stop_code from stops $where", stops.map { it.toString() }.toTypedArray())
 
         while (cursor.moveToNext()) {
             stopsIndex[cursor.getInt(0)] = cursor.getString(1)
@@ -108,7 +115,7 @@ class Timetable private constructor() {
 
         cursor.close()
 
-        cursor = db.rawQuery("select stop_id, route_id, trip_headsign " +
+        cursor = db!!.rawQuery("select stop_id, route_id, trip_headsign " +
                 "from stop_times natural join trips " +
                 where, stops.map { it.toString() }.toTypedArray())
 
@@ -138,7 +145,7 @@ class Timetable private constructor() {
     }
 
     fun getStopName(stopId: AgencyAndId): String {
-        val cursor = db.rawQuery("select stop_name from stops where stop_id = ?",
+        val cursor = db!!.rawQuery("select stop_name from stops where stop_id = ?",
                 arrayOf(stopId.id))
         cursor.moveToNext()
         val name = cursor.getString(0)
@@ -148,7 +155,7 @@ class Timetable private constructor() {
     }
 
     fun getStopCode(stopId: AgencyAndId): String {
-        val cursor = db.rawQuery("select stop_code from stops where stop_id = ?",
+        val cursor = db!!.rawQuery("select stop_code from stops where stop_id = ?",
                 arrayOf(stopId.id))
         cursor.moveToNext()
         val code = cursor.getString(0)
@@ -159,7 +166,7 @@ class Timetable private constructor() {
 
     fun getStopDepartures(stopId: AgencyAndId): Map<AgencyAndId, List<Departure>> {
         val map = HashMap<AgencyAndId, ArrayList<Departure>>()
-        val cursor = db.rawQuery("select route_id, service_id, departure_time, " +
+        val cursor = db!!.rawQuery("select route_id, service_id, departure_time, " +
                 "wheelchair_accessible, stop_sequence, trip_id, trip_headsign, route_desc " +
                 "from stop_times natural join trips natural join routes where stop_id = ?",
                 arrayOf(stopId.id))
@@ -197,7 +204,7 @@ class Timetable private constructor() {
             } ?: listOf()
         }.joinToString(" or ")
 
-        val cursor = db.rawQuery("select route_id, service_id, departure_time, " +
+        val cursor = db!!.rawQuery("select route_id, service_id, departure_time, " +
                 "wheelchair_accessible, stop_sequence, trip_id, trip_headsign, route_desc " +
                 "from stop_times natural join trips natural join routes where $wheres", null)
 
@@ -245,7 +252,7 @@ class Timetable private constructor() {
 
     fun calendarToMode(serviceId: AgencyAndId): List<Int> {
         val days = ArrayList<Int>()
-        val cursor = db.rawQuery("select * from calendar where service_id = ?",
+        val cursor = db!!.rawQuery("select * from calendar where service_id = ?",
                 arrayOf(serviceId.id))
 
         cursor.moveToNext()
@@ -308,10 +315,12 @@ class Timetable private constructor() {
 
     @SuppressLint("Recycle")
     fun isEmpty(): Boolean {
+        if (db == null)
+            return true
         var result: Boolean
         var cursor: Cursor? = null
         try {
-            cursor = db.rawQuery("select * from feed_info", null)
+            cursor = db!!.rawQuery("select * from feed_info", null)
             result = !cursor.moveToNext()
         } catch (e: Exception) {
             result = true
@@ -322,7 +331,7 @@ class Timetable private constructor() {
     }
 
     fun getValidSince(): String {
-        val cursor = db.rawQuery("select feed_start_date from feed_info", null)
+        val cursor = db!!.rawQuery("select feed_start_date from feed_info", null)
 
         cursor.moveToNext()
         val validTill = cursor.getString(0)
@@ -332,7 +341,7 @@ class Timetable private constructor() {
     }
 
     fun getValidTill(): String {
-        val cursor = db.rawQuery("select feed_end_date from feed_info", null)
+        val cursor = db!!.rawQuery("select feed_end_date from feed_info", null)
 
         cursor.moveToNext()
         val validTill = cursor.getString(0)
@@ -355,7 +364,7 @@ class Timetable private constructor() {
 
     fun getServiceFor(day: Int): AgencyAndId {
         val dayColumn = arrayOf("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")[((day + 5) % 7)]
-        val cursor = db.rawQuery("select service_id from calendar where $dayColumn = 1", null)
+        val cursor = db!!.rawQuery("select service_id from calendar where $dayColumn = 1", null)
 
         val service: Int
         cursor.moveToNext()
@@ -370,7 +379,7 @@ class Timetable private constructor() {
 
     fun getPlatesForStop(stop: AgencyAndId): Set<Plate.ID> {
         val plates = HashSet<Plate.ID>()
-        val cursor = db.rawQuery("select route_id, trip_headsign " +
+        val cursor = db!!.rawQuery("select route_id, trip_headsign " +
                 "from stop_times natural join trips where stop_id = ? " +
                 "group by route_id, trip_headsign", arrayOf(stop.id))
 
@@ -387,7 +396,7 @@ class Timetable private constructor() {
     fun getTripGraphs(id: AgencyAndId): Array<TripGraph> {
         val graphs = arrayOf(TripGraph(), TripGraph())
 
-        val cursor = db.rawQuery("select trip_id, trip_headsign, direction_id, stop_id, " +
+        val cursor = db!!.rawQuery("select trip_id, trip_headsign, direction_id, stop_id, " +
                 "stop_sequence, pickup_type, stop_name, zone_id " +
                 "from stop_times natural join trips natural join stops" +
                 "where route_id = ?", arrayOf(id.id))

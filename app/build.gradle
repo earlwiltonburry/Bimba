@@ -6,7 +6,7 @@ android {
     compileSdkVersion 27
     buildToolsVersion "28.0.1"
     defaultConfig {
-        applicationId "ml.adamsprogs.bimba"
+        applicationId "ml.adamsprogs.bimba.scheduleless"
         minSdkVersion 19
         targetSdkVersion 27
         versionCode 14

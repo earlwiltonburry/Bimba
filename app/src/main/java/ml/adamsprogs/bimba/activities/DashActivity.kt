@@ -3,8 +3,8 @@ package ml.adamsprogs.bimba.activities
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.*
-import android.database.sqlite.SQLiteException
 import android.os.*
+import android.preference.PreferenceManager.getDefaultSharedPreferences
 import android.support.design.widget.*
 import android.support.v4.widget.*
 import android.support.v7.widget.*
@@ -12,7 +12,6 @@ import android.support.v7.app.*
 import android.text.Html
 import android.view.*
 import android.view.inputmethod.InputMethodManager
-import kotlin.concurrent.thread
 import kotlin.collections.ArrayList
 import kotlinx.android.synthetic.main.activity_dash.*
 import java.util.*
@@ -34,7 +33,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         FavouritesAdapter.ViewHolder.OnClickListener {
     val context: Context = this
     private val receiver = MessageReceiver.getMessageReceiver()
-    var timetable: Timetable? = null
+    private lateinit var timetable: Timetable
     private var suggestions: List<GtfsSuggestion>? = null
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var drawerView: NavigationView
@@ -45,6 +44,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     private val actionModeCallback = ActionModeCallback()
     private var actionMode: ActionMode? = null
     private var isWarned = false
+    private lateinit var providerProxy: ProviderProxy
 
     companion object {
         const val REQUEST_EDIT_FAVOURITE = 1
@@ -56,11 +56,8 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         setSupportActionBar(toolbar)
 
-        timetable = try {
-            Timetable.getTimetable(this)
-        } catch (e: SQLiteException) {
-            null
-        }
+        providerProxy = ProviderProxy(this)
+        timetable = Timetable.getTimetable()
 
         getSuggestions()
 
@@ -99,7 +96,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         searchView.setOnFocusChangeListener(object : FloatingSearchView.OnFocusChangeListener {
             override fun onFocus() {
                 favouritesList.visibility = View.GONE
-                filterSuggestions(searchView.query)
+                providerProxy.getSuggestions(searchView.query) {
+                    searchView.swapSuggestions(it)
+                }
             }
 
             override fun onFocusCleared() {
@@ -110,7 +109,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         searchView.setOnQueryChangeListener { oldQuery, newQuery ->
             if (oldQuery != "" && newQuery == "")
                 searchView.clearSuggestions()
-            filterSuggestions(newQuery)
+            providerProxy.getSuggestions(newQuery) {
+                searchView.swapSuggestions(it)
+            }
         }
 
         searchView.setOnSearchListener(object : FloatingSearchView.OnSearchListener {
@@ -152,23 +153,16 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun showValidityInDrawer() {
-        if (timetable == null) {
+        if (timetable.isEmpty()) {
             drawerView.menu.findItem(R.id.drawer_validity_since).title = getString(R.string.validity_offline_unavailable)
         } else {
             val formatter = DateFormat.getDateInstance(DateFormat.SHORT)
-            var calendar = calendarFromIsoD(timetable!!.getValidSince())
+            var calendar = calendarFromIsoD(timetable.getValidSince())
             formatter.timeZone = calendar.timeZone
             drawerView.menu.findItem(R.id.drawer_validity_since).title = getString(R.string.valid_since, formatter.format(calendar.time))
-            calendar = calendarFromIsoD(timetable!!.getValidTill())
+            calendar = calendarFromIsoD(timetable.getValidTill())
             formatter.timeZone = calendar.timeZone
             drawerView.menu.findItem(R.id.drawer_validity_till).title = getString(R.string.valid_till, formatter.format(calendar.time))
-        }
-    }
-
-    private fun filterSuggestions(newQuery: String) {
-        thread {
-            val newStops = suggestions!!.filter { deAccent(it.name).contains(deAccent(newQuery), true) } //todo<p:2> sorted by similarity
-            runOnUiThread { searchView.swapSuggestions(newStops) }
         }
     }
 
@@ -176,16 +170,16 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         if (isWarned)
             return
         isWarned = true
-        if (timetable == null)
+        if (timetable.isEmpty())
             return
-        val validTill = timetable!!.getValidTill()
+        val validTill = timetable.getValidTill()
         val today = Calendar.getInstance().toIsoDate()
         val tomorrow = Calendar.getInstance().apply {
             this.add(Calendar.DAY_OF_MONTH, 1)
         }.toIsoDate()
 
         try {
-            timetable!!.getServiceForToday()
+            timetable.getServiceForToday()
             if (today > validTill) {
                 notifyTimetableValidity(-1)
                 suggestions = ArrayList()
@@ -202,7 +196,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         }
 
         try {
-            timetable!!.getServiceForTomorrow()
+            timetable.getServiceForTomorrow()
             if (tomorrow == validTill) {
                 notifyTimetableValidity(1)
                 return
@@ -246,10 +240,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun getSuggestions() {
-        suggestions = if (timetable != null)
-            (timetable!!.getStopSuggestions(context)).sorted() //+ timetable.getLineSuggestions()).sorted() //todo<p:v+1> + bike stations, train stations, &c
-        else
-            emptyList()
+        providerProxy.getSuggestions {
+            searchView.swapSuggestions(it)
+        }
     }
 
     private fun prepareListeners() {
@@ -262,7 +255,8 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun startDownloaderService() {
-        startService(Intent(context, TimetableDownloader::class.java))
+        if (getDefaultSharedPreferences(this).getBoolean("automatic timetable updates", false))
+            startService(Intent(context, TimetableDownloader::class.java))
     }
 
     override fun onBackPressed() {
@@ -286,19 +280,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         receiver.removeOnTimetableDownloadListener(context as MessageReceiver.OnTimetableDownloadListener)
         favourites.deregisterOnVm(receiver, context)
         unregisterReceiver(receiver)
-    }
-
-    private fun deAccent(str: String): String {
-        var result = str.replace('ę', 'e', true)
-        result = result.replace('ó', 'o', true)
-        result = result.replace('ą', 'a', true)
-        result = result.replace('ś', 's', true)
-        result = result.replace('ł', 'l', true)
-        result = result.replace('ż', 'z', true)
-        result = result.replace('ź', 'z', true)
-        result = result.replace('ć', 'c', true)
-        result = result.replace('ń', 'n', true)
-        return result
     }
 
     override fun onTimetableDownload(result: String?) {
