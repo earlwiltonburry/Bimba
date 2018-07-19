@@ -57,24 +57,19 @@ class Timetable private constructor() {
         if (_stops != null && !force)
             return _stops!!
 
-        val ids = HashMap<String, HashSet<AgencyAndId>>()
         val zones = HashMap<String, String>()
 
-        val cursor = db!!.rawQuery("select stop_name, stop_id, zone_id from stops", null)
+        val cursor = db!!.rawQuery("select stop_name, zone_id from stops", null)
 
         while (cursor.moveToNext()) {
             val name = cursor.getString(0)
-            val id = cursor.getInt(1)
-            val zone = cursor.getString(2)
-            if (name !in ids)
-                ids[name] = HashSet()
-            ids[name]!!.add(AgencyAndId(id.toString()))
+            val zone = cursor.getString(1)
             zones[name] = zone
         }
 
         cursor.close()
 
-        _stops = ids.map {
+        _stops = zones.map {
             /*todo
             val colour = when (zones[it.key]) {
                 "A" -> "#${getColour(R.color.zoneA, context).toString(16)}"
@@ -83,7 +78,7 @@ class Timetable private constructor() {
                 else -> "#000000"
             }
             */
-            StopSuggestion(it.key, it.value, zones[it.key]!!, "#000000")
+            StopSuggestion(it.key, it.value, "#000000")
         }.sorted()
         return _stops!!
     }
@@ -102,31 +97,31 @@ class Timetable private constructor() {
         return routes.sortedBy { it.name }
     }
 
-    fun getHeadlinesForStop(stops: Set<AgencyAndId>): Map<AgencyAndId, Pair<String, Set<String>>> {
-        val headsigns = HashMap<AgencyAndId, Pair<String, HashSet<String>>>()
+    fun getHeadlinesForStop(stop: String): Map<String, Set<String>> {
+        val headsigns = HashMap<String, HashSet<String>>()
 
-        val stopsIndex = HashMap<Int, String>()
-        val where = stops.joinToString(" or ", "where ") { "stop_id = ?" }
-        var cursor = db!!.rawQuery("select stop_id, stop_code from stops $where", stops.map { it.toString() }.toTypedArray())
-
+        var cursor = db!!.rawQuery("select stop_code from stops where stop_name = ?",
+                arrayOf(stop))
+        val stopCodes = ArrayList<String>()
         while (cursor.moveToNext()) {
-            stopsIndex[cursor.getInt(0)] = cursor.getString(1)
+            stopCodes.add(cursor.getString(0))
         }
 
         cursor.close()
 
-        cursor = db!!.rawQuery("select stop_id, route_id, trip_headsign " +
+        val where = stopCodes.joinToString(" or ", "where ") { "stop_code = ?" }
+
+        cursor = db!!.rawQuery("select stop_code, route_id, trip_headsign " +
                 "from stop_times natural join trips " +
-                where, stops.map { it.toString() }.toTypedArray())
+                where, stopCodes.toTypedArray())
 
         while (cursor.moveToNext()) {
-            val stop = cursor.getInt(0)
-            val stopId = AgencyAndId(stop.toString())
+            val stopCode = cursor.getString(0)
             val route = cursor.getString(1)
             val headsign = cursor.getString(2)
-            if (stopId !in headsigns)
-                headsigns[stopId] = Pair(stopsIndex[stop]!!, HashSet())
-            headsigns[stopId]!!.second.add("$route → $headsign")
+            if (stopCode !in headsigns)
+                headsigns[stopCode] = HashSet()
+            headsigns[stopCode]!!.add("$route → $headsign")
         }
 
         cursor.close()
@@ -134,13 +129,13 @@ class Timetable private constructor() {
         return headsigns
 
         /*
-        1435 -> (AWF03, {232 → Os. Rusa})
-        1436 -> (AWF04, {232 → Rondo Kaponiera})
-        1437 -> (AWF02, {76 → Pl. Bernardyński, 74 → Os. Sobieskiego, 603 → Pl. Bernardyński})
-        1634 -> (AWF01, {76 → Os. Dębina, 603 → Łęczyca/Dworcowa})
-        171 -> (AWF42, {29 → Pl. Wiosny Ludów})
-        172 -> (AWF41, {10 → Połabska, 29 → Dębiec, 15 → Budziszyńska, 10 → Dębiec, 15 → Os. Sobieskiego, 12 → Os. Sobieskiego, 6 → Junikowo, 18 → Ogrody, 2 → Ogrody})
-        4586 -> (AWF73, {10 → Franowo, 29 → Franowo, 6 → Miłostowo, 5 → Stomil, 18 → Franowo, 15 → Franowo, 12 → Starołęka, 74 → Os. Orła Białego})
+        AWF03 -> {232 → Os. Rusa}
+        AWF04 -> {232 → Rondo Kaponiera}
+        AWF02 -> {76 → Pl. Bernardyński, 74 → Os. Sobieskiego, 603 → Pl. Bernardyński}
+        AWF01 ->{76 → Os. Dębina, 603 → Łęczyca/Dworcowa}
+        AWF42 -> {29 → Pl. Wiosny Ludów}
+        AWF41 -> {10 → Połabska, 29 → Dębiec, 15 → Budziszyńska, 10 → Dębiec, 15 → Os. Sobieskiego, 12 → Os. Sobieskiego, 6 → Junikowo, 18 → Ogrody, 2 → Ogrody}
+        AWF73 -> {10 → Franowo, 29 → Franowo, 6 → Miłostowo, 5 → Stomil, 18 → Franowo, 15 → Franowo, 12 → Starołęka, 74 → Os. Orła Białego}
         */
     }
 

@@ -124,7 +124,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 imm.hideSoftInputFromWindow(view.windowToken, 0)
                 if (searchSuggestion is StopSuggestion) {
                     val intent = Intent(context, StopSpecifyActivity::class.java)
-                    intent.putExtra(StopSpecifyActivity.EXTRA_STOP_IDS, searchSuggestion.ids.joinToString(",") { it.id })
                     intent.putExtra(StopSpecifyActivity.EXTRA_STOP_NAME, searchSuggestion.name)
                     startActivity(intent)
                 } else if (searchSuggestion is LineSuggestion) {

@@ -5,9 +5,9 @@ import android.os.Parcelable
 import ml.adamsprogs.bimba.R
 import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 
-class StopSuggestion(name: String, val ids: Set<AgencyAndId>, private val zone: String, private val zoneColour: String) : GtfsSuggestion(name){
+class StopSuggestion(name: String, private val zone: String, private val zoneColour: String) : GtfsSuggestion(name){
     @Suppress("UNCHECKED_CAST")
-    constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString().split(",").map { AgencyAndId(it) }.toSet(), parcel.readString(), parcel.readString())
+    constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString())
 
     override fun describeContents(): Int {
         return Parcelable.CONTENTS_FILE_DESCRIPTOR
@@ -15,7 +15,6 @@ class StopSuggestion(name: String, val ids: Set<AgencyAndId>, private val zone: 
 
     override fun writeToParcel(dest: Parcel?, flags: Int) {
         dest?.writeString(name)
-        dest?.writeString(ids.joinToString(",") { it.toString() })
         dest?.writeString(zone)
         dest?.writeString(zoneColour)
     }

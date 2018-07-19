@@ -25,6 +25,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     companion object {
         const val EXTRA_STOP_ID = "stopId"
+        const val EXTRA_STOP_CODE = "stopCode"
         const val EXTRA_FAVOURITE = "favourite"
         const val SOURCE_TYPE = "sourceType"
         const val SOURCE_TYPE_STOP = "stop"

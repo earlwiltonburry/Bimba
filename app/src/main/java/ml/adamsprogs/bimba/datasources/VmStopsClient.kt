@@ -22,9 +22,10 @@ class VmStopsClient {
         }
     }
 
-    /*suspend fun getBollardsByStopPoint(name: String): Map<String, Set<String>> {
+    suspend fun getSheds(name: String): Map<String, Set<String>> {
         val response = makeRequest("getBollardsByStopPoint", """{"name": "$name"}""")
-        println("asked for $name and got $response")
+        if (!response.has("success"))
+            return emptyMap()
         val rootObject = response["success"].asJsonObject["bollards"].asJsonArray
         val result = HashMap<String, Set<String>>()
         rootObject.forEach {
@@ -36,6 +37,7 @@ class VmStopsClient {
         return result
     }
 
+    /*
     suspend fun getPlatesByStopPoint(code: String): Set<Plate.ID>? {
         val getTimesResponse = makeRequest("getTimes", """{"symbol": "$code"}""")
         val name = getTimesResponse["success"].asJsonObject["bollard"].asJsonObject["name"].asString
@@ -56,6 +58,9 @@ class VmStopsClient {
             makeRequest("getStopPoints", """{"pattern": "$pattern"}""")
         }
 
+        if (!response.has("success"))
+            return emptyList()
+
         val points = response["success"].asJsonArray.map { it.asJsonObject }
 
         val names = HashSet<String>()
@@ -65,7 +70,7 @@ class VmStopsClient {
             names.add(name)
         }
 
-        return names.map { StopSuggestion(it, emptySet(), "", "") }
+        return names.map { StopSuggestion(it, "", "") }
     }
 
     private suspend fun makeRequest(method: String, data: String): JsonObject {

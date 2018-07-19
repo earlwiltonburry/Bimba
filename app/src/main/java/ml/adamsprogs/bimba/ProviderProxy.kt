@@ -26,11 +26,8 @@ class ProviderProxy(context: Context) {
             vmStopsClient.getStops(query)
         }
 
-        return if (vmSuggestions.isEmpty()) {
-            if (timetable.isEmpty())
-                emptyList()
-            else
-                timetable.getStopSuggestions()
+        return if (vmSuggestions.isEmpty() and !timetable.isEmpty()) {
+            timetable.getStopSuggestions()
         } else {
             vmSuggestions
         }
@@ -53,5 +50,21 @@ class ProviderProxy(context: Context) {
         result = result.replace('ć', 'c', true)
         result = result.replace('ń', 'n', true)
         return result
+    }
+
+    fun getSheds(name: String, callback: (Map<String, Set<String>>) -> Unit) {
+        launch(UI) {
+            val vmSheds = withContext(DefaultDispatcher) {
+                vmStopsClient.getSheds(name)
+            }
+
+            val sheds = if (vmSheds.isEmpty() and !timetable.isEmpty()) {
+                timetable.getHeadlinesForStop(name)
+            } else {
+                vmSheds
+            }
+
+            callback(sheds)
+        }
     }
 }
