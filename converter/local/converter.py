@@ -87,6 +87,7 @@ class TimetableDownloader:
         return s + "{0:03}".format(100 - self.__validity_length(s, e))
 
     def __clean_overlapping(self, names):
+        today = date.today().strftime('%Y%m%d')
         names.sort(key=self.__sort_key)
         print(names)
         if len(names) == 1:
@@ -96,7 +97,8 @@ class TimetableDownloader:
         for name in names[1:]:
             this_start, this_end = name.split('_')
             prev_start, prev_end = names[i-1].split('_')
-            if not (this_start < prev_end or this_start == prev_start):
+            if not ((this_start < prev_end and this_start <= today)
+                    or this_start == prev_start):
                 return_names.append(names[i-1])
 
             i = i + 1
