@@ -30,7 +30,7 @@ class LineSpecifyActivity : AppCompatActivity() {
         val line = intent.getStringExtra(EXTRA_LINE_ID)
 
         val timetable = Timetable.getTimetable()
-        val graphs = timetable.getTripGraphs(AgencyAndId(line))
+        val graphs = timetable.getTripGraphs(line)
 
         sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, graphs)
 

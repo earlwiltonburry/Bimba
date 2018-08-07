@@ -80,7 +80,9 @@ internal fun Calendar.getMode(): Int {
     }
 }
 
-internal fun CharSequence.safeSplit(vararg delimiters: String, ignoreCase: Boolean = false, limit: Int = 0): List<String> {
+internal fun CharSequence.safeSplit(vararg delimiters: String, ignoreCase: Boolean = false, limit: Int = 0): List<String>? {
+    if (this == "null")
+        return null
     if (this == "")
         return ArrayList()
     return this.split(*delimiters, ignoreCase = ignoreCase, limit = limit)

@@ -4,7 +4,6 @@ import android.content.*
 import com.google.gson.*
 import ml.adamsprogs.bimba.*
 import ml.adamsprogs.bimba.models.*
-import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 import java.util.Calendar
 
 
@@ -34,11 +33,11 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
         for ((name, jsonTimetables) in favouritesMap.entrySet()) {
             val timetables = HashSet<StopSegment>()
             jsonTimetables.asJsonArray.mapTo(timetables) {
-                val stopSegment = StopSegment(AgencyAndId(it.asJsonObject["stop"].asString), null)
+                val stopSegment = StopSegment(it.asJsonObject["stop"].asString, null)
                 val plates = HashSet<Plate.ID>()
                 it.asJsonObject["plates"].asJsonArray.mapTo(plates) {
-                    Plate.ID(AgencyAndId(it.asJsonObject["line"].asString),
-                            AgencyAndId(it.asJsonObject["stop"].asString),
+                    Plate.ID(it.asJsonObject["line"].asString,
+                            it.asJsonObject["stop"].asString,
                             it.asJsonObject["headsign"].asString)
                 }
                 stopSegment.plates = plates
@@ -90,12 +89,12 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
             val timetables = JsonArray()
             for (timetable in favourite.segments) {
                 val segment = JsonObject()
-                segment.addProperty("stop", timetable.stop.id)
+                segment.addProperty("stop", timetable.stop)
                 val plates = JsonArray()
                 for (plate in timetable.plates ?: HashSet()) {
                     val element = JsonObject()
-                    element.addProperty("stop", plate.stop.id)
-                    element.addProperty("line", plate.line.id)
+                    element.addProperty("stop", plate.stop)
+                    element.addProperty("line", plate.line)
                     element.addProperty("headsign", plate.headsign)
                     plates.add(element)
                 }
@@ -115,9 +114,9 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
         if (names.size < 2)
             return
 
-        val newCache = HashMap<AgencyAndId, ArrayList<Departure>>()
+        val newCache = HashMap<Int, ArrayList<Departure>>()
         names.forEach {
-            favourites[it]!!.fullDepartures.forEach {
+            favourites[it]!!.fullTimetable().forEach {
                 if (newCache[it.key] == null)
                     newCache[it.key] = ArrayList()
                 newCache[it.key]!!.addAll(it.value)
@@ -147,18 +146,6 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
         favourites[newName] = favourite
         addIndex(newName)
         serialize()
-    }
-
-    fun registerOnVm(receiver: MessageReceiver, context: Context) {
-        favourites.values.forEach {
-            it.registerOnVm(receiver, context)
-        }
-    }
-
-    fun deregisterOnVm(receiver: MessageReceiver, context: Context) {
-        favourites.values.forEach {
-            it.deregisterOnVm(receiver, context)
-        }
     }
 
     operator fun get(name: String): Favourite? {

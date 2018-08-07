@@ -30,7 +30,7 @@ class StopSpecifyActivity : AppCompatActivity() {
             val layoutManager = LinearLayoutManager(this)
             val departuresList: RecyclerView = list_view
 
-            departuresList.adapter = ShedAdapter(this, it)
+            departuresList.adapter = ShedAdapter(this, it, name)
             departuresList.layoutManager = layoutManager
         }
         /*val timetable = Timetable.getTimetable(this)
@@ -41,7 +41,7 @@ class StopSpecifyActivity : AppCompatActivity() {
         supportActionBar?.title = name
     }
 
-    class ShedAdapter(val context: Context, private val values: Map<String, Set<String>>) :
+    class ShedAdapter(val context: Context, private val values: Map<String, Set<String>>, private val stopName: String) :
             RecyclerView.Adapter<ShedAdapter.ViewHolder>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
             val context = parent.context
@@ -59,11 +59,12 @@ class StopSpecifyActivity : AppCompatActivity() {
                 val intent = Intent(context, StopActivity::class.java)
                 intent.putExtra(StopActivity.SOURCE_TYPE, StopActivity.SOURCE_TYPE_STOP)
                 intent.putExtra(StopActivity.EXTRA_STOP_CODE, code)
+                intent.putExtra(StopActivity.EXTRA_STOP_NAME, stopName)
                 context.startActivity(intent)
             }
             holder.stopCode.text = values.keys.sorted()[position]
             holder.stopHeadlines.text = values.entries.sortedBy { it.key }[position].value
-                    .sortedBy { it.split(" → ")[0].toInt() } // fixme<p:1> natural sort
+                    .sortedBy { it.split(" → ")[0].toInt() }
                     .joinToString()
         }
 

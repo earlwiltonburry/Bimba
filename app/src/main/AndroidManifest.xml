@@ -44,7 +44,7 @@
             android:theme="@style/AppTheme" />
 
         <service
-            android:name=".datasources.VmClient"
+            android:name=".datasources.VmService"
             android:enabled="true"
             android:exported="false" />
 

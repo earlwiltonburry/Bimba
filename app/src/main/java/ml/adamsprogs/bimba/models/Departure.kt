@@ -1,6 +1,5 @@
 package ml.adamsprogs.bimba.models
 
-import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 import ml.adamsprogs.bimba.safeSplit
 import ml.adamsprogs.bimba.secondsAfterMidnight
 import java.io.Serializable
@@ -8,7 +7,7 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
-data class Departure(val line: AgencyAndId, val mode: List<Int>, val time: Int, val lowFloor: Boolean, //time in seconds since midnight
+data class Departure(val line: String, val mode: List<Int>, val time: Int, val lowFloor: Boolean, //time in seconds since midnight
                      val modification: List<String>, val headsign: String, val vm: Boolean = false,
                      var tomorrow: Boolean = false, val onStop: Boolean = false) {
 
@@ -28,7 +27,7 @@ data class Departure(val line: AgencyAndId, val mode: List<Int>, val time: Int, 
     companion object {
         private fun filterDepartures(departures: List<Departure>, relativeTo: Int = Calendar.getInstance().secondsAfterMidnight()): Array<Serializable> {
             val filtered = ArrayList<Departure>()
-            val lines = HashMap<AgencyAndId, Int>()
+            val lines = HashMap<String, Int>()
             val sortedDepartures = departures.sortedBy { it.timeTill(relativeTo) }
             for (departure in sortedDepartures) {
                 val timeTill = departure.timeTill(relativeTo)
@@ -42,15 +41,15 @@ data class Departure(val line: AgencyAndId, val mode: List<Int>, val time: Int, 
             return arrayOf(filtered, lines.all { it.value >= 3 })
         }
 
-        fun createDepartures(stopId: AgencyAndId): Map<AgencyAndId, List<Departure>> {
+        /*fun createDepartures(stopCode: String): Map<String, List<Departure>> {
             val timetable = Timetable.getTimetable()
-            val departures = timetable.getStopDepartures(stopId)
+            val departures = timetable.getStopDepartures(stopCode)
 
             return rollDepartures(departures)
-        }
+        }*/
 
-        fun rollDepartures(departures: Map<AgencyAndId, List<Departure>>): Map<AgencyAndId, List<Departure>> { //todo<p:2> it'd be nice to roll from tomorrow's real mode (Fri->Sat, Sat->Sun, Sun->Mon)
-            val rolledDepartures = HashMap<AgencyAndId, List<Departure>>()
+        fun rollDepartures(departures: Map<Int, List<Departure>>): Map<Int, List<Departure>> { //todo<p:2> it'd be nice to roll from tomorrow's real mode (Fri->Sat, Sat->Sun, Sun->Mon)
+            val rolledDepartures = HashMap<Int, List<Departure>>()
             departures.keys.forEach {
                 val (filtered, isFull) = filterDepartures(departures[it]!!)
                 if (isFull as Boolean) {
@@ -80,9 +79,9 @@ data class Departure(val line: AgencyAndId, val mode: List<Int>, val time: Int, 
             val array = string.split("|")
             if (array.size != 9)
                 throw IllegalArgumentException()
-            val modification = array[4].safeSplit(";")
-            return Departure(AgencyAndId.convertFromString(array[0]),
-                    array[1].safeSplit(";").map { Integer.parseInt(it) },
+            val modification = array[4].safeSplit(";")!!
+            return Departure(array[0],
+                    array[1].safeSplit(";")!!.map { Integer.parseInt(it) },
                     Integer.parseInt(array[2]), array[3] == "true",
                     modification, array[5], array[6] == "true",
                     array[7] == "true", array[8] == "true")
@@ -96,5 +95,5 @@ data class Departure(val line: AgencyAndId, val mode: List<Int>, val time: Int, 
         return (time - relativeTo) / 60
     }
 
-    val lineText: String = line.id
+    val lineText: String = line
 }

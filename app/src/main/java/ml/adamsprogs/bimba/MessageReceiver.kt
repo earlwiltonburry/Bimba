@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import ml.adamsprogs.bimba.datasources.TimetableDownloader
-import ml.adamsprogs.bimba.datasources.VmClient
+import ml.adamsprogs.bimba.datasources.VmService
 import ml.adamsprogs.bimba.models.Departure
 import ml.adamsprogs.bimba.models.Plate
 
@@ -28,11 +28,12 @@ class MessageReceiver private constructor() : BroadcastReceiver() {
                 listener.onTimetableDownload(result)
             }
         }
-        if (intent?.action == VmClient.ACTION_READY) {
-            val departures = intent.getStringArrayListExtra(VmClient.EXTRA_DEPARTURES)?.map { Departure.fromString(it) }?.toSet()
-            val plateId = intent.getSerializableExtra(VmClient.EXTRA_PLATE_ID) as Plate.ID
+        if (intent?.action == VmService.ACTION_READY) {
+            val departures = intent.getStringArrayListExtra(VmService.EXTRA_DEPARTURES)?.map { Departure.fromString(it) }?.toSet()
+            val plateId = intent.getSerializableExtra(VmService.EXTRA_PLATE_ID) as Plate.ID
+            val stopCode = intent.getSerializableExtra(VmService.EXTRA_STOP_CODE) as String
             for (listener in onVmListeners) {
-                listener.onVm(departures, plateId)
+                listener.onVm(departures, plateId, stopCode)
             }
         }
     }
@@ -58,6 +59,6 @@ class MessageReceiver private constructor() : BroadcastReceiver() {
     }
 
     interface OnVmListener {
-        fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID)
+        fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID, stopCode: String)
     }
 }

@@ -94,7 +94,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
             prefsEditor.apply()
 
             val oldDb = File(getSecondaryExternalFilesDir(), "timetable.db")
-            gtfsDb.renameTo(oldDb) // todo<p:1> delete old before downloading (may require stopping VmClient), and mutex with VmClient
+            gtfsDb.renameTo(oldDb) // todo<p:1> delete old before downloading (may require stopping VmService), and mutex with VmService
 
             cancelNotification()
 

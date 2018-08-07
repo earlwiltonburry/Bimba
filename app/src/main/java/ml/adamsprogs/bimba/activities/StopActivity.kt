@@ -15,17 +15,16 @@ import kotlinx.android.synthetic.main.activity_stop.*
 import ml.adamsprogs.bimba.*
 import ml.adamsprogs.bimba.collections.FavouriteStorage
 import ml.adamsprogs.bimba.datasources.*
-import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 import ml.adamsprogs.bimba.models.*
 import ml.adamsprogs.bimba.models.adapters.DeparturesAdapter
 
-class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, MessageReceiver.OnVmListener, Favourite.OnVmPreparedListener {
+class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, ProviderProxy.OnDeparturesReadyListener {
 
     private var sectionsPagerAdapter: SectionsPagerAdapter? = null
 
     companion object {
-        const val EXTRA_STOP_ID = "stopId"
         const val EXTRA_STOP_CODE = "stopCode"
+        const val EXTRA_STOP_NAME = "stopName"
         const val EXTRA_FAVOURITE = "favourite"
         const val SOURCE_TYPE = "sourceType"
         const val SOURCE_TYPE_STOP = "stop"
@@ -34,50 +33,47 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         const val MODE_WORKDAYS = 0
         const val MODE_SATURDAYS = 1
         const val MODE_SUNDAYS = 2
+
+        const val TIMETABLE_TYPE_DEPARTURE = "timetable_type_departure"
+        const val TIMETABLE_TYPE_FULL = "timetable_type_full"
     }
 
-    private var stopSegment: StopSegment? = null
+    private var stopCode = ""
     private var favourite: Favourite? = null
     private var timetableType = "departure"
-    private lateinit var timetable: Timetable
     private val context = this
     private val receiver = MessageReceiver.getMessageReceiver()
-    private val vmDepartures = HashMap<Plate.ID, Set<Departure>>()
-    private var hasDepartures = false
-    private var lastUpdated = 0L
+    private lateinit var providerProxy: ProviderProxy
+    private val departures = HashMap<Plate.ID, Set<Departure>>()
+    private val fullDepartures = HashMap<Int, List<Departure>>()
+    private lateinit var subscriptionId: String
+
 
     private lateinit var sourceType: String
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stop)
 
-        timetable = Timetable.getTimetable(this)
+        providerProxy = ProviderProxy(this)
 
         sourceType = intent.getStringExtra(SOURCE_TYPE)
 
         setSupportActionBar(toolbar)
 
-        val departures = when (sourceType) {
+        when (sourceType) {
             SOURCE_TYPE_STOP -> {
-                stopSegment = StopSegment(intent.getSerializableExtra(EXTRA_STOP_ID) as AgencyAndId, null).apply { fillPlates() }
-                supportActionBar?.title = timetable.getStopName(stopSegment!!.stop)
-                null
+                stopCode = intent.getSerializableExtra(EXTRA_STOP_CODE) as String
+                supportActionBar?.title = intent.getSerializableExtra(EXTRA_STOP_NAME) as String
             }
             SOURCE_TYPE_FAV -> {
                 favourite = intent.getParcelableExtra(EXTRA_FAVOURITE)
                 supportActionBar?.title = favourite!!.name
-                favourite!!.addOnVmPreparedListener(this)
-                if (favourite!!.fullDepartures.isNotEmpty())
-                    favourite!!.fullDepartures
-                else
-                    null
             }
-            else -> null
         }
 
         showFab()
 
-        sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, departures)
+        sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, null)
 
         container.adapter = sectionsPagerAdapter
 
@@ -87,51 +83,20 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         selectTodayPage()
 
         prepareOnDownloadListener()
-    }
-
-    private fun getFavouriteDepartures() {
-        refreshAdapter(favourite!!.allDepartures())
-    }
-
-    private fun refreshAdapterFromStop() {
-        val now = Calendar.getInstance().secondsAfterMidnight()
-        val departures = HashMap<AgencyAndId, List<Departure>>()
-        if (this.vmDepartures.isNotEmpty()) {
-            departures[timetable.getServiceForToday()] = this.vmDepartures.flatMap { it.value }.sortedBy { it.timeTill(now) }
-            refreshAdapter(departures)
-        } else {
-            refreshAdapter(Departure.createDepartures(stopSegment!!.stop))
-            hasDepartures = true
-        }
-    }
-
-    private fun refreshAdapter(departures: Map<AgencyAndId, List<Departure>>?) {
-        if (departures != null)
-            sectionsPagerAdapter?.departures = departures
-        sectionsPagerAdapter?.notifyDataSetChanged()
-        selectTodayPage()
-        lastUpdated = Calendar.getInstance().timeInMillis
-    }
-
-    override fun onVmPrepared() {
-        // println("onVmPrepared: ticked? ${ticked()}; vmBacked? ${favourite!!.isBackedByVm}")
-        if ((favourite!!.isBackedByVm || ticked()) && (timetableType == "departure")) {
-            getFavouriteDepartures()
-        }
+        subscribeForDepartures()
     }
 
     private fun showFab() {
         if (sourceType == SOURCE_TYPE_FAV)
             return
 
-        val stopSymbol = timetable.getStopCode(stopSegment!!.stop)
-
         val favourites = FavouriteStorage.getFavouriteStorage(context)
-        if (!favourites.has(stopSymbol)) {
+        if (!favourites.has(stopCode)) {
             fab.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_favourite_empty, this.theme))
         }
 
         fab.setOnClickListener {
+            /* todo
             if (!favourites.has(stopSymbol)) {
                 val items = HashSet<StopSegment>()
                 items.add(stopSegment!!)
@@ -141,6 +106,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 Snackbar.make(it, getString(R.string.stop_already_fav), Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show()
             }
+            */
         }
     }
 
@@ -157,41 +123,40 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     private fun prepareOnDownloadListener() {
         val filter = IntentFilter(TimetableDownloader.ACTION_DOWNLOADED)
-        filter.addAction(VmClient.ACTION_READY)
+        filter.addAction(VmService.ACTION_READY)
         filter.addCategory(Intent.CATEGORY_DEFAULT)
         registerReceiver(receiver, filter)
         receiver.addOnTimetableDownloadListener(context)
-        if (sourceType == SOURCE_TYPE_STOP) {
-            receiver.addOnVmListener(context)
-            val intent = Intent(this, VmClient::class.java)
-            intent.putExtra("stop", stopSegment)
-            intent.action = "request"
-            startService(intent)
+    }
+
+    private fun subscribeForDepartures() {
+        subscriptionId = if (sourceType == SOURCE_TYPE_STOP) {
+            providerProxy.subscribeForDepartures(stopCode, this, this)
         } else
-            favourite!!.registerOnVm(receiver, context)
+            favourite!!.subscribeForDepartures(this, context)
     }
 
-    override fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID) {
-        // println("onVm")
-        if (vmDepartures == null && this.vmDepartures.isEmpty() && hasDepartures) {
-            // println("\tbut noVM")
-            if (ticked()) {
-                //  println("\t\tbut ticked")
-                refreshAdapterFromStop()
-            }
+    override fun onDeparturesReady(departures: Set<Departure>, plateId: Plate.ID) {
+        this.departures[plateId] = HashSet()
+        (this.departures[plateId]as HashSet).addAll(departures)
+        if (timetableType == TIMETABLE_TYPE_FULL)
             return
-        }
-        if (timetableType == "departure" && stopSegment!!.contains(plateId)) {
-            // println("\tthere’s still vm")
-            if (vmDepartures != null)
-                this.vmDepartures[plateId] = vmDepartures
-            else
-                this.vmDepartures.remove(plateId)
-            refreshAdapterFromStop()
-        }
+        refreshAdapter()
     }
 
-    private fun ticked() = Calendar.getInstance().timeInMillis - lastUpdated >= VmClient.TICK_6_ZINA_TIM_WITH_MARGIN
+    private fun refreshAdapter() {
+        if (timetableType == TIMETABLE_TYPE_FULL)
+            sectionsPagerAdapter!!.departures = fullDepartures
+        else {
+            val departures = HashMap<Int, List<Departure>>()
+            val now = Calendar.getInstance()
+            val tab = now.getMode()
+            val seconds = now.secondsAfterMidnight()
+            departures[tab] = this.departures.flatMap { it.value }.sortedBy { it.timeTill(seconds) }
+            sectionsPagerAdapter!!.departures = departures
+        }
+        sectionsPagerAdapter!!.notifyDataSetChanged()
+    }
 
     override fun onTimetableDownload(result: String?) {
         val message: String = when (result) {
@@ -204,9 +169,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             Snackbar.make(findViewById(R.id.stop_layout), message, Snackbar.LENGTH_LONG).show()
         } catch (e: IllegalArgumentException) {
         }
-        timetable = Timetable.getTimetable(this, true)
-        if (sourceType == SOURCE_TYPE_STOP)
-            refreshAdapterFromStop()
+        providerProxy.refreshTimetable(this)
     }
 
     private fun selectTodayPage() {
@@ -214,7 +177,8 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_stop, menu)
+        if (providerProxy.mode == ProviderProxy.MODE_FULL)
+            menuInflater.inflate(R.menu.menu_stop, menu)
         return true
     }
 
@@ -222,22 +186,21 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         val id = item.itemId
 
         if (id == R.id.action_change_type) {
-            if (timetableType == "departure") {
-                timetableType = "full"
+            if (timetableType == TIMETABLE_TYPE_DEPARTURE) {
+                timetableType = TIMETABLE_TYPE_FULL
                 item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_timetable_departure, this.theme))
                 sectionsPagerAdapter?.relativeTime = false
-                if (sourceType == SOURCE_TYPE_STOP)
-                    refreshAdapter(timetable.getStopDepartures(stopSegment!!.stop))
-                else
-                    refreshAdapter(favourite!!.fullTimetable())
+                if (fullDepartures.isEmpty())
+                    if (sourceType == SOURCE_TYPE_STOP)
+                        fullDepartures.putAll(providerProxy.getFullTimetable(stopCode))
+                    else
+                        fullDepartures.putAll(favourite!!.fullTimetable())
+                refreshAdapter()
             } else {
-                timetableType = "departure"
+                timetableType = TIMETABLE_TYPE_DEPARTURE
                 item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_timetable_full, this.theme))
                 sectionsPagerAdapter?.relativeTime = true
-                if (sourceType == SOURCE_TYPE_STOP)
-                    refreshAdapterFromStop()
-                else
-                    refreshAdapter(favourite!!.allDepartures())
+                refreshAdapter()
             }
             return true
         }
@@ -248,18 +211,14 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     override fun onDestroy() {
         super.onDestroy()
         receiver.removeOnTimetableDownloadListener(context)
-        if (sourceType == SOURCE_TYPE_STOP) {
-            receiver.removeOnVmListener(context)
-            val intent = Intent(this, VmClient::class.java)
-            intent.putExtra("stop", stopSegment)
-            intent.action = "remove"
-            startService(intent)
-        } else
-            favourite!!.deregisterOnVm(receiver, context)
+        if (sourceType == SOURCE_TYPE_STOP)
+            providerProxy.unsubscribeFromDepartures(subscriptionId, this)
+        else
+            favourite!!.unsubscribeFromDepartures(subscriptionId, this)
         unregisterReceiver(receiver)
     }
 
-    inner class SectionsPagerAdapter(fm: FragmentManager, var departures: Map<AgencyAndId, List<Departure>>?) : FragmentStatePagerAdapter(fm) {
+    inner class SectionsPagerAdapter(fm: FragmentManager, var departures: Map<Int, List<Departure>>?) : FragmentStatePagerAdapter(fm) {
         var relativeTime = true
 
         override fun getItem(position: Int): Fragment {
@@ -267,28 +226,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 return PlaceholderFragment.newInstance(null, relativeTime) { updateFabVisibility(it) }
             if (departures!!.isEmpty())
                 return PlaceholderFragment.newInstance(ArrayList(), relativeTime) { updateFabVisibility(it) }
-            val sat = try {
-                timetable.getServiceFor(Calendar.SATURDAY)
-            } catch (e: IllegalArgumentException) {
-                null
-            }
-            val sun = try {
-                timetable.getServiceFor(Calendar.SUNDAY)
-            } catch (e: IllegalArgumentException) {
-                null
-            }
-            val list: List<Departure> = when (position) {
-                1 -> departures!![sat] ?: ArrayList()
-                2 -> departures!![sun] ?: ArrayList()
-                0 -> try {
-                    departures!!
-                            .filter { it.key != sat && it.key != sun }
-                            .toList()[0].second
-                } catch (e: IndexOutOfBoundsException) {
-                    ArrayList<Departure>()
-                }
-                else -> throw IndexOutOfBoundsException("No tab at index $position")
-            }
+            val list: List<Departure> = departures!![position] ?: ArrayList()
             return PlaceholderFragment.newInstance(list, relativeTime) { updateFabVisibility(it) }
         }
 
@@ -303,7 +241,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         }
     }
 
-    class PlaceholderFragment: Fragment() {
+    class PlaceholderFragment : Fragment() {
         lateinit var updater: (Int) -> Unit
         override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
             val rootView = inflater.inflate(R.layout.fragment_stop, container, false)

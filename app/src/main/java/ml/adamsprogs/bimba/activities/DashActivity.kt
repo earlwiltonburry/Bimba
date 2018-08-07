@@ -29,8 +29,8 @@ import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
 
 //todo<p:1> searchView integration
 class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener,
-        FavouritesAdapter.OnMenuItemClickListener, Favourite.OnVmPreparedListener,
-        FavouritesAdapter.ViewHolder.OnClickListener {
+        FavouritesAdapter.OnMenuItemClickListener, FavouritesAdapter.ViewHolder.OnClickListener, ProviderProxy.OnDeparturesReadyListener {
+
     val context: Context = this
     private val receiver = MessageReceiver.getMessageReceiver()
     private lateinit var timetable: Timetable
@@ -45,6 +45,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     private var actionMode: ActionMode? = null
     private var isWarned = false
     private lateinit var providerProxy: ProviderProxy
+    private val listenersIds = HashSet<String>()
 
     companion object {
         const val REQUEST_EDIT_FAVOURITE = 1
@@ -224,7 +225,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     private fun prepareFavourites() {
         favourites = FavouriteStorage.getFavouriteStorage(context)
         favourites.forEach {
-            it.addOnVmPreparedListener(this)
+            listenersIds.add(it.subscribeForDepartures(this, this))
         }
         val layoutManager = LinearLayoutManager(context)
         favouritesList = favourites_list
@@ -234,7 +235,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         favouritesList.layoutManager = layoutManager
     }
 
-    override fun onVmPrepared() {
+    override fun onDeparturesReady(departures: Set<Departure>, plateId: Plate.ID) {
         favouritesList.adapter.notifyDataSetChanged()
     }
 
@@ -246,11 +247,10 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     private fun prepareListeners() {
         val filter = IntentFilter(TimetableDownloader.ACTION_DOWNLOADED)
-        filter.addAction(VmClient.ACTION_READY)
+        filter.addAction(VmService.ACTION_READY)
         filter.addCategory(Intent.CATEGORY_DEFAULT)
         registerReceiver(receiver, filter)
         receiver.addOnTimetableDownloadListener(context as MessageReceiver.OnTimetableDownloadListener)
-        favourites.registerOnVm(receiver, context)
     }
 
     private fun startDownloaderService() {
@@ -258,7 +258,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             startService(Intent(context, TimetableDownloader::class.java))
     }
 
-    override fun onBackPressed() {
+    override fun onBackPressed() { //fixme
         if (drawerLayout.isDrawerOpen(drawerView)) {
             drawerLayout.closeDrawer(drawerView)
             return
@@ -276,8 +276,8 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     override fun onDestroy() {
         super.onDestroy()
+        listenersIds.forEach { providerProxy.unsubscribeFromDepartures(it, this) }
         receiver.removeOnTimetableDownloadListener(context as MessageReceiver.OnTimetableDownloadListener)
-        favourites.deregisterOnVm(receiver, context)
         unregisterReceiver(receiver)
     }
 

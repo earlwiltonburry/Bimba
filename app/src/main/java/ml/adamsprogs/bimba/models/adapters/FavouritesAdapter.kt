@@ -9,10 +9,8 @@ import android.view.*
 import android.widget.*
 import ml.adamsprogs.bimba.R
 import android.view.LayoutInflater
-import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.*
 import java.util.*
 import ml.adamsprogs.bimba.Declinator
 import ml.adamsprogs.bimba.collections.FavouriteStorage
@@ -61,7 +59,7 @@ class FavouritesAdapter(val appContext: Context, var favourites: FavouriteStorag
             holder.nameTextView.text = favourite.name
 
             holder.selectedOverlay.visibility = if (isSelected(position)) View.VISIBLE else View.INVISIBLE
-            holder.moreButton.setOnClickListener {
+            holder.moreButton.setOnClickListener { it ->
                 val popup = PopupMenu(appContext, it)
                 val inflater = popup.menuInflater
                 popup.setOnMenuItemClickListener {
@@ -75,9 +73,9 @@ class FavouritesAdapter(val appContext: Context, var favourites: FavouriteStorag
                 popup.show()
             }
 
-            val nextDeparture = async(CommonPool) {
+            val nextDeparture = withContext(CommonPool) {
                 favourite.nextDeparture()
-            }.await()
+            }
 
             val nextDepartureText: String
             val nextDepartureLineText: String

@@ -3,7 +3,6 @@ package ml.adamsprogs.bimba.models.suggestions
 import android.os.Parcel
 import android.os.Parcelable
 import ml.adamsprogs.bimba.R
-import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 
 class StopSuggestion(name: String, private val zone: String, private val zoneColour: String) : GtfsSuggestion(name){
     @Suppress("UNCHECKED_CAST")

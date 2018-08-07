@@ -2,13 +2,12 @@ package ml.adamsprogs.bimba.models
 
 import android.os.Parcel
 import android.os.Parcelable
-import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 import ml.adamsprogs.bimba.safeSplit
 
-data class StopSegment(val stop: AgencyAndId, var plates: Set<Plate.ID>?) : Parcelable {
+data class StopSegment(val stop: String, var plates: Set<Plate.ID>?) : Parcelable {
     constructor(parcel: Parcel) : this(
-            parcel.readSerializable() as AgencyAndId,
-            parcel.readString().safeSplit(";").map { Plate.ID.fromString(it) }.toSet()
+            parcel.readSerializable() as String,
+            parcel.readString().safeSplit(";")?.map { Plate.ID.fromString(it) }?.toSet()
     )
 
     companion object CREATOR : Parcelable.Creator<StopSegment> {
@@ -21,16 +20,12 @@ data class StopSegment(val stop: AgencyAndId, var plates: Set<Plate.ID>?) : Parc
         }
     }
 
-    fun fillPlates() {
-        plates = Timetable.getTimetable().getPlatesForStop(stop)
-    }
-
     override fun writeToParcel(dest: Parcel?, flags: Int) {
         dest?.writeSerializable(stop)
         if (plates != null)
             dest?.writeString(plates!!.joinToString(";") { it.toString() })
         else
-            dest?.writeString("")
+            dest?.writeString("null")
     }
 
     override fun describeContents(): Int {
@@ -56,12 +51,14 @@ data class StopSegment(val stop: AgencyAndId, var plates: Set<Plate.ID>?) : Parc
     }
 
     override fun hashCode(): Int {
-        return super.hashCode()
+        var hashCode = stop.hashCode()
+        plates?.forEach { hashCode = 31 * hashCode + it.hashCode() }
+        return hashCode
     }
 
-    fun contains(plateId: Plate.ID): Boolean {
+    operator fun contains(plateId: Plate.ID): Boolean {
         if (plates == null)
-            return false
+            return plateId.stop == stop
         return plates!!.contains(plateId)
     }
 

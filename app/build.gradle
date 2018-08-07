@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion 27
-    buildToolsVersion "28.0.1"
+    buildToolsVersion "28.0.2"
     defaultConfig {
         applicationId "ml.adamsprogs.bimba.scheduleless"
         minSdkVersion 19
