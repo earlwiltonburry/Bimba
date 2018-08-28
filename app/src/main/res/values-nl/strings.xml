@@ -74,4 +74,11 @@
     <string name="title_activity_settings">Instellingen</string>
     <string name="settings">Instellingen</string>
     <string name="timetable_decompressing">Bezig met uitpakken van dienstregeling</string>
+    <string name="Mon">ma</string>
+    <string name="Tue">di</string>
+    <string name="Wed">wo</string>
+    <string name="Thu">do</string>
+    <string name="Fri">vr</string>
+    <string name="Sat">za</string>
+    <string name="Sun">zo</string>
 </resources>

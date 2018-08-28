@@ -59,6 +59,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         providerProxy = ProviderProxy(this)
         timetable = Timetable.getTimetable()
+        NetworkStateReceiver.init(this)
 
         getSuggestions()
 
@@ -75,7 +76,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         drawerView.setNavigationItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.drawer_refresh -> {
-                    startDownloaderService()
+                    startDownloaderService(true)
                 }
                 R.id.drawer_help -> {
                     startActivity(Intent(context, HelpActivity::class.java))
@@ -235,7 +236,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         favouritesList.layoutManager = layoutManager
     }
 
-    override fun onDeparturesReady(departures: Set<Departure>, plateId: Plate.ID) {
+    override fun onDeparturesReady(departures: List<Departure>, plateId: Plate.ID?) {
         favouritesList.adapter.notifyDataSetChanged()
     }
 
@@ -253,8 +254,8 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         receiver.addOnTimetableDownloadListener(context as MessageReceiver.OnTimetableDownloadListener)
     }
 
-    private fun startDownloaderService() {
-        if (getDefaultSharedPreferences(this).getBoolean("automatic timetable updates", false))
+    private fun startDownloaderService(force: Boolean = false) {
+        if (getDefaultSharedPreferences(this).getBoolean("automatic timetable updates", false) or force)
             startService(Intent(context, TimetableDownloader::class.java))
     }
 

@@ -48,33 +48,6 @@ data class Departure(val line: String, val mode: List<Int>, val time: Int, val l
             return rollDepartures(departures)
         }*/
 
-        fun rollDepartures(departures: Map<Int, List<Departure>>): Map<Int, List<Departure>> { //todo<p:2> it'd be nice to roll from tomorrow's real mode (Fri->Sat, Sat->Sun, Sun->Mon)
-            val rolledDepartures = HashMap<Int, List<Departure>>()
-            departures.keys.forEach {
-                val (filtered, isFull) = filterDepartures(departures[it]!!)
-                if (isFull as Boolean) {
-                    @Suppress("UNCHECKED_CAST")
-                    rolledDepartures[it] = filtered as List<Departure>
-                } else {
-                    val (filteredTomorrow, _) = filterDepartures(departures[it]!!, 0)
-                    val departuresTomorrow = ArrayList<Departure>()
-                    @Suppress("UNCHECKED_CAST")
-                    (filteredTomorrow as List<Departure>).forEach {
-                        val departure = it.copy()
-                        departure.tomorrow = true
-                        departuresTomorrow.add(departure)
-                    }
-                    val (result, _) =
-                            @Suppress("UNCHECKED_CAST")
-                            filterDepartures((filtered as List<Departure>) + departuresTomorrow)
-                    val now = Calendar.getInstance().secondsAfterMidnight()
-                    @Suppress("UNCHECKED_CAST")
-                    rolledDepartures[it] = (result as List<Departure>).sortedBy { it.timeTill(now) }
-                }
-            }
-            return rolledDepartures
-        }
-
         fun fromString(string: String): Departure {
             val array = string.split("|")
             if (array.size != 9)

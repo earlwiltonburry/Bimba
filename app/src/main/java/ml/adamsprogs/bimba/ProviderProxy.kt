@@ -1,14 +1,13 @@
 package ml.adamsprogs.bimba
 
-import android.annotation.SuppressLint
 import android.content.*
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.*
-import ml.adamsprogs.bimba.activities.StopActivity
 import ml.adamsprogs.bimba.datasources.*
 import ml.adamsprogs.bimba.models.*
 import ml.adamsprogs.bimba.models.suggestions.*
 import java.util.*
+import kotlin.collections.HashMap
 
 //todo make singleton
 class ProviderProxy(context: Context? = null) {
@@ -16,6 +15,7 @@ class ProviderProxy(context: Context? = null) {
     private var timetable: Timetable = Timetable.getTimetable(context)
     private var suggestions = emptyList<GtfsSuggestion>()
     private val requests = HashMap<String, Request>()
+
     var mode = if (timetable.isEmpty()) MODE_VM else MODE_FULL
 
     companion object {
@@ -25,10 +25,11 @@ class ProviderProxy(context: Context? = null) {
 
     fun getSuggestions(query: String = "", callback: (List<GtfsSuggestion>) -> Unit) {
         launch(UI) {
-            suggestions = withContext(DefaultDispatcher) {
-                getStopSuggestions(query) //+ getLineSuggestions(query) //todo<p:v+1> + bike stations, train stations, &c
+            val filtered = withContext(DefaultDispatcher) {
+                suggestions = getStopSuggestions(query) //+ getLineSuggestions(query) //todo<p:v+1> + bike stations, train stations, &c
+                filterSuggestions(query)
             }
-            callback(filterSuggestions(query))
+            callback(filtered)
         }
     }
 
@@ -65,14 +66,14 @@ class ProviderProxy(context: Context? = null) {
 
     fun getSheds(name: String, callback: (Map<String, Set<String>>) -> Unit) {
         launch(UI) {
-            val vmSheds = withContext(DefaultDispatcher) {
-                vmStopsClient.getSheds(name)
-            }
+            val sheds = withContext(DefaultDispatcher) {
+                val vmSheds = vmStopsClient.getSheds(name)
 
-            val sheds = if (vmSheds.isEmpty() and !timetable.isEmpty()) {
-                timetable.getHeadlinesForStop(name)
-            } else {
-                vmSheds
+                if (vmSheds.isEmpty() and !timetable.isEmpty()) {
+                    timetable.getHeadlinesForStop(name)
+                } else {
+                    vmSheds
+                }
             }
 
             callback(sheds)
@@ -91,7 +92,7 @@ class ProviderProxy(context: Context? = null) {
         return uuid
     }
 
-    fun subscribeForDepartures(stopCode: String, listener: StopActivity, context: StopActivity): String {
+    fun subscribeForDepartures(stopCode: String, listener: OnDeparturesReadyListener, context: Context): String {
         val intent = Intent(context, VmService::class.java)
         intent.putExtra("stop", stopCode)
         intent.action = "request"
@@ -102,11 +103,35 @@ class ProviderProxy(context: Context? = null) {
         return uuid
     }
 
-    private fun constructSegmentDepartures(stopSegments: Set<StopSegment>): Set<Departure> {
-        if (timetable.isEmpty())
-            return emptySet()
-        else
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    private fun constructSegmentDepartures(stopSegments: Set<StopSegment>): Deferred<Map<String, List<Departure>>> {
+        return async {
+            if (timetable.isEmpty())
+                emptyMap()
+            else {
+                timetable.getStopDeparturesBySegments(stopSegments)
+            }
+        }
+    }
+
+    private fun filterDepartures(departures: Map<String, List<Departure>>): List<Departure> {
+        val now = Calendar.getInstance().secondsAfterMidnight()
+        val lines = HashMap<String, Int>()
+        val twoDayDepartures = (timetable.getServiceForToday()?.let {
+            departures[it]
+        } ?: emptyList()) +
+                (timetable.getServiceForTomorrow()?.let { service ->
+                    departures[service]!!.map { it.copy().apply { tomorrow = true } }
+                } ?: emptyList())
+
+        return twoDayDepartures
+                .filter { it.timeTill(now) >= 0 }
+                .filter {
+                    val existed = lines[it.line] ?: 0
+                    if (existed < 3) {
+                        lines[it.line] = existed + 1
+                        true
+                    } else false
+                }
     }
 
     fun unsubscribeFromDepartures(uuid: String, context: Context) {
@@ -119,65 +144,55 @@ class ProviderProxy(context: Context? = null) {
         mode = MODE_FULL
     }
 
-    fun getFullTimetable(stopCode: String): Map<Int, List<Departure>> {
-        val departures = if (timetable.isEmpty())
+    fun getFullTimetable(stopCode: String): Map<String, List<Departure>> {
+        return if (timetable.isEmpty())
             emptyMap()
         else
             timetable.getStopDepartures(stopCode)
 
-        return convertCalendarModes(departures)
     }
 
-    fun getFullTimetable(stopSegments: Set<StopSegment>): Map<Int, List<Departure>> {
-        val departures = if (timetable.isEmpty())
+    fun getFullTimetable(stopSegments: Set<StopSegment>): Map<String, List<Departure>> {
+        return if (timetable.isEmpty())
             emptyMap()
         else
             timetable.getStopDeparturesBySegments(stopSegments)
 
-        return convertCalendarModes(departures)
-    }
-
-    @SuppressLint("UseSparseArrays")
-    private fun convertCalendarModes(raw: Map<String, List<Departure>>): Map<Int, List<Departure>> {
-        val sunday = timetable.getServiceFor(Calendar.SUNDAY)
-        val saturday = timetable.getServiceFor(Calendar.SATURDAY)
-
-        val departures = HashMap<Int, List<Departure>>()
-        departures[StopActivity.MODE_WORKDAYS] =
-                try {
-                    raw.filter { it.key != saturday && it.key != sunday }.toList()[0].second
-                } catch (e: IndexOutOfBoundsException) {
-                    ArrayList<Departure>()
-                }
-
-        departures[StopActivity.MODE_SATURDAYS] = raw[saturday] ?: ArrayList()
-        departures[StopActivity.MODE_SUNDAYS] = raw[sunday] ?: ArrayList()
-
-        return departures
     }
 
     interface OnDeparturesReadyListener {
-        fun onDeparturesReady(departures: Set<Departure>, plateId: Plate.ID)
+        fun onDeparturesReady(departures: List<Departure>, plateId: Plate.ID?)
     }
 
     inner class Request(private val listener: OnDeparturesReadyListener, private val segments: Set<StopSegment>) : MessageReceiver.OnVmListener {
         private val receiver = MessageReceiver.getMessageReceiver()
         private val receivedPlates = HashSet<Plate.ID>()
 
+        private var cache: Deferred<Map<String, List<Departure>>>? = null
+
         init {
-            receiver.addOnVmListener(this)
+            receiver.addOnVmListener(this@Request)
+            launch(UI) {
+                cache = constructSegmentDepartures(segments)
+            }
         }
 
-        override fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID, stopCode: String) {
-            if (segments.any { plateId in it }) {
-                if (vmDepartures != null) {
-                    listener.onDeparturesReady(vmDepartures, plateId)
-                    if (plateId !in receivedPlates)
-                        receivedPlates.add(plateId)
+        override fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID?, stopCode: String) {
+            launch(UI) {
+                if (plateId == null) {
+                    listener.onDeparturesReady(filterDepartures(cache!!.await()), null)
                 } else {
-                    receivedPlates.remove(plateId)
-                    if (receivedPlates.isEmpty())
-                        listener.onDeparturesReady(constructSegmentDepartures(segments), plateId)
+                    if (segments.any { plateId in it }) {
+                        if (vmDepartures != null) {
+                            listener.onDeparturesReady(vmDepartures.toList(), plateId)
+                            if (plateId !in receivedPlates)
+                                receivedPlates.add(plateId)
+                        } else {
+                            receivedPlates.remove(plateId)
+                            if (receivedPlates.isEmpty())
+                                listener.onDeparturesReady(filterDepartures(cache!!.await()), null)
+                        }
+                    }
                 }
             }
         }

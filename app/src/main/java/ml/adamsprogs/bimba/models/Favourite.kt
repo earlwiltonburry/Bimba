@@ -15,8 +15,8 @@ class Favourite : Parcelable, ProviderProxy.OnDeparturesReadyListener {
         private set
     var segments: HashSet<StopSegment>
         private set
-    private var fullDepartures: Map<Int, List<Departure>> = HashMap()
-    private var cache: Set<Departure> = HashSet()
+    private var fullDepartures: Map<String, List<Departure>> = HashMap()
+    private var cache: List<Departure> = ArrayList()
 
     val size
         get() = segments.sumBy {
@@ -39,17 +39,17 @@ class Favourite : Parcelable, ProviderProxy.OnDeparturesReadyListener {
 
         val mapString = mapDir.readText()
 
-        val map = HashMap<Int, List<Departure>>()
+        val map = HashMap<String, List<Departure>>()
         mapString.safeSplit("%")!!.forEach { it ->
             val (k, v) = it.split("#")
-            map[k.toInt()] = v.split("&").map { Departure.fromString(it) }
+            map[k] = v.split("&").map { Departure.fromString(it) }
         }
         this.fullDepartures = map
         mapDir.delete()
         providerProxy = ProviderProxy()
     }
 
-    constructor(name: String, segments: HashSet<StopSegment>, cache: Map<Int, List<Departure>>, context: Context) {
+    constructor(name: String, segments: HashSet<StopSegment>, cache: Map<String, List<Departure>>, context: Context) {
         this.fullDepartures = cache
         this.name = name
         this.segments = segments
@@ -121,14 +121,14 @@ class Favourite : Parcelable, ProviderProxy.OnDeparturesReadyListener {
                 cache.sortedBy { it.time }[0]
 
 
-    fun fullTimetable(): Map<Int, List<Departure>> {
+    fun fullTimetable(): Map<String, List<Departure>> {
         if (fullDepartures.isEmpty())
             fullDepartures = providerProxy.getFullTimetable(segments)
         return fullDepartures
     }
 
     private fun removeFromCache(plate: Plate.ID) {
-        val map = HashMap<Int, List<Departure>>()
+        val map = HashMap<String, List<Departure>>()
         fullDepartures
         fullDepartures.forEach { it ->
             map[it.key] = it.value.filter { plate.line != it.line || plate.headsign != it.headsign }
@@ -141,7 +141,7 @@ class Favourite : Parcelable, ProviderProxy.OnDeparturesReadyListener {
         return providerProxy.subscribeForDepartures(segments, this, context)
     }
 
-    override fun onDeparturesReady(departures: Set<Departure>, plateId: Plate.ID) {
+    override fun onDeparturesReady(departures: List<Departure>, plateId: Plate.ID?) {
         cache = departures
         listener.onDeparturesReady(departures, plateId)
     }

@@ -54,6 +54,8 @@ data class Plate(val id: ID, val departures: HashMap<Int, HashSet<Departure>>?) 
 
     data class ID(val line: String, val stop: String, val headsign: String) : Serializable {
         companion object {
+            val dummy = Plate.ID("", "", "")
+
             fun fromString(string: String): ID {
                 val (line, stop, headsign) = string.split("|")
                 return ID(line,

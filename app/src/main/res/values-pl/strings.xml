@@ -73,4 +73,11 @@
     <string name="title_activity_settings">Ustawienia</string>
     <string name="settings">Ustawienia</string>
     <string name="timetable_decompressing">Rozpakowywanie rozkładu</string>
+    <string name="Mon">pon.</string>
+    <string name="Tue">wt.</string>
+    <string name="Wed">śr.</string>
+    <string name="Thu">czw.</string>
+    <string name="Fri">pt.</string>
+    <string name="Sat">sob.</string>
+    <string name="Sun">niedz.</string>
 </resources>

@@ -73,4 +73,11 @@
     <string name="title_activity_settings">Einstellungen</string>
     <string name="settings">Einstellungen</string>
     <string name="timetable_decompressing">Fahrplan wird entpackt</string>
+    <string name="Mon">Mo.</string>
+    <string name="Tue">Di.</string>
+    <string name="Wed">Mi.</string>
+    <string name="Thu">Do.</string>
+    <string name="Fri">Fr.</string>
+    <string name="Sat">Sa.</string>
+    <string name="Sun">So.</string>
 </resources>

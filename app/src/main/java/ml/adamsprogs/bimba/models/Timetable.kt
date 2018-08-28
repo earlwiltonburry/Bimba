@@ -3,9 +3,10 @@ package ml.adamsprogs.bimba.models
 import android.annotation.SuppressLint
 import android.content.Context
 import android.database.*
-import android.database.sqlite.SQLiteCantOpenDatabaseException
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
+import android.util.SparseArray
+import android.util.SparseBooleanArray
 import ml.adamsprogs.bimba.*
 import ml.adamsprogs.bimba.models.gtfs.*
 import ml.adamsprogs.bimba.models.suggestions.*
@@ -41,7 +42,7 @@ class Timetable private constructor() {
             val dbFile = File(filesDir, "timetable.db")
             timetable.db = try {
                 SQLiteDatabase.openDatabase(dbFile.path, null, SQLiteDatabase.OPEN_READONLY)
-            } catch(e: SQLiteException) {
+            } catch (e: SQLiteException) {
                 null
             }
             this.timetable = timetable
@@ -101,23 +102,27 @@ class Timetable private constructor() {
     fun getHeadlinesForStop(stop: String): Map<String, Set<String>> {
         val headsigns = HashMap<String, HashSet<String>>()
 
-        var cursor = db!!.rawQuery("select stop_code from stops where stop_name = ?",
+        var cursor = db!!.rawQuery("select stop_id, stop_code from stops where stop_name = ?",
                 arrayOf(stop))
-        val stopCodes = ArrayList<String>()
+        val stopIds = ArrayList<String>()
+        val stopCodes = SparseArray<String>()
         while (cursor.moveToNext()) {
-            stopCodes.add(cursor.getString(0))
+            cursor.getInt(0).let {
+                stopIds.add(it.toString())
+                stopCodes.put(it, cursor.getString(1))
+            }
         }
 
         cursor.close()
 
-        val where = stopCodes.joinToString(" or ", "where ") { "stop_code = ?" }
+        val where = stopIds.joinToString(" or ", "where ") { "stop_id = ?" }
 
-        cursor = db!!.rawQuery("select stop_code, route_id, trip_headsign " +
+        cursor = db!!.rawQuery("select stop_id, route_id, trip_headsign " +
                 "from stop_times natural join trips " +
-                where, stopCodes.toTypedArray())
+                where, stopIds.toTypedArray())
 
         while (cursor.moveToNext()) {
-            val stopCode = cursor.getString(0)
+            val stopCode = stopCodes[cursor.getInt(0)]
             val route = cursor.getString(1)
             val headsign = cursor.getString(2)
             if (stopCode !in headsigns)
@@ -193,14 +198,21 @@ class Timetable private constructor() {
         return map
     }
 
-    fun getStopDeparturesBySegments(segments: Set<StopSegment>): Map<String, List<Departure>> {
+    fun getStopDeparturesBySegments(segments: Set<StopSegment>): Map<String, List<Departure>> { // todo optimisation!!!
+        val stopCodes = HashMap<String, Int>()
+        var cursor = db!!.rawQuery("select stop_id, stop_code from stops", emptyArray())
+        while (cursor.moveToNext()) {
+            stopCodes[cursor.getString(1)] = cursor.getInt(0)
+        }
+        cursor.close()
+
         val wheres = segments.flatMap {
-            it.plates?.map {
-                "(stop_code = ${it.stop} and route_id = '${it.line}' and trip_headsign = '${it.headsign}')"
-            } ?: listOf()
+            it.plates?.map { plate ->
+                "(stop_id = ${stopCodes[plate.stop]} and route_id = '${plate.line}' and trip_headsign = '${plate.headsign}')"
+            } ?: listOf("stop_id = ${stopCodes[it.stop]}")
         }.joinToString(" or ")
 
-        val cursor = db!!.rawQuery("select route_id, service_id, departure_time, " +
+        cursor = db!!.rawQuery("select route_id, service_id, departure_time, " +
                 "wheelchair_accessible, stop_sequence, trip_id, trip_headsign, route_desc " +
                 "from stop_times natural join trips natural join routes where $wheres", null)
 
@@ -346,37 +358,38 @@ class Timetable private constructor() {
         return validTill
     }
 
-    fun getServiceForToday(): String {
-        val today = JCalendar.getInstance().get(JCalendar.DAY_OF_WEEK)
+    fun getServiceForToday(): String? {
+        val today = JCalendar.getInstance()
         return getServiceFor(today)
     }
 
-    fun getServiceForTomorrow(): String {
+    fun getServiceForTomorrow(): String? {
         val tomorrow = JCalendar.getInstance()
         tomorrow.add(JCalendar.DAY_OF_MONTH, 1)
-        val tomorrowDoW = tomorrow.get(JCalendar.DAY_OF_WEEK)
-        return getServiceFor(tomorrowDoW)
+        return getServiceFor(tomorrow)
     }
 
-    fun getServiceFor(day: Int): String {
-        val dayColumn = arrayOf("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")[((day + 5) % 7)]
-        val cursor = db!!.rawQuery("select service_id from calendar where $dayColumn = 1", null)
+    private fun getServiceFor(day: JCalendar): String? {
+        val dayColumn = arrayOf("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")[((day.get(JCalendar.DAY_OF_WEEK) + 5) % 7)]
+        val cursor = db!!.rawQuery("select service_id from calendar where $dayColumn = 1 and start_date < ? and ? < end_date", arrayOf(day.toIsoDate(), day.toIsoDate()))
 
-        val service: Int
-        cursor.moveToNext()
-        try {
-            service = cursor.getInt(0)
-            cursor.close()
-            return service.toString()
+        cursor.moveToFirst()
+        return try {
+            cursor.getInt(0).let {
+                cursor.close()
+                it.toString()
+            }
         } catch (e: CursorIndexOutOfBoundsException) {
-            throw IllegalArgumentException()
+            cursor.close()
+            null
         }
     }
 
-    fun getPlatesForStop(stop: String): Set<Plate.ID> {
+    private fun getPlatesForStop(stop: String): Set<Plate.ID> {
+
         val plates = HashSet<Plate.ID>()
         val cursor = db!!.rawQuery("select route_id, trip_headsign " +
-                "from stop_times natural join trips where stop_code = ? " +
+                "from stop_times natural join trips natural join stops where stop_code = ? " +
                 "group by route_id, trip_headsign", arrayOf(stop))
 
         while (cursor.moveToNext()) {
@@ -440,6 +453,45 @@ class Timetable private constructor() {
         }
 
         return graphs
+    }
+
+    fun getServiceDescription(service: String, context: Context): String {
+        val dayNames = SparseArray<String>()
+        dayNames.put(1, context.getString(R.string.Mon))
+        dayNames.put(1, context.getString(R.string.Tue))
+        dayNames.put(1, context.getString(R.string.Wed))
+        dayNames.put(1, context.getString(R.string.Thu))
+        dayNames.put(1, context.getString(R.string.Fri))
+        dayNames.put(1, context.getString(R.string.Sat))
+        dayNames.put(1, context.getString(R.string.Sun))
+
+        val cursor = db!!.rawQuery("select * from calendar where service_id = ?", arrayOf(service))
+        val days = SparseBooleanArray()
+        for (i in 1..7) {
+            days.append(i, cursor.getString(i) == "1")
+        }
+        val description = ArrayList<String>()
+        var start = 0
+
+        for (i in 1..7) {
+            if (!days[i] and (start > 0)) {
+                when {
+                    i - start == 1 -> description.add(dayNames[start])
+                    i - start == 2 -> description.add("${dayNames[start]}, ${dayNames[start + 1]}")
+                    i - start > 2 -> description.add("${dayNames[start]}–${dayNames[i - 1]}")
+                }
+                start = 0
+            }
+            if (days[i] and (start == 0))
+                start = i
+        }
+
+        val startDate = calendarFromIsoD(cursor.getString(8)).toNiceString(context)
+        val endDate = calendarFromIsoD(cursor.getString(9)).toNiceString(context)
+
+        cursor.close()
+
+        return "${description.joinToString { it }} ($startDate–$endDate)"
     }
 
     class TripGraph {

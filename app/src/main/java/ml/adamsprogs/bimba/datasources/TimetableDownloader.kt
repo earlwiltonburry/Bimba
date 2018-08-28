@@ -31,7 +31,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
         if (intent != null) {
             notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val prefs = this.getSharedPreferences("ml.adamsprogs.bimba.prefs", Context.MODE_PRIVATE)!!
-            if (!NetworkStateReceiver.isNetworkAvailable(this)) {
+            if (!NetworkStateReceiver.isNetworkAvailable()) {
                 sendResult(RESULT_NO_CONNECTIVITY)
                 return
             }

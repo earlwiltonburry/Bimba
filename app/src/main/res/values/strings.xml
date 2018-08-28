@@ -90,4 +90,12 @@
     <string name="title_timetable_source_url">Timetable source</string>
     <string name="title_activity_settings">Settings</string>
     <string name="settings">Settings</string>
+
+    <string name="Mon">Mon</string>
+    <string name="Tue">Tue</string>
+    <string name="Wed">Wed</string>
+    <string name="Thu">Thu</string>
+    <string name="Fri">Fri</string>
+    <string name="Sat">Sat</string>
+    <string name="Sun">Sun</string>
 </resources>

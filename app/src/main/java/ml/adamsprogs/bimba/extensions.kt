@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.os.Build
+import android.text.format.DateFormat
 import ml.adamsprogs.bimba.activities.StopActivity
 import java.io.*
 import java.text.SimpleDateFormat
@@ -105,4 +106,24 @@ internal fun InputStream.listenableCopyTo(out: OutputStream, bufferSize: Int = D
         bytes = read(buffer)
     }
     return bytesCopied
+}
+
+internal fun Calendar.toNiceString(context: Context, withTime: Boolean = false): String {
+    val dateFormat = DateFormat.getMediumDateFormat(context)
+    val timeFormat = DateFormat.getTimeFormat(context)
+    val now = Calendar.getInstance()
+    val date = if (get(Calendar.YEAR) == now.get(Calendar.YEAR)) {
+        when {
+            get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR) -> timeFormat.format(time)
+            now.apply { add(Calendar.DATE, -1) }.get(Calendar.DAY_OF_YEAR) == get(Calendar.DAY_OF_YEAR) -> "Yesterday"
+            else -> DateFormat.format("d MMM" as CharSequence, this.time) as String
+        }
+    } else
+        dateFormat.format(this.time)
+
+    return if (withTime) {
+        val time = timeFormat.format(this.time)
+        "$date, $time"
+    } else
+        date
 }

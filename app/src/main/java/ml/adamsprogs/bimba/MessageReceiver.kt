@@ -30,7 +30,7 @@ class MessageReceiver private constructor() : BroadcastReceiver() {
         }
         if (intent?.action == VmService.ACTION_READY) {
             val departures = intent.getStringArrayListExtra(VmService.EXTRA_DEPARTURES)?.map { Departure.fromString(it) }?.toSet()
-            val plateId = intent.getSerializableExtra(VmService.EXTRA_PLATE_ID) as Plate.ID
+            val plateId = intent.getSerializableExtra(VmService.EXTRA_PLATE_ID) as Plate.ID?
             val stopCode = intent.getSerializableExtra(VmService.EXTRA_STOP_CODE) as String
             for (listener in onVmListeners) {
                 listener.onVm(departures, plateId, stopCode)
@@ -59,6 +59,6 @@ class MessageReceiver private constructor() : BroadcastReceiver() {
     }
 
     interface OnVmListener {
-        fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID, stopCode: String)
+        fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID?, stopCode: String)
     }
 }

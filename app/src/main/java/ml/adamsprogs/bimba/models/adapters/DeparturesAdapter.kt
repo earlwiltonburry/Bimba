@@ -16,7 +16,7 @@ import ml.adamsprogs.bimba.models.Departure
 import ml.adamsprogs.bimba.rollTime
 import java.util.*
 
-class DeparturesAdapter(val context: Context, private val departures: List<Departure>?, private val relativeTime: Boolean) :
+class DeparturesAdapter(val context: Context, var departures: List<Departure>?, var relativeTime: Boolean) :
         RecyclerView.Adapter<DeparturesAdapter.ViewHolder>() {
 
     companion object {
@@ -26,31 +26,32 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
     }
 
     override fun getItemCount(): Int {
-        if (departures == null || departures.isEmpty())
+        if (departures == null || departures!!.isEmpty())
             return 1
-        return departures.size
+        return departures!!.size
     }
 
     override fun getItemViewType(position: Int): Int {
         return when {
-            departures == null -> VIEW_TYPE_EMPTY
-            departures.isEmpty() -> VIEW_TYPE_LOADING
+            departures == null -> VIEW_TYPE_LOADING //empty
+            departures!!.isEmpty() -> VIEW_TYPE_LOADING
             else -> VIEW_TYPE_CONTENT
         }
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        // todo migotanie ikon
         if (departures == null) {
             return
         }
         val line = holder.lineTextView
         val time = holder.timeTextView
         val direction = holder.directionTextView
-        if (departures.isEmpty()) {
+        if (departures!!.isEmpty()) {
             time.text = context.getString(R.string.no_departures)
             return
         }
-        val departure = departures[position]
+        val departure = departures!![position]
         val now = Calendar.getInstance()
         val departureTime = Calendar.getInstance().rollTime(departure.time)
         if (departure.tomorrow)

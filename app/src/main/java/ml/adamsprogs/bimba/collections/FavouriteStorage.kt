@@ -114,7 +114,7 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
         if (names.size < 2)
             return
 
-        val newCache = HashMap<Int, ArrayList<Departure>>()
+        val newCache = HashMap<String, ArrayList<Departure>>()
         names.forEach {
             favourites[it]!!.fullTimetable().forEach {
                 if (newCache[it.key] == null)

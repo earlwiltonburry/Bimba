@@ -2,6 +2,7 @@ package ml.adamsprogs.bimba.datasources
 
 import com.google.gson.*
 import kotlinx.coroutines.experimental.*
+import ml.adamsprogs.bimba.NetworkStateReceiver
 import ml.adamsprogs.bimba.models.suggestions.*
 import okhttp3.*
 import java.io.IOException
@@ -72,6 +73,9 @@ class VmClient {
     }
 
     suspend fun makeRequest(method: String, data: String): JsonObject {
+        if (!NetworkStateReceiver.isNetworkAvailable())
+            return JsonObject()
+
         val client = OkHttpClient()
         val url = "http://www.peka.poznan.pl/vm/method.vm?ts=${Calendar.getInstance().timeInMillis}"
         val body = RequestBody.create(MediaType.parse("application/x-www-form-urlencoded; charset=UTF-8"),
