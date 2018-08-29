@@ -12,6 +12,8 @@ import ml.adamsprogs.bimba.models.Favourite
 import ml.adamsprogs.bimba.models.Plate
 import ml.adamsprogs.bimba.models.Timetable
 
+
+//todo when plates null -> get all plates from proxy
 class FavouriteEditRowAdapter(private var favourite: Favourite) :
         RecyclerView.Adapter<FavouriteEditRowAdapter.ViewHolder>() {
     override fun getItemCount(): Int {

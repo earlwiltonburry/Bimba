@@ -45,7 +45,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     private var actionMode: ActionMode? = null
     private var isWarned = false
     private lateinit var providerProxy: ProviderProxy
-    private val listenersIds = HashSet<String>()
 
     companion object {
         const val REQUEST_EDIT_FAVOURITE = 1
@@ -153,6 +152,21 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         searchView.attachNavigationDrawerToMenuButton(drawer_layout as DrawerLayout)
     }
 
+    override fun onRestart() {
+        super.onRestart()
+        favourites = FavouriteStorage.getFavouriteStorage(context)
+        favourites.forEach {
+            it.subscribeForDepartures(this, this)
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        favourites.forEach {
+            it.unsubscribeFromDepartures(this)
+        }
+    }
+
     private fun showValidityInDrawer() {
         if (timetable.isEmpty()) {
             drawerView.menu.findItem(R.id.drawer_validity_since).title = getString(R.string.validity_offline_unavailable)
@@ -221,12 +235,14 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 .setCancelable(true)
                 .setMessage(message)
                 .create().show()
+
+        //todo if days == -1 -> delete timetable
     }
 
     private fun prepareFavourites() {
         favourites = FavouriteStorage.getFavouriteStorage(context)
         favourites.forEach {
-            listenersIds.add(it.subscribeForDepartures(this, this))
+            it.subscribeForDepartures(this, this)
         }
         val layoutManager = LinearLayoutManager(context)
         favouritesList = favourites_list
@@ -277,7 +293,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     override fun onDestroy() {
         super.onDestroy()
-        listenersIds.forEach { providerProxy.unsubscribeFromDepartures(it, this) }
         receiver.removeOnTimetableDownloadListener(context as MessageReceiver.OnTimetableDownloadListener)
         unregisterReceiver(receiver)
     }

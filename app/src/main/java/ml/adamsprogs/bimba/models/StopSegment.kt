@@ -66,6 +66,18 @@ data class StopSegment(val stop: String, var plates: Set<Plate.ID>?) : Parcelabl
         (plates as HashSet).remove(plateId)
     }
 
+    override fun toString(): String {
+        var s = "$stop: "
+        if (plates == null)
+            s += "NULL"
+        else {
+            s += "{"
+            s += plates!!.joinToString { it.toString() }
+            s += "}"
+        }
+        return s
+    }
+
     val size: Int
         get() = plates?.size ?: 0
 }

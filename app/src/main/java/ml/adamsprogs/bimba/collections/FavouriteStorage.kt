@@ -34,11 +34,18 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
             val timetables = HashSet<StopSegment>()
             jsonTimetables.asJsonArray.mapTo(timetables) {
                 val stopSegment = StopSegment(it.asJsonObject["stop"].asString, null)
-                val plates = HashSet<Plate.ID>()
-                it.asJsonObject["plates"].asJsonArray.mapTo(plates) {
-                    Plate.ID(it.asJsonObject["line"].asString,
-                            it.asJsonObject["stop"].asString,
-                            it.asJsonObject["headsign"].asString)
+                val plates = it.asJsonObject["plates"].let { jsonPlates ->
+                    if (jsonPlates == null || jsonPlates.isJsonNull)
+                        null
+                    else {
+                        HashSet<Plate.ID>().apply {
+                            jsonPlates.asJsonArray.map {
+                                Plate.ID(it.asJsonObject["line"].asString,
+                                        it.asJsonObject["stop"].asString,
+                                        it.asJsonObject["headsign"].asString)
+                            }
+                        }
+                    }
                 }
                 stopSegment.plates = plates
                 stopSegment
@@ -90,14 +97,19 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
             for (timetable in favourite.segments) {
                 val segment = JsonObject()
                 segment.addProperty("stop", timetable.stop)
-                val plates = JsonArray()
-                for (plate in timetable.plates ?: HashSet()) {
-                    val element = JsonObject()
-                    element.addProperty("stop", plate.stop)
-                    element.addProperty("line", plate.line)
-                    element.addProperty("headsign", plate.headsign)
-                    plates.add(element)
-                }
+                val plates =
+                        if (timetable.plates == null)
+                            JsonNull.INSTANCE
+                        else
+                            JsonArray().apply {
+                                for (plate in timetable.plates ?: HashSet()) {
+                                    val element = JsonObject()
+                                    element.addProperty("stop", plate.stop)
+                                    element.addProperty("line", plate.line)
+                                    element.addProperty("headsign", plate.headsign)
+                                    add(element)
+                                }
+                            }
                 segment.add("plates", plates)
                 timetables.add(segment)
             }

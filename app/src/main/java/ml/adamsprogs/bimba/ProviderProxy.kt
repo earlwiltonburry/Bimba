@@ -189,8 +189,9 @@ class ProviderProxy(context: Context? = null) {
                                 receivedPlates.add(plateId)
                         } else {
                             receivedPlates.remove(plateId)
-                            if (receivedPlates.isEmpty())
+                            if (receivedPlates.isEmpty()) {
                                 listener.onDeparturesReady(filterDepartures(cache!!.await()), null)
+                            }
                         }
                     }
                 }

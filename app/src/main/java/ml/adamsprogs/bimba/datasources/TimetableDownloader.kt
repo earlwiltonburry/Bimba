@@ -57,7 +57,6 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                     return
                 }
                 if (httpCon.responseCode != HttpsURLConnection.HTTP_OK) {
-                    println(httpCon.responseMessage)
                     sendResult(RESULT_NO_CONNECTIVITY)
                     return
                 }

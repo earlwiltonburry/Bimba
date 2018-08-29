@@ -98,17 +98,15 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         }
 
         fab.setOnClickListener {
-            /* todo
-            if (!favourites.has(stopSymbol)) {
+            if (!favourites.has(stopCode)) {
                 val items = HashSet<StopSegment>()
-                items.add(stopSegment!!)
-                favourites.add(stopSymbol, items, this@StopActivity)
+                items.add(StopSegment(stopCode, null))
+                favourites.add(stopCode, items, this@StopActivity)
                 fab.setImageDrawable(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_favourite, this.theme))
             } else {
                 Snackbar.make(it, getString(R.string.stop_already_fav), Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show()
             }
-            */
         }
     }
 
@@ -214,7 +212,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         if (sourceType == SOURCE_TYPE_STOP)
             providerProxy.unsubscribeFromDepartures(subscriptionId, this)
         else
-            favourite!!.unsubscribeFromDepartures(subscriptionId, this)
+            favourite!!.unsubscribeFromDepartures(this)
         unregisterReceiver(receiver)
     }
 }

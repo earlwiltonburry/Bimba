@@ -17,6 +17,7 @@ class Favourite : Parcelable, ProviderProxy.OnDeparturesReadyListener {
         private set
     private var fullDepartures: Map<String, List<Departure>> = HashMap()
     private var cache: List<Departure> = ArrayList()
+    private var listenerId = ""
 
     val size
         get() = segments.sumBy {
@@ -138,7 +139,8 @@ class Favourite : Parcelable, ProviderProxy.OnDeparturesReadyListener {
 
     fun subscribeForDepartures(listener: ProviderProxy.OnDeparturesReadyListener, context: Context): String {
         this.listener = listener
-        return providerProxy.subscribeForDepartures(segments, this, context)
+        listenerId = providerProxy.subscribeForDepartures(segments, this, context)
+        return listenerId
     }
 
     override fun onDeparturesReady(departures: List<Departure>, plateId: Plate.ID?) {
@@ -146,7 +148,7 @@ class Favourite : Parcelable, ProviderProxy.OnDeparturesReadyListener {
         listener.onDeparturesReady(departures, plateId)
     }
 
-    fun unsubscribeFromDepartures(uuid: String, context: Context) {
-        providerProxy.unsubscribeFromDepartures(uuid, context)
+    fun unsubscribeFromDepartures(context: Context) {
+        providerProxy.unsubscribeFromDepartures(listenerId, context)
     }
 }

@@ -84,7 +84,6 @@ class VmClient {
                 .url(url)
                 .post(body)
                 .build()
-        println("makeRequest: $request")
 
 
         val responseBody: String?
