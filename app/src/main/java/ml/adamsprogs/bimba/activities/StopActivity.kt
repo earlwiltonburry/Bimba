@@ -72,7 +72,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         val layoutManager = LinearLayoutManager(this)
         departuresList.addItemDecoration(DividerItemDecoration(departuresList.context, layoutManager.orientation))
-        departuresList.adapter = DeparturesAdapter(this, emptyList(), true)
+        departuresList.adapter = DeparturesAdapter(this, null, true)
         adapter = departuresList.adapter as DeparturesAdapter
         departuresList.layoutManager = layoutManager
 

@@ -85,9 +85,11 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
         serialize()
     }
 
-    fun delete(name: String, plate: Plate.ID) {
-        favourites[name]?.delete(plate)
-        serialize()
+    fun delete(name: String, plate: Plate.ID): Boolean {
+        return favourites[name]?.delete(plate).let {
+            serialize()
+            it
+        } ?: false
     }
 
     private fun serialize() {

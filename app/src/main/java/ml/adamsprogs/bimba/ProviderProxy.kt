@@ -11,7 +11,7 @@ import kotlin.collections.HashMap
 
 //todo make singleton
 class ProviderProxy(context: Context? = null) {
-    private val vmStopsClient = VmClient.getVmStopClient()
+    private val vmClient = VmClient.getVmClient()
     private var timetable: Timetable = Timetable.getTimetable(context)
     private var suggestions = emptyList<GtfsSuggestion>()
     private val requests = HashMap<String, Request>()
@@ -35,7 +35,7 @@ class ProviderProxy(context: Context? = null) {
 
     private suspend fun getStopSuggestions(query: String): List<StopSuggestion> {
         val vmSuggestions = withContext(DefaultDispatcher) {
-            vmStopsClient.getStops(query)
+            vmClient.getStops(query)
         }
 
         return if (vmSuggestions.isEmpty() and !timetable.isEmpty()) {
@@ -67,7 +67,7 @@ class ProviderProxy(context: Context? = null) {
     fun getSheds(name: String, callback: (Map<String, Set<String>>) -> Unit) {
         launch(UI) {
             val sheds = withContext(DefaultDispatcher) {
-                val vmSheds = vmStopsClient.getSheds(name)
+                val vmSheds = vmClient.getSheds(name)
 
                 if (vmSheds.isEmpty() and !timetable.isEmpty()) {
                     timetable.getHeadlinesForStop(name)
@@ -158,6 +158,39 @@ class ProviderProxy(context: Context? = null) {
         else
             timetable.getStopDeparturesBySegments(stopSegments)
 
+    }
+
+    fun fillStopSegment(stopSegment: StopSegment, callback: (StopSegment?) -> Unit) {
+        launch(UI) {
+            withContext(DefaultDispatcher) {
+                callback(fillStopSegment(stopSegment))
+            }
+        }
+    }
+
+    suspend fun fillStopSegment(stopSegment: StopSegment): StopSegment? {
+        if (stopSegment.plates != null)
+            return stopSegment
+
+        return if (timetable.isEmpty())
+            vmClient.getDirections(stopSegment.stop)
+        else
+            timetable.getHeadlinesForStopCode(stopSegment.stop)
+    }
+
+    fun getStopName(stopCode: String, callback: (String?) -> Unit) {
+        launch(UI) {
+            withContext(DefaultDispatcher) {
+                callback(getStopName(stopCode))
+            }
+        }
+    }
+
+    suspend fun getStopName(stopCode: String): String? {
+        return if (timetable.isEmpty())
+            vmClient.getName(stopCode)
+        else
+            timetable.getStopName(stopCode)
     }
 
     interface OnDeparturesReadyListener {

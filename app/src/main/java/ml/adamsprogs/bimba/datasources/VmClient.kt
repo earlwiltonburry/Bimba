@@ -3,6 +3,8 @@ package ml.adamsprogs.bimba.datasources
 import com.google.gson.*
 import kotlinx.coroutines.experimental.*
 import ml.adamsprogs.bimba.NetworkStateReceiver
+import ml.adamsprogs.bimba.models.Plate
+import ml.adamsprogs.bimba.models.StopSegment
 import ml.adamsprogs.bimba.models.suggestions.*
 import okhttp3.*
 import java.io.IOException
@@ -14,7 +16,7 @@ class VmClient {
     companion object {
         private var vmClient: VmClient? = null
 
-        fun getVmStopClient(): VmClient {
+        fun getVmClient(): VmClient {
             if (vmClient == null)
                 vmClient = VmClient()
             return vmClient!!
@@ -100,5 +102,32 @@ class VmClient {
         } catch (e: JsonSyntaxException) {
             JsonObject()
         }
+    }
+
+    suspend fun getName(symbol: String): String? {
+        val timesResponse = withContext(DefaultDispatcher) {
+            makeRequest("getTimes", """{"symbol": "$symbol"}""")
+        }
+        if (!timesResponse.has("success"))
+            return null
+
+        return timesResponse["success"].asJsonObject["bollard"].asJsonObject["name"].asString
+    }
+
+    suspend fun getDirections(symbol: String): StopSegment? {
+        val name = getName(symbol)
+        val directionsResponse = makeRequest("getBollardsByStopPoint", """{"name": "$name"}""")
+
+        if (!directionsResponse.has("success"))
+            return null
+
+        return StopSegment(symbol,
+                directionsResponse["success"].asJsonObject["bollards"].asJsonArray.filter {
+                    it.asJsonObject["bollard"].asJsonObject["tag"].asString == symbol
+                }[0].asJsonObject["directions"].asJsonArray.map {
+                    it.asJsonObject.let { direction ->
+                        Plate.ID(direction["lineName"].asString, symbol, direction["direction"].asString)
+                    }
+                }.toSet())
     }
 }

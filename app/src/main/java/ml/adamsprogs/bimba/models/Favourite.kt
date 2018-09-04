@@ -94,11 +94,13 @@ class Favourite : Parcelable, ProviderProxy.OnDeparturesReadyListener {
         mapFile.writeText(map)
     }
 
-    fun delete(plateId: Plate.ID) {
+    fun delete(plateId: Plate.ID): Boolean {
         segments.forEach {
-            it.remove(plateId)
+            if (!it.remove(plateId))
+                return false
         }
         removeFromCache(plateId)
+        return true
     }
 
     fun rename(newName: String) {

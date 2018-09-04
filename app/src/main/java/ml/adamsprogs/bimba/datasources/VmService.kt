@@ -50,7 +50,9 @@ class VmService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val stopCode = intent?.getStringExtra("stop")!!
+        if (intent == null)
+            return START_STICKY
+        val stopCode = intent.getStringExtra("stop")!!
         val action = intent.action
         val once = intent.getBooleanExtra("once", false)
         if (action == "request") {
@@ -119,7 +121,7 @@ class VmService : Service() {
             return
         }
 
-        val javaRootMapObject = VmClient.getVmStopClient().makeRequest("getTimes", """{"symbol": "$stopCode"}""")
+        val javaRootMapObject = VmClient.getVmClient().makeRequest("getTimes", """{"symbol": "$stopCode"}""")
 
         if (!javaRootMapObject.has("success")) {
             sendResult(stopCode, null, null)

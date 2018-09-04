@@ -62,8 +62,10 @@ data class StopSegment(val stop: String, var plates: Set<Plate.ID>?) : Parcelabl
         return plates!!.contains(plateId)
     }
 
-    fun remove(plateId: Plate.ID) {
-        (plates as HashSet).remove(plateId)
+    fun remove(plateId: Plate.ID): Boolean {
+        if (plates == null)
+            return false
+        return (plates as HashSet).remove(plateId)
     }
 
     override fun toString(): String {

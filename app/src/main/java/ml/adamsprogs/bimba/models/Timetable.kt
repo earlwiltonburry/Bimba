@@ -145,6 +145,29 @@ class Timetable private constructor() {
         */
     }
 
+    fun getHeadlinesForStopCode(stop: String): StopSegment {
+        var cursor = db!!.rawQuery("select stop_id from stops where stop_code = ?",
+                arrayOf(stop))
+        cursor.moveToFirst()
+        val stopId = cursor.getInt(0)
+        cursor.close()
+
+
+        cursor = db!!.rawQuery("select route_id, trip_headsign " +
+                "from stop_times natural join trips where stop_id = ? ",
+                arrayOf(stopId.toString()))
+
+        val plates = HashSet<Plate.ID>()
+
+        while (cursor.moveToNext()) {
+            val route = cursor.getString(0)
+            val headsign = cursor.getString(1)
+            plates.add(Plate.ID(route, stop, headsign))
+        }
+        cursor.close()
+        return StopSegment(stop, plates)
+    }
+
     fun getStopName(stopCode: String): String {
         val cursor = db!!.rawQuery("select stop_name from stops where stop_code = ?",
                 arrayOf(stopCode))
