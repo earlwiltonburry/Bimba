@@ -71,4 +71,11 @@
     <string name="title_activity_settings">Impostazioni</string>
     <string name="settings">Impostazioni</string>
     <string name="timetable_decompressing">Decomprimendo l’orario</string>
+    <string name="Mon">lun</string>
+    <string name="Tue">mar</string>
+    <string name="Wed">mer</string>
+    <string name="Thu">gio</string>
+    <string name="Fri">ven</string>
+    <string name="Sat">sab</string>
+    <string name="Sun">dom</string>
 </resources>

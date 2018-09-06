@@ -37,7 +37,13 @@ foreach ($timetables as $id => $timetable) {
     $t = $timetable['t'];
     $sha = $timetable['sha'];
 
-    // todo if $id in $oldMetadata -> skip
+    $shallSkip = false;
+    foreach ($oldMetadata as $entry) {
+        if ($entry['id'] == $id)
+            $shallSkip = true;
+    }
+
+    if ($shallSkip) continue;
 
     $fp = fopen(dirname(__FILE__) . "/$id.db.gz", 'wb');
     $ch = curl_init($t);

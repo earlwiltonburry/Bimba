@@ -31,7 +31,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
         if (intent != null) {
             notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val prefs = this.getSharedPreferences("ml.adamsprogs.bimba.prefs", Context.MODE_PRIVATE)!!
-            if (!NetworkStateReceiver.isNetworkAvailable(this)) {
+            if (!NetworkStateReceiver.isNetworkAvailable()) {
                 sendResult(RESULT_NO_CONNECTIVITY)
                 return
             }
@@ -57,7 +57,6 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
                     return
                 }
                 if (httpCon.responseCode != HttpsURLConnection.HTTP_OK) {
-                    println(httpCon.responseMessage)
                     sendResult(RESULT_NO_CONNECTIVITY)
                     return
                 }
@@ -94,7 +93,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
             prefsEditor.apply()
 
             val oldDb = File(getSecondaryExternalFilesDir(), "timetable.db")
-            gtfsDb.renameTo(oldDb) // todo<p:1> delete old before downloading (may require stopping VmClient), and mutex with VmClient
+            gtfsDb.renameTo(oldDb) // todo<p:1> delete old before downloading (may require stopping VmService), and mutex with VmService
 
             cancelNotification()
 

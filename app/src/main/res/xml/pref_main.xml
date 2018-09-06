@@ -9,5 +9,10 @@
 
         <!-- todo intent get file (import) -->
         <!-- todo reset source -->
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="key_timetable_automatic_update"
+            android:summary="Automatically check for and download timetable updates"
+            android:title="Automatic updates" />
     </PreferenceCategory>
 </PreferenceScreen>
