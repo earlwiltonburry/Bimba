@@ -193,6 +193,17 @@ class ProviderProxy(context: Context? = null) {
             timetable.getStopName(stopCode)
     }
 
+    fun describeService(service: String, context: Context): String? {
+        return if (timetable.isEmpty())
+            null
+        else
+            timetable.getServiceDescription(service, context)
+    }
+
+    fun getServiceFirstDay(service: String): Int {
+        return timetable.getServiceFirstDay(service)
+    }
+
     interface OnDeparturesReadyListener {
         fun onDeparturesReady(departures: List<Departure>, plateId: Plate.ID?)
     }

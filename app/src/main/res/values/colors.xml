@@ -12,4 +12,5 @@
 
     <color name="tram">#00adef</color>
     <color name="bus">#c4212a</color>
+    <color name="text_on_toolbar">#ffffff</color>
 </resources>

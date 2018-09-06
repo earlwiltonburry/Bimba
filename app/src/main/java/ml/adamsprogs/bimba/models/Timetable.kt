@@ -178,6 +178,16 @@ class Timetable private constructor() {
         return name
     }
 
+    fun getStopId(stopCode: String): String {
+        val cursor = db!!.rawQuery("select stop_id from stops where stop_code = ?",
+                arrayOf(stopCode))
+        cursor.moveToNext()
+        val id = cursor.getString(0)
+        cursor.close()
+
+        return id
+    }
+
     fun getStopCode(stopId: String): String {
         val cursor = db!!.rawQuery("select stop_code from stops where stop_id = ?",
                 arrayOf(stopId))
@@ -189,11 +199,12 @@ class Timetable private constructor() {
     }
 
     fun getStopDepartures(stopCode: String): Map<String, List<Departure>> {
+        val stopID = getStopId(stopCode)
         val map = HashMap<String, ArrayList<Departure>>()
         val cursor = db!!.rawQuery("select route_id, service_id, departure_time, " +
                 "wheelchair_accessible, stop_sequence, trip_id, trip_headsign, route_desc " +
-                "from stop_times natural join trips natural join routes where stop_code = ?",
-                arrayOf(stopCode))
+                "from stop_times natural join trips natural join routes where stop_id = ?",
+                arrayOf(stopID))
 
         while (cursor.moveToNext()) {
             val line = cursor.getString(0)
@@ -478,25 +489,36 @@ class Timetable private constructor() {
         return graphs
     }
 
+    fun getServiceFirstDay(service: String): Int {
+        val cursor = db!!.rawQuery("select * from calendar where service_id = ?", arrayOf(service))
+        cursor.moveToFirst()
+        var i = 1
+        while ((cursor.getString(i) == "0") and (i < 8)) i++
+        cursor.close()
+        return i
+    }
+
     fun getServiceDescription(service: String, context: Context): String {
         val dayNames = SparseArray<String>()
         dayNames.put(1, context.getString(R.string.Mon))
-        dayNames.put(1, context.getString(R.string.Tue))
-        dayNames.put(1, context.getString(R.string.Wed))
-        dayNames.put(1, context.getString(R.string.Thu))
-        dayNames.put(1, context.getString(R.string.Fri))
-        dayNames.put(1, context.getString(R.string.Sat))
-        dayNames.put(1, context.getString(R.string.Sun))
+        dayNames.put(2, context.getString(R.string.Tue))
+        dayNames.put(3, context.getString(R.string.Wed))
+        dayNames.put(4, context.getString(R.string.Thu))
+        dayNames.put(5, context.getString(R.string.Fri))
+        dayNames.put(6, context.getString(R.string.Sat))
+        dayNames.put(7, context.getString(R.string.Sun))
 
         val cursor = db!!.rawQuery("select * from calendar where service_id = ?", arrayOf(service))
+        cursor.moveToFirst()
         val days = SparseBooleanArray()
         for (i in 1..7) {
             days.append(i, cursor.getString(i) == "1")
         }
+        days.append(8, false)
         val description = ArrayList<String>()
         var start = 0
 
-        for (i in 1..7) {
+        for (i in 1..8) {
             if (!days[i] and (start > 0)) {
                 when {
                     i - start == 1 -> description.add(dayNames[start])

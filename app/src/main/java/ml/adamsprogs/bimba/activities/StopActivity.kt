@@ -7,6 +7,7 @@ import android.view.*
 import android.support.v4.content.res.ResourcesCompat
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.*
+import android.widget.AdapterView
 
 import java.util.Calendar
 import kotlinx.android.synthetic.main.activity_stop.*
@@ -15,9 +16,9 @@ import ml.adamsprogs.bimba.collections.FavouriteStorage
 import ml.adamsprogs.bimba.datasources.*
 import ml.adamsprogs.bimba.models.*
 import ml.adamsprogs.bimba.models.adapters.DeparturesAdapter
+import ml.adamsprogs.bimba.models.adapters.ServiceAdapter
 
 class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, ProviderProxy.OnDeparturesReadyListener {
-
     companion object {
         const val EXTRA_STOP_CODE = "stopCode"
         const val EXTRA_STOP_NAME = "stopName"
@@ -36,7 +37,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     private var stopCode = ""
     private var favourite: Favourite? = null
-    private var timetableType = "departure"
+    private var timetableType = TIMETABLE_TYPE_DEPARTURE
     private val context = this
     private val receiver = MessageReceiver.getMessageReceiver()
     private lateinit var providerProxy: ProviderProxy
@@ -151,7 +152,8 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     private fun refreshAdapter() {
         if (timetableType == TIMETABLE_TYPE_FULL) {
-            // todo adapter.departures = fullDepartures
+            @Suppress("UNCHECKED_CAST")
+            adapter.departures = fullDepartures[(dateSpinner.selectedItem as ServiceAdapter.RowItem).service]
         } else {
             val now = Calendar.getInstance()
             val seconds = now.secondsAfterMidnight()
@@ -186,6 +188,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         if (id == R.id.action_change_type) {
             if (timetableType == TIMETABLE_TYPE_DEPARTURE) {
                 timetableType = TIMETABLE_TYPE_FULL
+
                 item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_timetable_departure, this.theme))
                 adapter.relativeTime = false
                 if (fullDepartures.isEmpty())
@@ -193,8 +196,28 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                         fullDepartures.putAll(providerProxy.getFullTimetable(stopCode))
                     else
                         fullDepartures.putAll(favourite!!.fullTimetable())
+
+                dateSpinner.let { spinner ->
+                    spinner.adapter = ServiceAdapter(this, R.layout.toolbar_spinner_item, fullDepartures.keys.map {
+                        ServiceAdapter.RowItem(it, providerProxy.describeService(it, this)!!)
+                    }.sorted()).apply {
+                        setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                    }
+                    spinner.visibility = View.VISIBLE
+                    spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                        override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                            refreshAdapter()
+                        }
+
+                        override fun onNothingSelected(parent: AdapterView<*>?) {
+                        }
+
+                    }
+                }
+
                 refreshAdapter()
             } else {
+                dateSpinner.visibility = View.GONE
                 timetableType = TIMETABLE_TYPE_DEPARTURE
                 item.icon = (ResourcesCompat.getDrawable(resources, R.drawable.ic_timetable_full, this.theme))
                 adapter.relativeTime = true
