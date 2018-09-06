@@ -232,7 +232,7 @@ class Timetable private constructor() {
         return map
     }
 
-    fun getStopDeparturesBySegments(segments: Set<StopSegment>): Map<String, List<Departure>> { // todo optimisation!!!
+    fun getStopDeparturesBySegments(segments: Set<StopSegment>): Map<String, List<Departure>> {
         val stopCodes = HashMap<String, Int>()
         var cursor = db!!.rawQuery("select stop_id, stop_code from stops", emptyArray())
         while (cursor.moveToNext()) {

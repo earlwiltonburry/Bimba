@@ -18,7 +18,6 @@ import ml.adamsprogs.bimba.models.Plate
 import ml.adamsprogs.bimba.models.StopSegment
 
 
-//todo when plates null -> get all plates from proxy
 class FavouriteEditRowAdapter(private var favourite: Favourite) :
         RecyclerView.Adapter<FavouriteEditRowAdapter.ViewHolder>() {
 
