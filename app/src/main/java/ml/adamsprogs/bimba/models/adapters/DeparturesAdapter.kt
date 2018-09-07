@@ -22,7 +22,6 @@ class DeparturesAdapter(val context: Context, var departures: List<Departure>?, 
     companion object {
         const val VIEW_TYPE_LOADING: Int = 0
         const val VIEW_TYPE_CONTENT: Int = 1
-        const val VIEW_TYPE_EMPTY: Int = 2
     }
 
     override fun getItemCount(): Int {
@@ -40,10 +39,13 @@ class DeparturesAdapter(val context: Context, var departures: List<Departure>?, 
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        // todo migotanie ikon
+        holder.floorIcon.visibility = View.GONE
+        holder.infoIcon.visibility = View.GONE
+
         if (departures == null) {
             return
         }
+
         val line = holder.lineTextView
         val time = holder.timeTextView
         val direction = holder.directionTextView
@@ -78,9 +80,8 @@ class DeparturesAdapter(val context: Context, var departures: List<Departure>?, 
 
         if (departure.lowFloor)
             holder.floorIcon.visibility = View.VISIBLE
-        if (departure.isModified) {
+        if (departure.isModified)
             holder.infoIcon.visibility = View.VISIBLE
-        }
         holder.root.setOnClickListener {
             AlertDialog.Builder(context)
                     .setPositiveButton(context.getText(android.R.string.ok)
