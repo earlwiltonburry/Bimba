@@ -36,25 +36,14 @@
     <string name="action_merge">Unisci</string>
     <string name="merge_favourites">Unisci le favorite</string>
     <string name="loading">Caricamento in corso…</string>
-    <string name="refresh">Ricarica</string>
+    <string name="refresh">Aggiorna l’orario</string>
     <string name="departure_row_getting_departures">Ottenere le partenze…</string>
     <string name="help_text">
-        "Perché non c’è nessun orario per il sabato?\n\n"
-
-        "Attuale orario ufficiale sarà invalido entro sabato perciò non contiene ore per sabato.\n"
-        "Assicurati di aggiornare l’orario il sabato al più tardi\n\n"
-
         "Perché un favorito mostra «Nessuna partenza successiva»?\n\n"
         
         "I favoriti contengono ore per oggi e domani."
         "«Nessuna partenza successiva» potrebbe succedere quando, ad esempio, non c’e orario per"
         "domani e non ci sono partenze oggi in più.\n\n" 
-
-        "Oggi è martedì però è un giorno festivo. Dovrei guardare l’orario per la domenica?\n\n"
-
-        "L’orario ufficiale è preparato specialmente per giorni festivi – sarà mostrato come oggi"
-        "(se è martedì, sarà nella scheda «giorni di lavoro»).\n"
-        "Assicurati di consultare le notifiche su\nhttps://www.ztm.poznan.pl/en.\n\n"
     </string>
     <string name="refreshing_cache">Cache sta essendo aggiornato. Può richiedere un certo tempo…</string>
     <string name="today">Oggi</string>
@@ -78,4 +67,6 @@
     <string name="Fri">ven</string>
     <string name="Sat">sab</string>
     <string name="Sun">dom</string>
+    <string name="summary_timetable_automatic_update">Controlla e scarica automaticamente gli aggiornamenti dell’orario</string>
+    <string name="title_timetable_automatic_update">Aggiornamenti automatici</string>
 </resources>

@@ -33,27 +33,15 @@
     <string name="departure_in__plural_nominative">Over %1$s minuten</string>
 
     <string name="home">Startpagina</string>
-    <string name="refresh">Verversen</string>
+    <string name="refresh">Dienstregeling bijwerken</string>
     <string name="help">Hulp</string>
     <string name="title_activity_help">Hulp</string>
     <string name="help_text">
-        "Waarom is er geen zaterdagdienstregeling?\n\n"
-
-        "De huidige dienstregeling zal zaterdag niet meer kloppen; daarom bevat deze geen tijden"
-        "voor zaterdag.\n"
-        "Zorg ervoor dat je uiterlijk zaterdag de dienstregeling bijwerkt.\n\n"
-
         "Waarom toont een favoriet ‘Geen vertrektijden’?\n\n"
 
         "Favorieten tonen tijden voor vandaag en morgen."
         "‘Geen vertrektijden’ kan worden getoond als er bijv. geen dienstregeling voor morgen is en"
         "er vandaag geen voertuigen meer vertrekken.\n\n"
-
-        "Het is vandaag niet alleen dinsdag, maar ook een feestdag. Moet ik niet naar de zondagsdienstregeling kijken?\n\n"
-
-        "De dienstregeling is voorbereid op feestdagen; deze zal worden weergegeven als vandaag (als"
-        "het dinsdag is, dan zal deze zich bevinden op het tabblad ‘werkdagen’).\n"
-        "Lees ook de berichten op\nhttps://www.ztm.poznan.pl/en.\n\n"
     </string>
     <string name="departure_row_getting_departures">Bezig met ophalen van vertrektijden…</string>
     <string name="valid_since">Ingegaan op %1$s</string>
@@ -81,4 +69,6 @@
     <string name="Fri">vr</string>
     <string name="Sat">za</string>
     <string name="Sun">zo</string>
+    <string name="title_timetable_automatic_update">Automatische updates</string>
+    <string name="summary_timetable_automatic_update">Automatisch controleren en download dienstregeling updates</string>
 </resources>

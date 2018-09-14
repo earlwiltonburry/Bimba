@@ -62,8 +62,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         getSuggestions()
 
-        warnTimetableValidity()
-
         prepareFavourites()
 
         prepareListeners()
@@ -77,9 +75,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 R.id.drawer_refresh -> {
                     startDownloaderService(true)
                 }
-                R.id.drawer_help -> {
-                    startActivity(Intent(context, HelpActivity::class.java))
-                }
                 R.id.drawer_settings -> {
                     startActivity(Intent(context, SettingsActivity::class.java))
                 }
@@ -89,6 +84,8 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             drawerLayout.closeDrawer(drawerView)
             super.onOptionsItemSelected(item)
         }
+
+        warnTimetableValidity()
 
         showValidityInDrawer()
 
@@ -236,7 +233,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 .setMessage(message)
                 .create().show()
 
-        //todo if days == -1 -> delete timetable
+        if (daysTillInvalid == -1) {
+            Timetable.delete(this)
+        }
     }
 
     private fun prepareFavourites() {
@@ -271,7 +270,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun startDownloaderService(force: Boolean = false) {
-        if (getDefaultSharedPreferences(this).getBoolean("automatic timetable updates", false) or force)
+        if (getDefaultSharedPreferences(this).getBoolean(getString(R.string.key_timetable_automatic_update), false) or force)
             startService(Intent(context, TimetableDownloader::class.java))
     }
 

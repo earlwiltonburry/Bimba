@@ -47,6 +47,15 @@ class Timetable private constructor() {
             }
             this.timetable = timetable
         }
+
+        fun delete(context: Context) {
+            val filesDir = context.getSecondaryExternalFilesDir()
+            val dbFile = File(filesDir, "timetable.db")
+            try {
+                dbFile.delete()
+            } catch (e: Exception) {
+            }
+        }
     }
 
     private var db: SQLiteDatabase? = null

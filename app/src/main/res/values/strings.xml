@@ -42,30 +42,18 @@
     <string name="departure_in__plural_nominative">In %1$s minutes</string>
 
     <string name="home">Home</string>
-    <string name="refresh">Refresh</string>
+    <string name="refresh">Update timetable</string>
     <string name="help">Help</string>
     <string name="navigation_drawer_home_button" translatable="false">navigation drawer home button</string>
     <string name="navigation_drawer_refresh_button" translatable="false">navigation drawer refresh button</string>
     <string name="navigation_drawer_help_button" translatable="false">navigation drawer help button</string>
     <string name="title_activity_help">Help</string>
     <string name="help_text">
-        "Why is there no timetable for Saturdays?\n\n"
-
-        "Current official timetable will have been invalid by Saturday so it doesn’t contain times"
-        "for Saturdays.\n"
-        "Be sure to update timetable on Saturday at the latest.\n\n"
-
         "Why a favourite card shows ‘No next departure’?\n\n"
 
         "Favourite cards contain times for today and tomorrow."
         "‘No next departure’ may happen when, e.g. there is no timetable for tomorrow and there"
         "are no more departures today.\n\n"
-
-        "Today is Tuesday but it’s a holiday. Shouldn’t I look at Sundays timetable?\n\n"
-
-        "Official timetable is especially prepared for holidays—it will show up as today (if"
-        "it’s Tuesday, it will be on ‘workdays’ tab).\n"
-        "Be sure to consult the messages on\nhttps://www.ztm.poznan.pl/en.\n\n"
     </string>
     <string name="departure_row_getting_departures">Getting departures…</string>
     <string name="valid_since">Valid since %1$s</string>
@@ -90,6 +78,8 @@
     <string name="title_timetable_source_url">Timetable source</string>
     <string name="title_activity_settings">Settings</string>
     <string name="settings">Settings</string>
+    <string name="key_timetable_automatic_update" translatable="false">key_timetable_automatic_update</string>
+    <string name="title_timetable_automatic_update">Automatic updates</string>
 
     <string name="Mon">Mon</string>
     <string name="Tue">Tue</string>
@@ -98,4 +88,5 @@
     <string name="Fri">Fri</string>
     <string name="Sat">Sat</string>
     <string name="Sun">Sun</string>
+    <string name="summary_timetable_automatic_update">Automatically check for and download timetable updates</string>
 </resources>

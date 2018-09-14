@@ -33,30 +33,18 @@
     <string name="merge_favourites">Lieblingshaltestellen zusammenfügen</string>
     <string name="loading">Laden…</string>
     <string name="home">Startseite</string>
-    <string name="refresh">Erfrischen</string>
+    <string name="refresh">Fahrplan aktualisieren</string>
     <string name="help">Hilfe</string>
     <string name="title_activity_help">Hilfe</string>
     <string name="valid_since">Gilt seit %1$s</string>
     <string name="valid_till">Gilt bis %1$s</string>
     <string name="departure_row_getting_departures">Abfahrten sammeln…</string>
     <string name="help_text">
-        "Warum gibt es keinen Fahrplan für Samstag?\n\n"
-
-        "Der aktuelle offizielle Fahrplan wird bis Samstag ungültig sein also es enthält nicht den"
-        "Abfahrtszeiten für Samstag.\n"
-        "Sei sicher, den Fahrplan bis spätestens Samstag zu aktualisieren.\n\n"
-
         "Warum Lieblingshaltestelle zeigt „Keine nächste Abfahrt“?\n\n"
 
         "Die Lieblingshaltestellen enthalten Abfahrtszeiten für heute und morgen."
         "„Keine nächste Abfahrt“ kann passieren, wenn es z.B. keinen Zeitplan für"
         "morgen gibt und heute keine Abfahrten mehr stattfinden.\n\n"
-
-        "Heute ist Dienstag, aber es ist ein Feiertag. Soll ich nicht den Sonntags Fahrplan angucken?\n\n"
-
-        "Der offizielle Fahrplan ist vorbereitet besonders für Feiertagen — es wird sich als"
-        "heute zeigen (wenn es Dienstag ist, es wird auf „Arbeitstage“ Karte sein).\n"
-        "Sei sicher, die Nachrichten auf\nhttps://www.ztm.poznan.pl/en\nkonsultieren.\n\n"
     </string>
     <string name="refreshing_cache">Cache wird aktualisiert. Es kann einige Zeit dauern…</string>
     <string name="today">Heute</string>
@@ -80,4 +68,6 @@
     <string name="Fri">Fr.</string>
     <string name="Sat">Sa.</string>
     <string name="Sun">So.</string>
+    <string name="title_timetable_automatic_update">Automatische Updates</string>
+    <string name="summary_timetable_automatic_update">Automatisch nach Fahrplanaktualisierungen suchen und diese herunterladen</string>
 </resources>
