@@ -18,7 +18,8 @@
     <string name="timetable_downloading_progress" translatable="false">%1$1.2f MiB/%2$1.2f MiB</string>
     <string name="timetable_decompressing">Decompressing timetable</string>
     <string name="search_placeholder">Stop…</string>
-    <string name="no_connectivity">No connectivity – can’t update timetable</string>
+    <string name="no_connectivity_cant_update">No connectivity – can’t update timetable</string>
+    <string name="no_connectivity">No connectivity</string>
     <string name="timetable_up_to_date">Timetable is up-to-date</string>
     <string name="validity_failed">Downloaded timetable is corrupted – can’t update</string>
     <string name="error_try_later">Error. Try again later</string>
@@ -89,4 +90,5 @@
     <string name="Sat">Sat</string>
     <string name="Sun">Sun</string>
     <string name="summary_timetable_automatic_update">Automatically check for and download timetable updates</string>
+    <string name="server_error">Server error</string>
 </resources>

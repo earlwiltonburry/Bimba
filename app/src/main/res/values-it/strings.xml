@@ -20,7 +20,8 @@
     <string name="no_db_downloading">L’orario è stando scaricato</string>
     <string name="timetable_downloading">Scaricando l’orario</string>
     <string name="search_placeholder">Fermata…</string>
-    <string name="no_connectivity">Nessuna connettività – non si riesce aggiornare l’orario</string>
+    <string name="no_connectivity_cant_update">Nessuna connettività – non si riesce aggiornare l’orario</string>
+    <string name="no_connectivity">Nessuna connettività</string>
     <string name="timetable_up_to_date">L’orario sta aggiornato</string>
     <string name="validity_failed">L’orario scaricato sta corrotto – non si riesce aggiornare</string>
     <string name="error_try_later">Errore. Riprova più tardi</string>
@@ -69,4 +70,5 @@
     <string name="Sun">dom</string>
     <string name="summary_timetable_automatic_update">Controlla e scarica automaticamente gli aggiornamenti dell’orario</string>
     <string name="title_timetable_automatic_update">Aggiornamenti automatici</string>
+    <string name="server_error">Errore del server</string>
 </resources>

@@ -145,9 +145,9 @@ class Favourite : Parcelable, ProviderProxy.OnDeparturesReadyListener {
         return listenerId
     }
 
-    override fun onDeparturesReady(departures: List<Departure>, plateId: Plate.ID?) {
+    override fun onDeparturesReady(departures: List<Departure>, plateId: Plate.ID?, code: Int) {
         cache = departures
-        listener.onDeparturesReady(departures, plateId)
+        listener.onDeparturesReady(departures, plateId, code)
     }
 
     fun unsubscribeFromDepartures(context: Context) {

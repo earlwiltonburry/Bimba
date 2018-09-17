@@ -4,7 +4,9 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.os.Build
+import android.support.design.widget.Snackbar
 import android.text.format.DateFormat
+import android.view.View
 import ml.adamsprogs.bimba.activities.StopActivity
 import java.io.*
 import java.text.SimpleDateFormat
@@ -126,4 +128,14 @@ internal fun Calendar.toNiceString(context: Context, withTime: Boolean = false):
         "$date, $time"
     } else
         date
+}
+
+fun showError(view: View, code: Int, context: Context) {
+    val message = when {
+        code == 0 -> context.getString(R.string.no_connectivity)
+        (code >= 500) and (code < 600) -> context.getString(R.string.server_error)
+        else -> ""
+    }
+    if (message != "")
+        Snackbar.make(view, message, Snackbar.LENGTH_LONG).show()
 }

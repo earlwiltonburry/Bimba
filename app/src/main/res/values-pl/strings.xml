@@ -14,7 +14,8 @@
     <string name="search_placeholder">Przystanek…</string>
     <string name="timetable_up_to_date">Rozkład jest aktualny</string>
     <string name="validity_failed">Pobrany rozkład jest uszkodzony – nie można zaktualizować</string>
-    <string name="no_connectivity">Brak połączenia z Internetem – nie można zaktualizować rozkładu</string>
+    <string name="no_connectivity_cant_update">Brak połączenia z Internetem – nie można zaktualizować rozkładu</string>
+    <string name="no_connectivity">Brak połączenia z Internetem</string>
     <string name="error_try_later">Błąd. Spróbuj ponownie później</string>
     <string name="now">Teraz</string>
     <string name="stop_already_fav">Ten przystanek już jest pośród ulubionych</string>
@@ -70,4 +71,5 @@
     <string name="Sun">niedz.</string>
     <string name="summary_timetable_automatic_update">Automatycznie sprawdzaj i pobieraj aktualizacje rozkładu</string>
     <string name="title_timetable_automatic_update">Automatyczne aktualizacje</string>
+    <string name="server_error">Błąd servera</string>
 </resources>

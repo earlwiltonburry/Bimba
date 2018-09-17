@@ -20,6 +20,7 @@ class VmService : Service() {
         const val EXTRA_DEPARTURES = "ml.adamsprogs.bimba.extra.vm.departures"
         const val EXTRA_PLATE_ID = "ml.adamsprogs.bimba.extra.vm.plate"
         const val EXTRA_STOP_CODE = "ml.adamsprogs.bimba.extra.vm.stop"
+        const val EXTRA_CODE = "ml.adamsprogs.bimba.extra.vm.code"
         const val TICK_6_ZINA_TIM = 12500L
         const val TICK_6_ZINA_TIM_WITH_MARGIN = TICK_6_ZINA_TIM * 3 / 4
     }
@@ -76,9 +77,10 @@ class VmService : Service() {
     }
 
     private fun cleanRequests() {
-        requests.forEach {
-            if (it.value <= 0)
-                requests.remove(it.key)
+        val newRequests = requests.filter { it.value > 0 }
+        requests.clear()
+        newRequests.forEach {
+            requests[it.key] = it.value
         }
     }
 
@@ -121,10 +123,10 @@ class VmService : Service() {
             return
         }
 
-        val javaRootMapObject = VmClient.getVmClient().makeRequest("getTimes", """{"symbol": "$stopCode"}""")
+        val (code, javaRootMapObject) = VmClient.getVmClient().makeRequest("getTimes", """{"symbol": "$stopCode"}""")
 
         if (!javaRootMapObject.has("success")) {
-            sendResult(stopCode, null, null)
+            sendResult(stopCode, null, null, code)
             return
         }
 
@@ -173,12 +175,13 @@ class VmService : Service() {
 
     }
 
-    private fun sendResult(stopCode: String, plateId: Plate.ID?, departures: HashSet<Departure>?) {
+    private fun sendResult(stopCode: String, plateId: Plate.ID?, departures: HashSet<Departure>?, code: Int = 200) {
         val broadcastIntent = Intent()
         broadcastIntent.action = ACTION_READY
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT)
         if (departures != null)
             broadcastIntent.putStringArrayListExtra(EXTRA_DEPARTURES, departures.map { it.toString() } as ArrayList)
+        broadcastIntent.putExtra(EXTRA_CODE, code)
         broadcastIntent.putExtra(EXTRA_PLATE_ID, plateId)
         broadcastIntent.putExtra(EXTRA_STOP_CODE, stopCode)
         sendBroadcast(broadcastIntent)

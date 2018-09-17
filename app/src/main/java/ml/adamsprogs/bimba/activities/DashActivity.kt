@@ -251,8 +251,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         favouritesList.layoutManager = layoutManager
     }
 
-    override fun onDeparturesReady(departures: List<Departure>, plateId: Plate.ID?) {
+    override fun onDeparturesReady(departures: List<Departure>, plateId: Plate.ID?, code: Int) {
         favouritesList.adapter.notifyDataSetChanged()
+        showError(drawer_layout, code, this)
     }
 
     private fun getSuggestions() {
@@ -298,7 +299,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     override fun onTimetableDownload(result: String?) {
         val message: String = when (result) {
-            TimetableDownloader.RESULT_NO_CONNECTIVITY -> getString(R.string.no_connectivity)
+            TimetableDownloader.RESULT_NO_CONNECTIVITY -> getString(R.string.no_connectivity_cant_update)
             TimetableDownloader.RESULT_UP_TO_DATE -> getString(R.string.timetable_up_to_date)
             TimetableDownloader.RESULT_FINISHED -> getString(R.string.timetable_downloaded)
             else -> getString(R.string.error_try_later)
