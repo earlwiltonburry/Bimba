@@ -121,7 +121,6 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
         val editor = preferences.edit()
         editor.putString("favourites", favouritesString)
         editor.apply()
-
     }
 
     fun merge(names: List<String>, context: Context) {
@@ -168,6 +167,11 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
 
     operator fun get(position: Int): Favourite? {
         return favourites[positionIndex[position]]
+    }
+
+    operator fun set(name: String, value: Favourite) {
+        favourites[name] = value
+        serialize()
     }
 
     fun indexOf(name: String): Int {

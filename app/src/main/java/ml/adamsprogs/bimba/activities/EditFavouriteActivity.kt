@@ -42,7 +42,7 @@ class EditFavouriteActivity : AppCompatActivity() {
         recyclerView!!.layoutManager = layoutManager
         val dividerItemDecoration = DividerItemDecoration(this, layoutManager.orientation)
         recyclerView.addItemDecoration(dividerItemDecoration)
-        recyclerView.adapter = FavouriteEditRowAdapter(favourite!!)
+        recyclerView.adapter = FavouriteEditRowAdapter(favourite!!, favourite_edit_loading, favourite_edit_list)
         setSupportActionBar(toolbar)
         supportActionBar?.title = getString(R.string.edit_favourite_title, favourite!!.name)
         nameEdit = favourite_name_edit
