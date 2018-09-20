@@ -16,7 +16,7 @@ class Favourite : Parcelable, ProviderProxy.OnDeparturesReadyListener {
     var segments: HashSet<StopSegment>
         private set
     private var fullDepartures: Map<String, List<Departure>> = HashMap()
-    private var cache: List<Departure> = ArrayList()
+    private val cache = HashMap<Plate.ID, List<Departure>>()
     private var listenerId = ""
 
     val size
@@ -121,7 +121,7 @@ class Favourite : Parcelable, ProviderProxy.OnDeparturesReadyListener {
             if (cache.isEmpty())
                 null
             else
-                cache.sortedBy { it.time }[0]
+                cache.flatMap { it.value }.sortedBy { it.time }[0]
 
 
     fun fullTimetable(): Map<String, List<Departure>> {
@@ -146,7 +146,13 @@ class Favourite : Parcelable, ProviderProxy.OnDeparturesReadyListener {
     }
 
     override fun onDeparturesReady(departures: List<Departure>, plateId: Plate.ID?, code: Int) {
-        cache = departures
+        if (plateId == null) {
+            cache.clear()
+            cache[Plate.ID.dummy] = departures
+        } else {
+            cache.remove(Plate.ID.dummy)
+            cache[plateId] = departures
+        }
         listener.onDeparturesReady(departures, plateId, code)
     }
 
