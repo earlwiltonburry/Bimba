@@ -67,10 +67,6 @@ data class StopSegment(val stop: String, var plates: Set<Plate.ID>?) : Parcelabl
             return false
 
         plates = plates!!.asSequence().filter { it != plateId }.toSet()
-        println("after remove:")
-        plates!!.forEach {
-            println(it)
-        }
         return true
     }
 
