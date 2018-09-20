@@ -334,6 +334,10 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                     favouritesList.adapter.notifyItemChanged(positionBefore)
                     favouritesList.adapter.notifyItemMoved(positionBefore, positionAfter)
                 }
+                adapter[name]?.let {
+                    it.unsubscribeFromDepartures(context)
+                    it.subscribeForDepartures(this, context)
+                }
             }
         }
     }
@@ -404,12 +408,19 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 R.id.action_merge -> {
                     val selectedPositions = adapter.getSelectedItems()
                     val selectedNames = selectedPositions.map { favourites[it]?.name }.filter { it != null }.map { it!! }
-                    favourites.merge(selectedNames, this@DashActivity)
 
-                    adapter.notifyItemChanged(selectedPositions.min()!!)
-                    (1 until selectedPositions.size).forEach {
-                        adapter.notifyItemRemoved(it)
+                    (1 until selectedNames.size).forEach {
+                        selectedNames[it].let { name ->
+                            adapter.notifyItemRemoved(adapter.indexOf(name))
+                            adapter[name]?.unsubscribeFromDepartures(context)
+                        }
                     }
+                    favourites.merge(selectedNames, context)
+                    adapter[selectedNames[0]]?.let {
+                        it.unsubscribeFromDepartures(context)
+                        it.subscribeForDepartures(this@DashActivity, context)
+                    }
+                    adapter.notifyItemChanged(adapter.indexOf(selectedNames[0]))
 
                     clearSelection()
                     true

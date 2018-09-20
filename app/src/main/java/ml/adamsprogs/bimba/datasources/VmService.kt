@@ -119,7 +119,7 @@ class VmService : Service() {
     private suspend fun downloadVM(stopCode: String) {
         if (!NetworkStateReceiver.isNetworkAvailable()) {
             vms[stopCode] = emptySet()
-            sendResult(stopCode, null, null)
+            sendResult(stopCode, null, null, 0)
             return
         }
 
