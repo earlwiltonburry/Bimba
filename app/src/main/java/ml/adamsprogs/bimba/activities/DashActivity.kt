@@ -251,8 +251,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         favouritesList.layoutManager = layoutManager
     }
 
-    override fun onDeparturesReady(departures: List<Departure>, plateId: Plate.ID?) {
+    override fun onDeparturesReady(departures: List<Departure>, plateId: Plate.ID?, code: Int) {
         favouritesList.adapter.notifyDataSetChanged()
+        showError(drawer_layout, code, this)
     }
 
     private fun getSuggestions() {
@@ -298,7 +299,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
     override fun onTimetableDownload(result: String?) {
         val message: String = when (result) {
-            TimetableDownloader.RESULT_NO_CONNECTIVITY -> getString(R.string.no_connectivity)
+            TimetableDownloader.RESULT_NO_CONNECTIVITY -> getString(R.string.no_connectivity_cant_update)
             TimetableDownloader.RESULT_UP_TO_DATE -> getString(R.string.timetable_up_to_date)
             TimetableDownloader.RESULT_FINISHED -> getString(R.string.timetable_downloaded)
             else -> getString(R.string.error_try_later)
@@ -332,6 +333,10 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                     val positionAfter = favourites.indexOf(name)
                     favouritesList.adapter.notifyItemChanged(positionBefore)
                     favouritesList.adapter.notifyItemMoved(positionBefore, positionAfter)
+                }
+                adapter[name]?.let {
+                    it.unsubscribeFromDepartures(context)
+                    it.subscribeForDepartures(this, context)
                 }
             }
         }
@@ -403,12 +408,19 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 R.id.action_merge -> {
                     val selectedPositions = adapter.getSelectedItems()
                     val selectedNames = selectedPositions.map { favourites[it]?.name }.filter { it != null }.map { it!! }
-                    favourites.merge(selectedNames, this@DashActivity)
 
-                    adapter.notifyItemChanged(selectedPositions.min()!!)
-                    (1 until selectedPositions.size).forEach {
-                        adapter.notifyItemRemoved(it)
+                    (1 until selectedNames.size).forEach {
+                        selectedNames[it].let { name ->
+                            adapter.notifyItemRemoved(adapter.indexOf(name))
+                            adapter[name]?.unsubscribeFromDepartures(context)
+                        }
                     }
+                    favourites.merge(selectedNames, context)
+                    adapter[selectedNames[0]]?.let {
+                        it.unsubscribeFromDepartures(context)
+                        it.subscribeForDepartures(this@DashActivity, context)
+                    }
+                    adapter.notifyItemChanged(adapter.indexOf(selectedNames[0]))
 
                     clearSelection()
                     true

@@ -12,7 +12,8 @@
     <string name="no_db_downloading">De dienstregeling wordt gedownload…</string>
     <string name="timetable_downloading">Bezig met downloaden van dienstregeling</string>
     <string name="search_placeholder">Halte…</string>
-    <string name="no_connectivity">Geen internetverbinding – de dienstregeling kan niet worden bijgewerkt.</string>
+    <string name="no_connectivity_cant_update">Geen internetverbinding – de dienstregeling kan niet worden bijgewerkt.</string>
+    <string name="no_connectivity">Geen internetverbinding</string>
     <string name="timetable_up_to_date">De dienstregeling is volledig bijgewerkt.</string>
     <string name="validity_failed">De gedownloade dienstregeling bevat fouten – bijwerken is niet mogelijk.</string>
     <string name="error_try_later">Fout; probeer het later opnieuw.</string>
@@ -71,4 +72,5 @@
     <string name="Sun">zo</string>
     <string name="title_timetable_automatic_update">Automatische updates</string>
     <string name="summary_timetable_automatic_update">Automatisch controleren en download dienstregeling updates</string>
+    <string name="server_error">Serverfout</string>
 </resources>

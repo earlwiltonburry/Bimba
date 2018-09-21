@@ -17,7 +17,8 @@
     <string name="no_db_downloading">Fahrplan wird heruntergeladen…</string>
     <string name="timetable_downloading">Fahrplan wird heruntergeladen</string>
     <string name="search_placeholder">Haltestelle…</string>
-    <string name="no_connectivity">Kein Verbindung – kann nicht den Fahrplan aktualisieren</string>
+    <string name="no_connectivity_cant_update">Kein Verbindung – kann nicht den Fahrplan aktualisieren</string>
+    <string name="no_connectivity">Kein Verbindung</string>
     <string name="timetable_up_to_date">Fahrplan ist aktuell</string>
     <string name="validity_failed">Der heruntergeladene Fahrplan ist geschädigt – kann nicht aktualisieren</string>
     <string name="error_try_later">Fehler. Versuch später noch einmal</string>
@@ -70,4 +71,5 @@
     <string name="Sun">So.</string>
     <string name="title_timetable_automatic_update">Automatische Updates</string>
     <string name="summary_timetable_automatic_update">Automatisch nach Fahrplanaktualisierungen suchen und diese herunterladen</string>
+    <string name="server_error">Serverfehler</string>
 </resources>

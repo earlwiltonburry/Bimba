@@ -1,4 +1,6 @@
 - oficjalny rozkład od ZTM
+- VM może być używany bez rozkładu offline
+- rozkład offline operuje na dokładnych datach (zamiast dni powszednie/soboty/święta)
 - VM jest szybszy i pewniejszy (ponieważ jest generowany w ten sam sposób, co odjazdy offline)
 - ulubione przepisane od zera
 - aplikacja może być przenoszona do pamięci zewnętrznej

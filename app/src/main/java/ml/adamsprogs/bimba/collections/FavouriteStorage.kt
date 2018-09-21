@@ -29,28 +29,23 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
 
     init {
         val favouritesString = preferences.getString("favourites", "{}")
-        val favouritesMap = Gson().fromJson(favouritesString, JsonObject::class.java)
-        for ((name, jsonTimetables) in favouritesMap.entrySet()) {
-            val timetables = HashSet<StopSegment>()
-            jsonTimetables.asJsonArray.mapTo(timetables) {
-                val stopSegment = StopSegment(it.asJsonObject["stop"].asString, null)
-                val plates = it.asJsonObject["plates"].let { jsonPlates ->
-                    if (jsonPlates == null || jsonPlates.isJsonNull)
+        JsonParser().parse(favouritesString).asJsonObject.entrySet().forEach { (name, timetables) ->
+            timetables.asJsonArray.map {
+                val plates = it.asJsonObject["plates"].let {
+                    if (it == null || it.isJsonNull)
                         null
                     else {
-                        HashSet<Plate.ID>().apply {
-                            jsonPlates.asJsonArray.map {
-                                Plate.ID(it.asJsonObject["line"].asString,
-                                        it.asJsonObject["stop"].asString,
-                                        it.asJsonObject["headsign"].asString)
+                        it.asJsonArray.map {
+                            it.asJsonObject.let {
+                                Plate.ID(it["line"].asString, it["stop"].asString, it["headsign"].asString)
                             }
-                        }
+                        }.toHashSet()
                     }
                 }
-                stopSegment.plates = plates
-                stopSegment
+                StopSegment(it.asJsonObject["stop"].asString, plates)
+            }.toHashSet().let {
+                favourites[name] = Favourite(name, it, context)
             }
-            favourites[name] = Favourite(name, timetables, context)
             positionIndex.add(name)
         }
     }
@@ -121,7 +116,6 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
         val editor = preferences.edit()
         editor.putString("favourites", favouritesString)
         editor.apply()
-
     }
 
     fun merge(names: List<String>, context: Context) {
@@ -168,6 +162,11 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
 
     operator fun get(position: Int): Favourite? {
         return favourites[positionIndex[position]]
+    }
+
+    operator fun set(name: String, value: Favourite) {
+        favourites[name] = value
+        serialize()
     }
 
     fun indexOf(name: String): Int {

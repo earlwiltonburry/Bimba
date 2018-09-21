@@ -18,46 +18,63 @@ import ml.adamsprogs.bimba.models.Plate
 import ml.adamsprogs.bimba.models.StopSegment
 
 
-class FavouriteEditRowAdapter(private var favourite: Favourite) :
+class FavouriteEditRowAdapter(private var favourite: Favourite, private val loadingView: View, private val listView: View) :
         RecyclerView.Adapter<FavouriteEditRowAdapter.ViewHolder>() {
 
     private val segments = HashMap<String, StopSegment>()
     private val providerProxy = ProviderProxy()
+    private val favourites = FavouriteStorage.getFavouriteStorage()
+    private val platesList = ArrayList<Plate.ID>()
+    private val namesList = HashMap<Plate.ID, String>()
 
     init {
         launch(UI) {
             withContext(DefaultDispatcher) {
                 favourite.segments.forEach {
-                    segments[it.stop] = providerProxy.fillStopSegment(it) ?: it
+                    if (it.plates == null) {
+                        (providerProxy.fillStopSegment(it) ?: it).let { segment ->
+                            segments[segment.stop] = segment
+                            it.plates = segment.plates
+                        }
+                    } else {
+                        segments[it.stop] = it
+                    }
+                }
+                favourites[favourite.name] = favourite
+
+                segments.flatMap {
+                    it.value.plates ?: emptyList<Plate.ID>()
+                }.sortedBy { "${it.line}${it.stop}" }.forEach {
+                    platesList.add(it)
+                    namesList[it] = providerProxy.getStopName(it.stop).let { name ->
+                        "${name ?: ""} (${it.stop}):\n${it.line} → ${it.headsign}"
+                    }
+                }
+                launch(UI) {
+                    loadingView.visibility = View.GONE
+                    listView.visibility = View.VISIBLE
+                    this@FavouriteEditRowAdapter.notifyDataSetChanged()
                 }
             }
-            this@FavouriteEditRowAdapter.notifyDataSetChanged()
         }
     }
 
 
-    override fun getItemCount(): Int {
-        return segments.flatMap { it.value.plates ?: emptyList<Plate.ID>() }.size
-    }
+    override fun getItemCount(): Int = platesList.size
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         launch(UI) {
-            val plates = segments.flatMap { it.value.plates ?: emptyList<Plate.ID>() }
-            val favourites = FavouriteStorage.getFavouriteStorage()
-            val id = plates.sortedBy { "${it.line}${it.stop}" }[position]
-            val favouriteElement = withContext(DefaultDispatcher) {
-                providerProxy.getStopName(id.stop).let {
-                    "${it ?: ""} (${id.stop}):\n${id.line} → ${id.headsign}"
-                }
-            }
+            val id = platesList[position]
+            val favouriteElement = namesList[id]
+
             holder.rowTextView.text = favouriteElement
             holder.deleteButton.setOnClickListener {
                 launch(UI) {
-                    favourite.segments.clear()
-                    favourite.segments.addAll(segments.map { it.value })
                     favourites.delete(favourite.name, id)
                     favourite = favourites.favourites[favourite.name]!!
-                    notifyDataSetChanged()
+                    notifyItemRemoved(platesList.indexOf(id))
+                    platesList.remove(id)
+                    namesList.remove(id)
                 }
             }
         }

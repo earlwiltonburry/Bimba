@@ -24,7 +24,7 @@ class VmClient {
     }
 
     suspend fun getSheds(name: String): Map<String, Set<String>> {
-        val response = makeRequest("getBollardsByStopPoint", """{"name": "$name"}""")
+        val (_, response) = makeRequest("getBollardsByStopPoint", """{"name": "$name"}""")
         if (!response.has("success"))
             return emptyMap()
         val rootObject = response["success"].asJsonObject["bollards"].asJsonArray
@@ -55,7 +55,7 @@ class VmClient {
     }*/
 
     suspend fun getStops(pattern: String): List<StopSuggestion> {
-        val response = withContext(DefaultDispatcher) {
+        val (_, response) = withContext(DefaultDispatcher) {
             makeRequest("getStopPoints", """{"pattern": "$pattern"}""")
         }
 
@@ -74,9 +74,9 @@ class VmClient {
         return names.map { StopSuggestion(it, "", "") }
     }
 
-    suspend fun makeRequest(method: String, data: String): JsonObject {
+    suspend fun makeRequest(method: String, data: String): Pair<Int, JsonObject> {
         if (!NetworkStateReceiver.isNetworkAvailable())
-            return JsonObject()
+            return Pair(0, JsonObject())
 
         val client = OkHttpClient()
         val url = "http://www.peka.poznan.pl/vm/method.vm?ts=${Calendar.getInstance().timeInMillis}"
@@ -88,24 +88,28 @@ class VmClient {
                 .build()
 
 
-        val responseBody: String?
+        var responseBody: String? = null
+        var responseCode = 0
         try {
-            responseBody = withContext(CommonPool) {
-                client.newCall(request).execute().body()?.string()
+            withContext(CommonPool) {
+                client.newCall(request).execute().let {
+                    responseCode = it.code()
+                    responseBody = it.body()?.string()
+                }
             }
         } catch (e: IOException) {
-            return JsonObject()
+            return Pair(0, JsonObject())
         }
 
         return try {
-            Gson().fromJson(responseBody, JsonObject::class.java)
+            Pair(responseCode, Gson().fromJson(responseBody, JsonObject::class.java))
         } catch (e: JsonSyntaxException) {
-            JsonObject()
+            Pair(responseCode, JsonObject())
         }
     }
 
     suspend fun getName(symbol: String): String? {
-        val timesResponse = withContext(DefaultDispatcher) {
+        val (_, timesResponse) = withContext(DefaultDispatcher) {
             makeRequest("getTimes", """{"symbol": "$symbol"}""")
         }
         if (!timesResponse.has("success"))
@@ -116,7 +120,7 @@ class VmClient {
 
     suspend fun getDirections(symbol: String): StopSegment? {
         val name = getName(symbol)
-        val directionsResponse = makeRequest("getBollardsByStopPoint", """{"name": "$name"}""")
+        val (_, directionsResponse) = makeRequest("getBollardsByStopPoint", """{"name": "$name"}""")
 
         if (!directionsResponse.has("success"))
             return null

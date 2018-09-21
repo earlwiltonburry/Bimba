@@ -205,7 +205,7 @@ class ProviderProxy(context: Context? = null) {
     }
 
     interface OnDeparturesReadyListener {
-        fun onDeparturesReady(departures: List<Departure>, plateId: Plate.ID?)
+        fun onDeparturesReady(departures: List<Departure>, plateId: Plate.ID?, code: Int)
     }
 
     inner class Request(private val listener: OnDeparturesReadyListener, private val segments: Set<StopSegment>) : MessageReceiver.OnVmListener {
@@ -221,20 +221,24 @@ class ProviderProxy(context: Context? = null) {
             }
         }
 
-        override fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID?, stopCode: String) {
+        override fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID?, stopCode: String, code: Int) {
             launch(UI) {
+                if ((plateId == null || vmDepartures == null) and (timetable.isEmpty())) {
+                    listener.onDeparturesReady(emptyList(), null, code)
+                    return@launch
+                }
                 if (plateId == null) {
-                    listener.onDeparturesReady(filterDepartures(cache!!.await()), null)
+                    listener.onDeparturesReady(filterDepartures(cache!!.await()), null, code)
                 } else {
                     if (segments.any { plateId in it }) {
                         if (vmDepartures != null) {
-                            listener.onDeparturesReady(vmDepartures.toList(), plateId)
+                            listener.onDeparturesReady(vmDepartures.toList(), plateId, code)
                             if (plateId !in receivedPlates)
                                 receivedPlates.add(plateId)
                         } else {
                             receivedPlates.remove(plateId)
                             if (receivedPlates.isEmpty()) {
-                                listener.onDeparturesReady(filterDepartures(cache!!.await()), null)
+                                listener.onDeparturesReady(filterDepartures(cache!!.await()), null, code)
                             }
                         }
                     }

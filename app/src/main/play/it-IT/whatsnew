@@ -1,4 +1,6 @@
 - ufficiale orario da ZTM
+- VM può essere utilizzato senza orario offline
+- l’orario offline utilizza le date esatte (invece di giorni lavorativi/sabato/festività)
 - VM è più veloce e più affidabile (in quanto è calcolato allo stesso modo delle partenze offline)
 - favoriti rescritti da capo
 - app è trasferibile su una memoria esterna
