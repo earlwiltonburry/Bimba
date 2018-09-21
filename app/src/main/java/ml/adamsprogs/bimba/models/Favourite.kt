@@ -121,7 +121,12 @@ class Favourite : Parcelable, ProviderProxy.OnDeparturesReadyListener {
             if (cache.isEmpty())
                 null
             else
-                cache.flatMap { it.value }.sortedBy { it.time }[0]
+                cache.flatMap { it.value }.let {
+                    if (it.isEmpty())
+                        null
+                    else
+                        it.sortedBy { it.time }[0]
+                }
 
 
     fun fullTimetable(): Map<String, List<Departure>> {
