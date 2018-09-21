@@ -3,8 +3,8 @@ package ml.adamsprogs.bimba.activities
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.*
-import android.database.sqlite.SQLiteException
 import android.os.*
+import android.preference.PreferenceManager.getDefaultSharedPreferences
 import android.support.design.widget.*
 import android.support.v4.widget.*
 import android.support.v7.widget.*
@@ -12,7 +12,6 @@ import android.support.v7.app.*
 import android.text.Html
 import android.view.*
 import android.view.inputmethod.InputMethodManager
-import kotlin.concurrent.thread
 import kotlin.collections.ArrayList
 import kotlinx.android.synthetic.main.activity_dash.*
 import java.util.*
@@ -30,11 +29,11 @@ import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
 
 //todo<p:1> searchView integration
 class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener,
-        FavouritesAdapter.OnMenuItemClickListener, Favourite.OnVmPreparedListener,
-        FavouritesAdapter.ViewHolder.OnClickListener {
+        FavouritesAdapter.OnMenuItemClickListener, FavouritesAdapter.ViewHolder.OnClickListener, ProviderProxy.OnDeparturesReadyListener {
+
     val context: Context = this
     private val receiver = MessageReceiver.getMessageReceiver()
-    var timetable: Timetable? = null
+    private lateinit var timetable: Timetable
     private var suggestions: List<GtfsSuggestion>? = null
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var drawerView: NavigationView
@@ -45,6 +44,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     private val actionModeCallback = ActionModeCallback()
     private var actionMode: ActionMode? = null
     private var isWarned = false
+    private lateinit var providerProxy: ProviderProxy
 
     companion object {
         const val REQUEST_EDIT_FAVOURITE = 1
@@ -56,15 +56,11 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         setSupportActionBar(toolbar)
 
-        timetable = try {
-            Timetable.getTimetable(this)
-        } catch (e: SQLiteException) {
-            null
-        }
+        providerProxy = ProviderProxy(this)
+        timetable = Timetable.getTimetable()
+        NetworkStateReceiver.init(this)
 
         getSuggestions()
-
-        warnTimetableValidity()
 
         prepareFavourites()
 
@@ -77,10 +73,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         drawerView.setNavigationItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.drawer_refresh -> {
-                    startDownloaderService()
-                }
-                R.id.drawer_help -> {
-                    startActivity(Intent(context, HelpActivity::class.java))
+                    startDownloaderService(true)
                 }
                 R.id.drawer_settings -> {
                     startActivity(Intent(context, SettingsActivity::class.java))
@@ -92,6 +85,8 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             super.onOptionsItemSelected(item)
         }
 
+        warnTimetableValidity()
+
         showValidityInDrawer()
 
         searchView = search_view
@@ -99,7 +94,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         searchView.setOnFocusChangeListener(object : FloatingSearchView.OnFocusChangeListener {
             override fun onFocus() {
                 favouritesList.visibility = View.GONE
-                filterSuggestions(searchView.query)
+                providerProxy.getSuggestions(searchView.query) {
+                    searchView.swapSuggestions(it)
+                }
             }
 
             override fun onFocusCleared() {
@@ -110,7 +107,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         searchView.setOnQueryChangeListener { oldQuery, newQuery ->
             if (oldQuery != "" && newQuery == "")
                 searchView.clearSuggestions()
-            filterSuggestions(newQuery)
+            providerProxy.getSuggestions(newQuery) {
+                searchView.swapSuggestions(it)
+            }
         }
 
         searchView.setOnSearchListener(object : FloatingSearchView.OnSearchListener {
@@ -123,7 +122,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 imm.hideSoftInputFromWindow(view.windowToken, 0)
                 if (searchSuggestion is StopSuggestion) {
                     val intent = Intent(context, StopSpecifyActivity::class.java)
-                    intent.putExtra(StopSpecifyActivity.EXTRA_STOP_IDS, searchSuggestion.ids.joinToString(",") { it.id })
                     intent.putExtra(StopSpecifyActivity.EXTRA_STOP_NAME, searchSuggestion.name)
                     startActivity(intent)
                 } else if (searchSuggestion is LineSuggestion) {
@@ -151,24 +149,32 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         searchView.attachNavigationDrawerToMenuButton(drawer_layout as DrawerLayout)
     }
 
-    private fun showValidityInDrawer() {
-        if (timetable == null) {
-            drawerView.menu.findItem(R.id.drawer_validity_since).title = getString(R.string.validity_offline_unavailable)
-        } else {
-            val formatter = DateFormat.getDateInstance(DateFormat.SHORT)
-            var calendar = calendarFromIsoD(timetable!!.getValidSince())
-            formatter.timeZone = calendar.timeZone
-            drawerView.menu.findItem(R.id.drawer_validity_since).title = getString(R.string.valid_since, formatter.format(calendar.time))
-            calendar = calendarFromIsoD(timetable!!.getValidTill())
-            formatter.timeZone = calendar.timeZone
-            drawerView.menu.findItem(R.id.drawer_validity_till).title = getString(R.string.valid_till, formatter.format(calendar.time))
+    override fun onRestart() {
+        super.onRestart()
+        favourites = FavouriteStorage.getFavouriteStorage(context)
+        favourites.forEach {
+            it.subscribeForDepartures(this, this)
         }
     }
 
-    private fun filterSuggestions(newQuery: String) {
-        thread {
-            val newStops = suggestions!!.filter { deAccent(it.name).contains(deAccent(newQuery), true) } //todo<p:2> sorted by similarity
-            runOnUiThread { searchView.swapSuggestions(newStops) }
+    override fun onStop() {
+        super.onStop()
+        favourites.forEach {
+            it.unsubscribeFromDepartures(this)
+        }
+    }
+
+    private fun showValidityInDrawer() {
+        if (timetable.isEmpty()) {
+            drawerView.menu.findItem(R.id.drawer_validity_since).title = getString(R.string.validity_offline_unavailable)
+        } else {
+            val formatter = DateFormat.getDateInstance(DateFormat.SHORT)
+            var calendar = calendarFromIsoD(timetable.getValidSince())
+            formatter.timeZone = calendar.timeZone
+            drawerView.menu.findItem(R.id.drawer_validity_since).title = getString(R.string.valid_since, formatter.format(calendar.time))
+            calendar = calendarFromIsoD(timetable.getValidTill())
+            formatter.timeZone = calendar.timeZone
+            drawerView.menu.findItem(R.id.drawer_validity_till).title = getString(R.string.valid_till, formatter.format(calendar.time))
         }
     }
 
@@ -176,16 +182,16 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         if (isWarned)
             return
         isWarned = true
-        if (timetable == null)
+        if (timetable.isEmpty())
             return
-        val validTill = timetable!!.getValidTill()
+        val validTill = timetable.getValidTill()
         val today = Calendar.getInstance().toIsoDate()
         val tomorrow = Calendar.getInstance().apply {
             this.add(Calendar.DAY_OF_MONTH, 1)
         }.toIsoDate()
 
         try {
-            timetable!!.getServiceForToday()
+            timetable.getServiceForToday()
             if (today > validTill) {
                 notifyTimetableValidity(-1)
                 suggestions = ArrayList()
@@ -202,7 +208,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         }
 
         try {
-            timetable!!.getServiceForTomorrow()
+            timetable.getServiceForTomorrow()
             if (tomorrow == validTill) {
                 notifyTimetableValidity(1)
                 return
@@ -226,12 +232,16 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 .setCancelable(true)
                 .setMessage(message)
                 .create().show()
+
+        if (daysTillInvalid == -1) {
+            Timetable.delete(this)
+        }
     }
 
     private fun prepareFavourites() {
         favourites = FavouriteStorage.getFavouriteStorage(context)
         favourites.forEach {
-            it.addOnVmPreparedListener(this)
+            it.subscribeForDepartures(this, this)
         }
         val layoutManager = LinearLayoutManager(context)
         favouritesList = favourites_list
@@ -241,31 +251,31 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         favouritesList.layoutManager = layoutManager
     }
 
-    override fun onVmPrepared() {
+    override fun onDeparturesReady(departures: List<Departure>, plateId: Plate.ID?, code: Int) {
         favouritesList.adapter.notifyDataSetChanged()
+        showError(drawer_layout, code, this)
     }
 
     private fun getSuggestions() {
-        suggestions = if (timetable != null)
-            (timetable!!.getStopSuggestions(context)).sorted() //+ timetable.getLineSuggestions()).sorted() //todo<p:v+1> + bike stations, train stations, &c
-        else
-            emptyList()
+        providerProxy.getSuggestions {
+            searchView.swapSuggestions(it)
+        }
     }
 
     private fun prepareListeners() {
         val filter = IntentFilter(TimetableDownloader.ACTION_DOWNLOADED)
-        filter.addAction(VmClient.ACTION_READY)
+        filter.addAction(VmService.ACTION_READY)
         filter.addCategory(Intent.CATEGORY_DEFAULT)
         registerReceiver(receiver, filter)
         receiver.addOnTimetableDownloadListener(context as MessageReceiver.OnTimetableDownloadListener)
-        favourites.registerOnVm(receiver, context)
     }
 
-    private fun startDownloaderService() {
-        startService(Intent(context, TimetableDownloader::class.java))
+    private fun startDownloaderService(force: Boolean = false) {
+        if (getDefaultSharedPreferences(this).getBoolean(getString(R.string.key_timetable_automatic_update), false) or force)
+            startService(Intent(context, TimetableDownloader::class.java))
     }
 
-    override fun onBackPressed() {
+    override fun onBackPressed() { //fixme
         if (drawerLayout.isDrawerOpen(drawerView)) {
             drawerLayout.closeDrawer(drawerView)
             return
@@ -284,26 +294,12 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     override fun onDestroy() {
         super.onDestroy()
         receiver.removeOnTimetableDownloadListener(context as MessageReceiver.OnTimetableDownloadListener)
-        favourites.deregisterOnVm(receiver, context)
         unregisterReceiver(receiver)
-    }
-
-    private fun deAccent(str: String): String {
-        var result = str.replace('ę', 'e', true)
-        result = result.replace('ó', 'o', true)
-        result = result.replace('ą', 'a', true)
-        result = result.replace('ś', 's', true)
-        result = result.replace('ł', 'l', true)
-        result = result.replace('ż', 'z', true)
-        result = result.replace('ź', 'z', true)
-        result = result.replace('ć', 'c', true)
-        result = result.replace('ń', 'n', true)
-        return result
     }
 
     override fun onTimetableDownload(result: String?) {
         val message: String = when (result) {
-            TimetableDownloader.RESULT_NO_CONNECTIVITY -> getString(R.string.no_connectivity)
+            TimetableDownloader.RESULT_NO_CONNECTIVITY -> getString(R.string.no_connectivity_cant_update)
             TimetableDownloader.RESULT_UP_TO_DATE -> getString(R.string.timetable_up_to_date)
             TimetableDownloader.RESULT_FINISHED -> getString(R.string.timetable_downloaded)
             else -> getString(R.string.error_try_later)
@@ -337,6 +333,10 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                     val positionAfter = favourites.indexOf(name)
                     favouritesList.adapter.notifyItemChanged(positionBefore)
                     favouritesList.adapter.notifyItemMoved(positionBefore, positionAfter)
+                }
+                adapter[name]?.let {
+                    it.unsubscribeFromDepartures(context)
+                    it.subscribeForDepartures(this, context)
                 }
             }
         }
@@ -408,12 +408,19 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 R.id.action_merge -> {
                     val selectedPositions = adapter.getSelectedItems()
                     val selectedNames = selectedPositions.map { favourites[it]?.name }.filter { it != null }.map { it!! }
-                    favourites.merge(selectedNames, this@DashActivity)
 
-                    adapter.notifyItemChanged(selectedPositions.min()!!)
-                    (1 until selectedPositions.size).forEach {
-                        adapter.notifyItemRemoved(it)
+                    (1 until selectedNames.size).forEach {
+                        selectedNames[it].let { name ->
+                            adapter.notifyItemRemoved(adapter.indexOf(name))
+                            adapter[name]?.unsubscribeFromDepartures(context)
+                        }
                     }
+                    favourites.merge(selectedNames, context)
+                    adapter[selectedNames[0]]?.let {
+                        it.unsubscribeFromDepartures(context)
+                        it.subscribeForDepartures(this@DashActivity, context)
+                    }
+                    adapter.notifyItemChanged(adapter.indexOf(selectedNames[0]))
 
                     clearSelection()
                     true

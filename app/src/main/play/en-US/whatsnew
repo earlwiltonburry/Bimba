@@ -1,6 +1,8 @@
 - official timetable from ZTM
+- VM can be used without offline timetable
+- offline timetable uses exact dates (instead of workdays/saturdays/holidays)
 - VM is quicker and is more reliable (as it’s computed in the same way as offline departures)
-- favorites rewritten from scratch
+- favourites rewritten from scratch
 - app is movable to external storage
-- new colors—gray and green—fitting new Poznań style
+- new colours—grey and green—fitting new Poznań style
 - multiple bug fixes

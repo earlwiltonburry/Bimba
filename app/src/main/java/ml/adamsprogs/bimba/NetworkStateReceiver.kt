@@ -37,9 +37,14 @@ class NetworkStateReceiver : BroadcastReceiver() {
     }
 
     companion object {
-        fun isNetworkAvailable(context: Context): Boolean {
-            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            val activeNetworkInfo = connectivityManager.activeNetworkInfo
+        lateinit var manager: ConnectivityManager
+
+        fun init(context: Context) {
+            manager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        }
+
+        fun isNetworkAvailable(): Boolean {
+            val activeNetworkInfo = manager.activeNetworkInfo
             return activeNetworkInfo != null && activeNetworkInfo.isConnected
         }
     }

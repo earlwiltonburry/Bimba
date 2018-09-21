@@ -1,4 +1,6 @@
 - official timetable from ZTM
+- VM can be used without offline timetable
+- offline timetable uses exact dates (instead of workdays/saturdays/holidays)
 - VM is quicker and is more reliable (as it’s computed in the same way as offline departures)
 - favourites rewritten from scratch
 - app is movable to external storage

@@ -7,18 +7,16 @@ import android.view.View
 import android.view.ViewGroup
 import kotlinx.android.synthetic.main.activity_stop_specify.*
 import ml.adamsprogs.bimba.R
-import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
-import ml.adamsprogs.bimba.models.Timetable
 import android.content.Context
 import android.widget.TextView
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
+import ml.adamsprogs.bimba.ProviderProxy
 
 class StopSpecifyActivity : AppCompatActivity() {
 
     companion object {
-        const val EXTRA_STOP_IDS = "stopIds"
         const val EXTRA_STOP_NAME = "stopName"
     }
 
@@ -26,22 +24,24 @@ class StopSpecifyActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stop_specify)
 
-        val ids = intent.getStringExtra(EXTRA_STOP_IDS).split(",").map { AgencyAndId(it) }.toSet()
         val name = intent.getStringExtra(EXTRA_STOP_NAME)
-        val timetable = Timetable.getTimetable(this)
-        val headlines = timetable.getHeadlinesForStop(ids)
+        val providerProxy = ProviderProxy(this)
+        providerProxy.getSheds(name) {
+            val layoutManager = LinearLayoutManager(this)
+            val departuresList: RecyclerView = list_view
 
-        val layoutManager = LinearLayoutManager(this)
-        val departuresList: RecyclerView = list_view
+            departuresList.adapter = ShedAdapter(this, it, name)
+            departuresList.layoutManager = layoutManager
+        }
+        /*val timetable = Timetable.getTimetable(this)
+        val headlines = timetable.getHeadlinesForStop(name)*/
 
-        departuresList.adapter = ShedAdapter(this, headlines)
-        departuresList.layoutManager = layoutManager
 
         setSupportActionBar(toolbar)
         supportActionBar?.title = name
     }
 
-    class ShedAdapter(val context: Context, private val values: Map<AgencyAndId, Pair<String, Set<String>>>) :
+    class ShedAdapter(val context: Context, private val values: Map<String, Set<String>>, private val stopName: String) :
             RecyclerView.Adapter<ShedAdapter.ViewHolder>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
             val context = parent.context
@@ -55,15 +55,16 @@ class StopSpecifyActivity : AppCompatActivity() {
 
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             holder.root.setOnClickListener {
-                val id = values.entries.sortedBy { it.value.first }[position].key
+                val code = values.keys.sorted()[position]
                 val intent = Intent(context, StopActivity::class.java)
                 intent.putExtra(StopActivity.SOURCE_TYPE, StopActivity.SOURCE_TYPE_STOP)
-                intent.putExtra(StopActivity.EXTRA_STOP_ID, id)
+                intent.putExtra(StopActivity.EXTRA_STOP_CODE, code)
+                intent.putExtra(StopActivity.EXTRA_STOP_NAME, stopName)
                 context.startActivity(intent)
             }
-            holder.stopCode.text = values.values.sortedBy { it.first }[position].first
-            holder.stopHeadlines.text = values.values.sortedBy { it.first }[position].second
-                    .sortedBy { it } // fixme<p:1> natural sort
+            holder.stopCode.text = values.keys.sorted()[position]
+            holder.stopHeadlines.text = values.entries.sortedBy { it.key }[position].value
+                    .sortedBy { it.split(" → ")[0].toInt() }
                     .joinToString()
         }
 

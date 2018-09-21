@@ -9,5 +9,10 @@
 
         <!-- todo intent get file (import) -->
         <!-- todo reset source -->
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="@string/key_timetable_automatic_update"
+            android:summary="@string/summary_timetable_automatic_update"
+            android:title="@string/title_timetable_automatic_update" />
     </PreferenceCategory>
 </PreferenceScreen>

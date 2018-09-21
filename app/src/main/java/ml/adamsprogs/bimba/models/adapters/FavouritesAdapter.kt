@@ -9,17 +9,16 @@ import android.view.*
 import android.widget.*
 import ml.adamsprogs.bimba.R
 import android.view.LayoutInflater
-import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.*
 import java.util.*
 import ml.adamsprogs.bimba.Declinator
 import ml.adamsprogs.bimba.collections.FavouriteStorage
+import ml.adamsprogs.bimba.models.Favourite
 import ml.adamsprogs.bimba.secondsAfterMidnight
 
 
-class FavouritesAdapter(val appContext: Context, var favourites: FavouriteStorage,
+class FavouritesAdapter(private val appContext: Context, var favourites: FavouriteStorage,
                         private val onMenuItemClickListener: OnMenuItemClickListener,
                         private val onClickListener: ViewHolder.OnClickListener) :
         RecyclerView.Adapter<FavouritesAdapter.ViewHolder>() {
@@ -38,11 +37,8 @@ class FavouritesAdapter(val appContext: Context, var favourites: FavouriteStorag
     }
 
     fun clearSelection() {
-        val selection = getSelectedItems()
         selectedItems.clear()
-        for (i in selection) {
-            notifyItemChanged(i)
-        }
+        notifyDataSetChanged()
     }
 
     fun getSelectedItemCount() = selectedItems.size()
@@ -61,7 +57,7 @@ class FavouritesAdapter(val appContext: Context, var favourites: FavouriteStorag
             holder.nameTextView.text = favourite.name
 
             holder.selectedOverlay.visibility = if (isSelected(position)) View.VISIBLE else View.INVISIBLE
-            holder.moreButton.setOnClickListener {
+            holder.moreButton.setOnClickListener { it ->
                 val popup = PopupMenu(appContext, it)
                 val inflater = popup.menuInflater
                 popup.setOnMenuItemClickListener {
@@ -75,9 +71,9 @@ class FavouritesAdapter(val appContext: Context, var favourites: FavouriteStorag
                 popup.show()
             }
 
-            val nextDeparture = async(CommonPool) {
+            val nextDeparture = withContext(CommonPool) {
                 favourite.nextDeparture()
-            }.await()
+            }
 
             val nextDepartureText: String
             val nextDepartureLineText: String
@@ -109,6 +105,14 @@ class FavouritesAdapter(val appContext: Context, var favourites: FavouriteStorag
 
         val rowView = inflater.inflate(R.layout.row_favourite, parent, false)
         return ViewHolder(rowView, onClickListener)
+    }
+
+    fun indexOf(name: String): Int {
+        return favourites.indexOf(name)
+    }
+
+    operator fun get(index: String): Favourite? {
+        return favourites[index]
     }
 
     class ViewHolder(itemView: View, private val listener: OnClickListener) : RecyclerView.ViewHolder(itemView), View.OnClickListener, View.OnLongClickListener {

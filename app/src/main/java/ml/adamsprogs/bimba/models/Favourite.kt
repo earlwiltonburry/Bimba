@@ -3,42 +3,28 @@ package ml.adamsprogs.bimba.models
 import android.content.*
 import android.os.*
 import ml.adamsprogs.bimba.*
-import ml.adamsprogs.bimba.datasources.VmClient
-import ml.adamsprogs.bimba.models.gtfs.AgencyAndId
 import java.io.File
 import java.math.BigInteger
 import java.security.SecureRandom
-import java.util.Calendar
 import kotlin.collections.*
 
-class Favourite : Parcelable, MessageReceiver.OnVmListener {
-    private var isRegisteredOnVmListener: Boolean = false
+class Favourite : Parcelable, ProviderProxy.OnDeparturesReadyListener {
     private val cacheDir: File
+    private lateinit var listener: ProviderProxy.OnDeparturesReadyListener
     var name: String
         private set
     var segments: HashSet<StopSegment>
         private set
-    private var vmDepartures = HashMap<Plate.ID, List<Departure>>()
-    var fullDepartures: Map<AgencyAndId, List<Departure>> = HashMap()
-        private set
-    val timetable = Timetable.getTimetable()
+    private var fullDepartures: Map<String, List<Departure>> = HashMap()
+    private val cache = HashMap<Plate.ID, List<Departure>>()
+    private var listenerId = ""
 
     val size
         get() = segments.sumBy {
             it.size
         }
-    val isBackedByVm
-        get() = vmDepartures.isNotEmpty()
 
-    private val onVmPreparedListeners = HashSet<OnVmPreparedListener>()
-
-    fun addOnVmPreparedListener(listener: OnVmPreparedListener) {
-        onVmPreparedListeners.add(listener)
-    }
-
-    fun removeOnVmPreparedListener(listener: OnVmPreparedListener) {
-        onVmPreparedListeners.remove(listener)
-    }
+    private val providerProxy: ProviderProxy
 
     constructor(parcel: Parcel) {
         this.name = parcel.readString()
@@ -54,26 +40,29 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
 
         val mapString = mapDir.readText()
 
-        val map = HashMap<AgencyAndId, List<Departure>>()
-        mapString.safeSplit("%").forEach {
+        val map = HashMap<String, List<Departure>>()
+        mapString.safeSplit("%")!!.forEach { it ->
             val (k, v) = it.split("#")
-            map[AgencyAndId(k)] = v.split("&").map { Departure.fromString(it) }
+            map[k] = v.split("&").map { Departure.fromString(it) }
         }
         this.fullDepartures = map
         mapDir.delete()
+        providerProxy = ProviderProxy()
     }
 
-    constructor(name: String, segments: HashSet<StopSegment>, cache: Map<AgencyAndId, List<Departure>>, context: Context) {
+    constructor(name: String, segments: HashSet<StopSegment>, cache: Map<String, List<Departure>>, context: Context) {
         this.fullDepartures = cache
         this.name = name
         this.segments = segments
         this.cacheDir = context.cacheDir
+        providerProxy = ProviderProxy(context)
     }
 
     constructor(name: String, timetables: HashSet<StopSegment>, context: Context) {
         this.name = name
         this.segments = timetables
         this.cacheDir = context.cacheDir
+        providerProxy = ProviderProxy(context)
 
     }
 
@@ -94,7 +83,7 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
 
         var isFirst = true
         var map = ""
-        fullDepartures.forEach {
+        fullDepartures.forEach { it ->
             if (isFirst)
                 isFirst = false
             else
@@ -105,49 +94,13 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         mapFile.writeText(map)
     }
 
-    private fun filterVmDepartures() {
-        val now = Calendar.getInstance().secondsAfterMidnight()
-        this.vmDepartures.forEach {
-            val newVms = it.value
-                    .filter { it.timeTill(now) >= 0 }.sortedBy { it.timeTill(now) }
-            this.vmDepartures[it.key] = newVms
-        }
-    }
-
-    fun delete(plateId: Plate.ID) {
+    fun delete(plateId: Plate.ID): Boolean {
         segments.forEach {
-            it.remove(plateId)
+            if (!it.remove(plateId))
+                return false
         }
         removeFromCache(plateId)
-    }
-
-    fun registerOnVm(receiver: MessageReceiver, context: Context) {
-        if (!isRegisteredOnVmListener) {
-            receiver.addOnVmListener(this)
-            isRegisteredOnVmListener = true
-
-
-            segments.forEach {
-                val intent = Intent(context, VmClient::class.java)
-                intent.putExtra("stop", it)
-                intent.action = "request"
-                context.startService(intent)
-            }
-        }
-    }
-
-    fun deregisterOnVm(receiver: MessageReceiver, context: Context) {
-        if (isRegisteredOnVmListener) {
-            receiver.removeOnVmListener(this)
-            isRegisteredOnVmListener = false
-
-            segments.forEach {
-                val intent = Intent(context, VmClient::class.java)
-                intent.putExtra("stop", it)
-                intent.action = "remove"
-                context.startService(intent)
-            }
-        }
+        return true
     }
 
     fun rename(newName: String) {
@@ -164,80 +117,51 @@ class Favourite : Parcelable, MessageReceiver.OnVmListener {
         }
     }
 
-    fun nextDeparture(): Departure? {
-        val now = Calendar.getInstance().secondsAfterMidnight()
-        filterVmDepartures()
-        if (segments.isEmpty() && vmDepartures.isEmpty())
-            return null
-
-        if (vmDepartures.isNotEmpty()) {
-            return vmDepartures.flatMap { it.value }
-                    .minBy {
-                        it.timeTill(now)
-                    }
-        }
-
-        val full = fullTimetable()
-
-        val twoDayDepartures = try {
-            Departure.rollDepartures(full)[timetable.getServiceForToday()]
-        } catch (e: IllegalArgumentException) {
-            listOf<Departure>()
-        }
-
-        if (twoDayDepartures?.isEmpty() != false)
-            return null
-
-        return twoDayDepartures[0]
-    }
-
-    fun allDepartures(): Map<AgencyAndId, List<Departure>> {
-        if (vmDepartures.isNotEmpty()) {
-            val now = Calendar.getInstance().secondsAfterMidnight()
-            val departures = HashMap<AgencyAndId, List<Departure>>()
-            val today = timetable.getServiceForToday()
-            departures[today] = vmDepartures.flatMap { it.value }.sortedBy { it.timeTill(now) }
-            return departures
-        }
-
-        val departures = fullTimetable()
-        return Departure.rollDepartures(departures)
-    }
-
-    fun fullTimetable() =
-            if (fullDepartures.isNotEmpty())
-                fullDepartures
-            else {
-                fullDepartures = timetable.getStopDeparturesBySegments(segments)
-                fullDepartures
-
-            }
-
-
-    override fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID) {
-        val now = Calendar.getInstance().secondsAfterMidnight()
-        if (segments.any { it.contains(plateId) }) {
-            if (vmDepartures == null)
-                this.vmDepartures.remove(plateId)
+    fun nextDeparture() =
+            if (cache.isEmpty())
+                null
             else
-                this.vmDepartures[plateId] = vmDepartures.sortedBy { it.timeTill(now) }
-        }
-        filterVmDepartures()
-        onVmPreparedListeners.forEach {
-            it.onVmPrepared()
-        }
+                cache.flatMap { it.value }.let {
+                    if (it.isEmpty())
+                        null
+                    else
+                        it.sortedBy { it.time }[0]
+                }
+
+
+    fun fullTimetable(): Map<String, List<Departure>> {
+        if (fullDepartures.isEmpty())
+            fullDepartures = providerProxy.getFullTimetable(segments)
+        return fullDepartures
     }
 
     private fun removeFromCache(plate: Plate.ID) {
-        val map = HashMap<AgencyAndId, List<Departure>>()
+        val map = HashMap<String, List<Departure>>()
         fullDepartures
-        fullDepartures.forEach {
+        fullDepartures.forEach { it ->
             map[it.key] = it.value.filter { plate.line != it.line || plate.headsign != it.headsign }
         }
         fullDepartures = map
     }
 
-    interface OnVmPreparedListener {
-        fun onVmPrepared()
+    fun subscribeForDepartures(listener: ProviderProxy.OnDeparturesReadyListener, context: Context): String {
+        this.listener = listener
+        listenerId = providerProxy.subscribeForDepartures(segments, this, context)
+        return listenerId
+    }
+
+    override fun onDeparturesReady(departures: List<Departure>, plateId: Plate.ID?, code: Int) {
+        if (plateId == null) {
+            cache.clear()
+            cache[Plate.ID.dummy] = departures
+        } else {
+            cache.remove(Plate.ID.dummy)
+            cache[plateId] = departures
+        }
+        listener.onDeparturesReady(departures, plateId, code)
+    }
+
+    fun unsubscribeFromDepartures(context: Context) {
+        providerProxy.unsubscribeFromDepartures(listenerId, context)
     }
 }

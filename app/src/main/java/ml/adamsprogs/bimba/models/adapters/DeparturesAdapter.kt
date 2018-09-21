@@ -16,41 +16,44 @@ import ml.adamsprogs.bimba.models.Departure
 import ml.adamsprogs.bimba.rollTime
 import java.util.*
 
-class DeparturesAdapter(val context: Context, private val departures: List<Departure>?, private val relativeTime: Boolean) :
+class DeparturesAdapter(val context: Context, var departures: List<Departure>?, var relativeTime: Boolean) :
         RecyclerView.Adapter<DeparturesAdapter.ViewHolder>() {
 
     companion object {
         const val VIEW_TYPE_LOADING: Int = 0
         const val VIEW_TYPE_CONTENT: Int = 1
-        const val VIEW_TYPE_EMPTY: Int = 2
     }
 
     override fun getItemCount(): Int {
-        if (departures == null || departures.isEmpty())
+        if (departures == null || departures!!.isEmpty())
             return 1
-        return departures.size
+        return departures!!.size
     }
 
     override fun getItemViewType(position: Int): Int {
         return when {
-            departures == null -> VIEW_TYPE_EMPTY
-            departures.isEmpty() -> VIEW_TYPE_LOADING
+            departures == null -> VIEW_TYPE_LOADING //empty
+            departures!!.isEmpty() -> VIEW_TYPE_LOADING
             else -> VIEW_TYPE_CONTENT
         }
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        holder.floorIcon.visibility = View.GONE
+        holder.infoIcon.visibility = View.GONE
+
         if (departures == null) {
             return
         }
+
         val line = holder.lineTextView
         val time = holder.timeTextView
         val direction = holder.directionTextView
-        if (departures.isEmpty()) {
+        if (departures!!.isEmpty()) {
             time.text = context.getString(R.string.no_departures)
             return
         }
-        val departure = departures[position]
+        val departure = departures!![position]
         val now = Calendar.getInstance()
         val departureTime = Calendar.getInstance().rollTime(departure.time)
         if (departure.tomorrow)
@@ -77,9 +80,8 @@ class DeparturesAdapter(val context: Context, private val departures: List<Depar
 
         if (departure.lowFloor)
             holder.floorIcon.visibility = View.VISIBLE
-        if (departure.isModified) {
+        if (departure.isModified)
             holder.infoIcon.visibility = View.VISIBLE
-        }
         holder.root.setOnClickListener {
             AlertDialog.Builder(context)
                     .setPositiveButton(context.getText(android.R.string.ok)

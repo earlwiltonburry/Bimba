@@ -9,6 +9,7 @@
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
@@ -27,7 +28,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activities.NoDbActivity" />
         <activity android:name=".activities.EditFavouriteActivity" />
         <activity
             android:name=".activities.SettingsActivity"
@@ -44,7 +44,7 @@
             android:theme="@style/AppTheme" />
 
         <service
-            android:name=".datasources.VmClient"
+            android:name=".datasources.VmService"
             android:enabled="true"
             android:exported="false" />
 

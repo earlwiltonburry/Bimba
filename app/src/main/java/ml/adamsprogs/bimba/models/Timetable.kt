@@ -4,6 +4,9 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.database.*
 import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteException
+import android.util.SparseArray
+import android.util.SparseBooleanArray
 import ml.adamsprogs.bimba.*
 import ml.adamsprogs.bimba.models.gtfs.*
 import ml.adamsprogs.bimba.models.suggestions.*
@@ -37,53 +40,63 @@ class Timetable private constructor() {
             val timetable = Timetable()
             val filesDir = context.getSecondaryExternalFilesDir()
             val dbFile = File(filesDir, "timetable.db")
-            timetable.db = SQLiteDatabase.openDatabase(dbFile.path, null, SQLiteDatabase.OPEN_READONLY) // fixme can be null
+            timetable.db = try {
+                SQLiteDatabase.openDatabase(dbFile.path, null, SQLiteDatabase.OPEN_READONLY)
+            } catch (e: SQLiteException) {
+                null
+            }
             this.timetable = timetable
+        }
+
+        fun delete(context: Context) {
+            val filesDir = context.getSecondaryExternalFilesDir()
+            val dbFile = File(filesDir, "timetable.db")
+            try {
+                dbFile.delete()
+            } catch (e: Exception) {
+            }
         }
     }
 
-    private lateinit var db: SQLiteDatabase
+    private var db: SQLiteDatabase? = null
     private var _stops: List<StopSuggestion>? = null
 
     fun refresh() {
     }
 
-    fun getStopSuggestions(context: Context, force: Boolean = false): List<StopSuggestion> {
+    fun getStopSuggestions(/*context: Context, */force: Boolean = false): List<StopSuggestion> {
         if (_stops != null && !force)
             return _stops!!
 
-        val ids = HashMap<String, HashSet<AgencyAndId>>()
         val zones = HashMap<String, String>()
 
-        val cursor = db.rawQuery("select stop_name, stop_id, zone_id from stops", null)
+        val cursor = db!!.rawQuery("select stop_name, zone_id from stops", null)
 
         while (cursor.moveToNext()) {
             val name = cursor.getString(0)
-            val id = cursor.getInt(1)
-            val zone = cursor.getString(2)
-            if (name !in ids)
-                ids[name] = HashSet()
-            ids[name]!!.add(AgencyAndId(id.toString()))
+            val zone = cursor.getString(1)
             zones[name] = zone
         }
 
         cursor.close()
 
-        _stops = ids.map {
+        _stops = zones.map {
+            /*todo
             val colour = when (zones[it.key]) {
                 "A" -> "#${getColour(R.color.zoneA, context).toString(16)}"
                 "B" -> "#${getColour(R.color.zoneB, context).toString(16)}"
                 "C" -> "#${getColour(R.color.zoneC, context).toString(16)}"
                 else -> "#000000"
             }
-            StopSuggestion(it.key, it.value, zones[it.key]!!, colour)
+            */
+            StopSuggestion(it.key, it.value, "#000000")
         }.sorted()
         return _stops!!
     }
 
     fun getLineSuggestions(): List<LineSuggestion> {
         val routes = ArrayList<LineSuggestion>()
-        val cursor = db.rawQuery("select * from routes", null)
+        val cursor = db!!.rawQuery("select * from routes", null)
 
         while (cursor.moveToNext()) {
             val routeId = cursor.getString(0)
@@ -95,31 +108,35 @@ class Timetable private constructor() {
         return routes.sortedBy { it.name }
     }
 
-    fun getHeadlinesForStop(stops: Set<AgencyAndId>): Map<AgencyAndId, Pair<String, Set<String>>> {
-        val headsigns = HashMap<AgencyAndId, Pair<String, HashSet<String>>>()
+    fun getHeadlinesForStop(stop: String): Map<String, Set<String>> {
+        val headsigns = HashMap<String, HashSet<String>>()
 
-        val stopsIndex = HashMap<Int, String>()
-        val where = stops.joinToString(" or ", "where ") { "stop_id = ?" }
-        var cursor = db.rawQuery("select stop_id, stop_code from stops $where", stops.map { it.toString() }.toTypedArray())
-
+        var cursor = db!!.rawQuery("select stop_id, stop_code from stops where stop_name = ?",
+                arrayOf(stop))
+        val stopIds = ArrayList<String>()
+        val stopCodes = SparseArray<String>()
         while (cursor.moveToNext()) {
-            stopsIndex[cursor.getInt(0)] = cursor.getString(1)
+            cursor.getInt(0).let {
+                stopIds.add(it.toString())
+                stopCodes.put(it, cursor.getString(1))
+            }
         }
 
         cursor.close()
 
-        cursor = db.rawQuery("select stop_id, route_id, trip_headsign " +
+        val where = stopIds.joinToString(" or ", "where ") { "stop_id = ?" }
+
+        cursor = db!!.rawQuery("select stop_id, route_id, trip_headsign " +
                 "from stop_times natural join trips " +
-                where, stops.map { it.toString() }.toTypedArray())
+                where, stopIds.toTypedArray())
 
         while (cursor.moveToNext()) {
-            val stop = cursor.getInt(0)
-            val stopId = AgencyAndId(stop.toString())
+            val stopCode = stopCodes[cursor.getInt(0)]
             val route = cursor.getString(1)
             val headsign = cursor.getString(2)
-            if (stopId !in headsigns)
-                headsigns[stopId] = Pair(stopsIndex[stop]!!, HashSet())
-            headsigns[stopId]!!.second.add("$route → $headsign")
+            if (stopCode !in headsigns)
+                headsigns[stopCode] = HashSet()
+            headsigns[stopCode]!!.add("$route → $headsign")
         }
 
         cursor.close()
@@ -127,19 +144,42 @@ class Timetable private constructor() {
         return headsigns
 
         /*
-        1435 -> (AWF03, {232 → Os. Rusa})
-        1436 -> (AWF04, {232 → Rondo Kaponiera})
-        1437 -> (AWF02, {76 → Pl. Bernardyński, 74 → Os. Sobieskiego, 603 → Pl. Bernardyński})
-        1634 -> (AWF01, {76 → Os. Dębina, 603 → Łęczyca/Dworcowa})
-        171 -> (AWF42, {29 → Pl. Wiosny Ludów})
-        172 -> (AWF41, {10 → Połabska, 29 → Dębiec, 15 → Budziszyńska, 10 → Dębiec, 15 → Os. Sobieskiego, 12 → Os. Sobieskiego, 6 → Junikowo, 18 → Ogrody, 2 → Ogrody})
-        4586 -> (AWF73, {10 → Franowo, 29 → Franowo, 6 → Miłostowo, 5 → Stomil, 18 → Franowo, 15 → Franowo, 12 → Starołęka, 74 → Os. Orła Białego})
+        AWF03 -> {232 → Os. Rusa}
+        AWF04 -> {232 → Rondo Kaponiera}
+        AWF02 -> {76 → Pl. Bernardyński, 74 → Os. Sobieskiego, 603 → Pl. Bernardyński}
+        AWF01 ->{76 → Os. Dębina, 603 → Łęczyca/Dworcowa}
+        AWF42 -> {29 → Pl. Wiosny Ludów}
+        AWF41 -> {10 → Połabska, 29 → Dębiec, 15 → Budziszyńska, 10 → Dębiec, 15 → Os. Sobieskiego, 12 → Os. Sobieskiego, 6 → Junikowo, 18 → Ogrody, 2 → Ogrody}
+        AWF73 -> {10 → Franowo, 29 → Franowo, 6 → Miłostowo, 5 → Stomil, 18 → Franowo, 15 → Franowo, 12 → Starołęka, 74 → Os. Orła Białego}
         */
     }
 
-    fun getStopName(stopId: AgencyAndId): String {
-        val cursor = db.rawQuery("select stop_name from stops where stop_id = ?",
-                arrayOf(stopId.id))
+    fun getHeadlinesForStopCode(stop: String): StopSegment {
+        var cursor = db!!.rawQuery("select stop_id from stops where stop_code = ?",
+                arrayOf(stop))
+        cursor.moveToFirst()
+        val stopId = cursor.getInt(0)
+        cursor.close()
+
+
+        cursor = db!!.rawQuery("select route_id, trip_headsign " +
+                "from stop_times natural join trips where stop_id = ? ",
+                arrayOf(stopId.toString()))
+
+        val plates = HashSet<Plate.ID>()
+
+        while (cursor.moveToNext()) {
+            val route = cursor.getString(0)
+            val headsign = cursor.getString(1)
+            plates.add(Plate.ID(route, stop, headsign))
+        }
+        cursor.close()
+        return StopSegment(stop, plates)
+    }
+
+    fun getStopName(stopCode: String): String {
+        val cursor = db!!.rawQuery("select stop_name from stops where stop_code = ?",
+                arrayOf(stopCode))
         cursor.moveToNext()
         val name = cursor.getString(0)
         cursor.close()
@@ -147,9 +187,19 @@ class Timetable private constructor() {
         return name
     }
 
-    fun getStopCode(stopId: AgencyAndId): String {
-        val cursor = db.rawQuery("select stop_code from stops where stop_id = ?",
-                arrayOf(stopId.id))
+    fun getStopId(stopCode: String): String {
+        val cursor = db!!.rawQuery("select stop_id from stops where stop_code = ?",
+                arrayOf(stopCode))
+        cursor.moveToNext()
+        val id = cursor.getString(0)
+        cursor.close()
+
+        return id
+    }
+
+    fun getStopCode(stopId: String): String {
+        val cursor = db!!.rawQuery("select stop_code from stops where stop_id = ?",
+                arrayOf(stopId))
         cursor.moveToNext()
         val code = cursor.getString(0)
         cursor.close()
@@ -157,16 +207,17 @@ class Timetable private constructor() {
         return code
     }
 
-    fun getStopDepartures(stopId: AgencyAndId): Map<AgencyAndId, List<Departure>> {
-        val map = HashMap<AgencyAndId, ArrayList<Departure>>()
-        val cursor = db.rawQuery("select route_id, service_id, departure_time, " +
+    fun getStopDepartures(stopCode: String): Map<String, List<Departure>> {
+        val stopID = getStopId(stopCode)
+        val map = HashMap<String, ArrayList<Departure>>()
+        val cursor = db!!.rawQuery("select route_id, service_id, departure_time, " +
                 "wheelchair_accessible, stop_sequence, trip_id, trip_headsign, route_desc " +
                 "from stop_times natural join trips natural join routes where stop_id = ?",
-                arrayOf(stopId.id))
+                arrayOf(stopID))
 
         while (cursor.moveToNext()) {
-            val line = AgencyAndId(cursor.getString(0))
-            val service = AgencyAndId(cursor.getInt(1).toString())
+            val line = cursor.getString(0)
+            val service = cursor.getInt(1).toString()
             val mode = calendarToMode(service)
             val time = parseTime(cursor.getString(2))
             val lowFloor = cursor.getInt(3) == 1
@@ -190,14 +241,21 @@ class Timetable private constructor() {
         return map
     }
 
-    fun getStopDeparturesBySegments(segments: HashSet<StopSegment>): Map<AgencyAndId, List<Departure>> {
+    fun getStopDeparturesBySegments(segments: Set<StopSegment>): Map<String, List<Departure>> {
+        val stopCodes = HashMap<String, Int>()
+        var cursor = db!!.rawQuery("select stop_id, stop_code from stops", emptyArray())
+        while (cursor.moveToNext()) {
+            stopCodes[cursor.getString(1)] = cursor.getInt(0)
+        }
+        cursor.close()
+
         val wheres = segments.flatMap {
-            it.plates?.map {
-                "(stop_id = ${it.stop} and route_id = '${it.line}' and trip_headsign = '${it.headsign}')"
-            } ?: listOf()
+            it.plates?.map { plate ->
+                "(stop_id = ${stopCodes[plate.stop]} and route_id = '${plate.line}' and trip_headsign = '${plate.headsign}')"
+            } ?: listOf("stop_id = ${stopCodes[it.stop]}")
         }.joinToString(" or ")
 
-        val cursor = db.rawQuery("select route_id, service_id, departure_time, " +
+        cursor = db!!.rawQuery("select route_id, service_id, departure_time, " +
                 "wheelchair_accessible, stop_sequence, trip_id, trip_headsign, route_desc " +
                 "from stop_times natural join trips natural join routes where $wheres", null)
 
@@ -206,12 +264,12 @@ class Timetable private constructor() {
         return map
     }
 
-    private fun parseDeparturesCursor(cursor: Cursor): Map<AgencyAndId, List<Departure>> {
-        val map = HashMap<AgencyAndId, ArrayList<Departure>>()
+    private fun parseDeparturesCursor(cursor: Cursor): Map<String, List<Departure>> {
+        val map = HashMap<String, ArrayList<Departure>>()
 
         while (cursor.moveToNext()) {
-            val line = AgencyAndId(cursor.getString(0))
-            val service = AgencyAndId(cursor.getInt(1).toString())
+            val line = cursor.getString(0)
+            val service = cursor.getInt(1).toString()
             val mode = calendarToMode(service)
             val time = parseTime(cursor.getString(2))
             val lowFloor = cursor.getInt(3) == 1
@@ -243,10 +301,10 @@ class Timetable private constructor() {
         return cal.secondsAfterMidnight()
     }
 
-    fun calendarToMode(serviceId: AgencyAndId): List<Int> {
+    private fun calendarToMode(serviceId: String): List<Int> {
         val days = ArrayList<Int>()
-        val cursor = db.rawQuery("select * from calendar where service_id = ?",
-                arrayOf(serviceId.id))
+        val cursor = db!!.rawQuery("select * from calendar where service_id = ?",
+                arrayOf(serviceId))
 
         cursor.moveToNext()
         (1 until 7).forEach {
@@ -262,9 +320,9 @@ class Timetable private constructor() {
         tripId.modification.forEach {
             if (it.stopRange != null) {
                 if (stopSequence in it.stopRange)
-                    explanations.add(routeModifications[it.id.id]!!)
+                    explanations.add(routeModifications[it.id]!!)
             } else {
-                explanations.add(routeModifications[it.id.id]!!)
+                explanations.add(routeModifications[it.id]!!)
             }
         }
 
@@ -295,23 +353,25 @@ class Timetable private constructor() {
                 modification.split(",").forEach {
                     try {
                         val (id, start, end) = it.split(":")
-                        modifications.add(Trip.ID.Modification(AgencyAndId(id), IntRange(start.toInt(), end.toInt())))
+                        modifications.add(Trip.ID.Modification(id, IntRange(start.toInt(), end.toInt())))
                     } catch (e: Exception) {
-                        modifications.add(Trip.ID.Modification(AgencyAndId(it), null))
+                        modifications.add(Trip.ID.Modification(it, null))
                     }
                 }
             }
-            return Trip.ID(rawId, AgencyAndId(rawId.split("^")[0]), modifications, isMain)
+            return Trip.ID(rawId, rawId.split("^")[0], modifications, isMain)
         } else
-            return Trip.ID(rawId, AgencyAndId(rawId), HashSet(), false)
+            return Trip.ID(rawId, rawId, HashSet(), false)
     }
 
     @SuppressLint("Recycle")
     fun isEmpty(): Boolean {
+        if (db == null)
+            return true
         var result: Boolean
         var cursor: Cursor? = null
         try {
-            cursor = db.rawQuery("select * from feed_info", null)
+            cursor = db!!.rawQuery("select * from feed_info", null)
             result = !cursor.moveToNext()
         } catch (e: Exception) {
             result = true
@@ -322,7 +382,7 @@ class Timetable private constructor() {
     }
 
     fun getValidSince(): String {
-        val cursor = db.rawQuery("select feed_start_date from feed_info", null)
+        val cursor = db!!.rawQuery("select feed_start_date from feed_info", null)
 
         cursor.moveToNext()
         val validTill = cursor.getString(0)
@@ -332,7 +392,7 @@ class Timetable private constructor() {
     }
 
     fun getValidTill(): String {
-        val cursor = db.rawQuery("select feed_end_date from feed_info", null)
+        val cursor = db!!.rawQuery("select feed_end_date from feed_info", null)
 
         cursor.moveToNext()
         val validTill = cursor.getString(0)
@@ -341,41 +401,42 @@ class Timetable private constructor() {
         return validTill
     }
 
-    fun getServiceForToday(): AgencyAndId {
-        val today = JCalendar.getInstance().get(JCalendar.DAY_OF_WEEK)
+    fun getServiceForToday(): String? {
+        val today = JCalendar.getInstance()
         return getServiceFor(today)
     }
 
-    fun getServiceForTomorrow(): AgencyAndId {
+    fun getServiceForTomorrow(): String? {
         val tomorrow = JCalendar.getInstance()
         tomorrow.add(JCalendar.DAY_OF_MONTH, 1)
-        val tomorrowDoW = tomorrow.get(JCalendar.DAY_OF_WEEK)
-        return getServiceFor(tomorrowDoW)
+        return getServiceFor(tomorrow)
     }
 
-    fun getServiceFor(day: Int): AgencyAndId {
-        val dayColumn = arrayOf("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")[((day + 5) % 7)]
-        val cursor = db.rawQuery("select service_id from calendar where $dayColumn = 1", null)
+    private fun getServiceFor(day: JCalendar): String? {
+        val dayColumn = arrayOf("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")[((day.get(JCalendar.DAY_OF_WEEK) + 5) % 7)]
+        val cursor = db!!.rawQuery("select service_id from calendar where $dayColumn = 1 and start_date < ? and ? < end_date", arrayOf(day.toIsoDate(), day.toIsoDate()))
 
-        val service: Int
-        cursor.moveToNext()
-        try {
-            service = cursor.getInt(0)
-            cursor.close()
-            return AgencyAndId(service.toString())
+        cursor.moveToFirst()
+        return try {
+            cursor.getInt(0).let {
+                cursor.close()
+                it.toString()
+            }
         } catch (e: CursorIndexOutOfBoundsException) {
-            throw IllegalArgumentException()
+            cursor.close()
+            null
         }
     }
 
-    fun getPlatesForStop(stop: AgencyAndId): Set<Plate.ID> {
+    private fun getPlatesForStop(stop: String): Set<Plate.ID> {
+
         val plates = HashSet<Plate.ID>()
-        val cursor = db.rawQuery("select route_id, trip_headsign " +
-                "from stop_times natural join trips where stop_id = ? " +
-                "group by route_id, trip_headsign", arrayOf(stop.id))
+        val cursor = db!!.rawQuery("select route_id, trip_headsign " +
+                "from stop_times natural join trips natural join stops where stop_code = ? " +
+                "group by route_id, trip_headsign", arrayOf(stop))
 
         while (cursor.moveToNext()) {
-            val routeId = AgencyAndId(cursor.getString(0))
+            val routeId = cursor.getString(0)
             val headsign = cursor.getString(1)
             plates.add(Plate.ID(routeId, stop, headsign))
         }
@@ -384,13 +445,13 @@ class Timetable private constructor() {
         return plates
     }
 
-    fun getTripGraphs(id: AgencyAndId): Array<TripGraph> {
+    fun getTripGraphs(id: String): Array<TripGraph> {
         val graphs = arrayOf(TripGraph(), TripGraph())
 
-        val cursor = db.rawQuery("select trip_id, trip_headsign, direction_id, stop_id, " +
+        val cursor = db!!.rawQuery("select trip_id, trip_headsign, direction_id, stop_id, " +
                 "stop_sequence, pickup_type, stop_name, zone_id " +
                 "from stop_times natural join trips natural join stops" +
-                "where route_id = ?", arrayOf(id.id))
+                "where route_id = ?", arrayOf(id))
 
         while (cursor.moveToNext()) {
             val trip = cursor.getString(0)
@@ -435,6 +496,56 @@ class Timetable private constructor() {
         }
 
         return graphs
+    }
+
+    fun getServiceFirstDay(service: String): Int {
+        val cursor = db!!.rawQuery("select * from calendar where service_id = ?", arrayOf(service))
+        cursor.moveToFirst()
+        var i = 1
+        while ((cursor.getString(i) == "0") and (i < 8)) i++
+        cursor.close()
+        return i
+    }
+
+    fun getServiceDescription(service: String, context: Context): String {
+        val dayNames = SparseArray<String>()
+        dayNames.put(1, context.getString(R.string.Mon))
+        dayNames.put(2, context.getString(R.string.Tue))
+        dayNames.put(3, context.getString(R.string.Wed))
+        dayNames.put(4, context.getString(R.string.Thu))
+        dayNames.put(5, context.getString(R.string.Fri))
+        dayNames.put(6, context.getString(R.string.Sat))
+        dayNames.put(7, context.getString(R.string.Sun))
+
+        val cursor = db!!.rawQuery("select * from calendar where service_id = ?", arrayOf(service))
+        cursor.moveToFirst()
+        val days = SparseBooleanArray()
+        for (i in 1..7) {
+            days.append(i, cursor.getString(i) == "1")
+        }
+        days.append(8, false)
+        val description = ArrayList<String>()
+        var start = 0
+
+        for (i in 1..8) {
+            if (!days[i] and (start > 0)) {
+                when {
+                    i - start == 1 -> description.add(dayNames[start])
+                    i - start == 2 -> description.add("${dayNames[start]}, ${dayNames[start + 1]}")
+                    i - start > 2 -> description.add("${dayNames[start]}–${dayNames[i - 1]}")
+                }
+                start = 0
+            }
+            if (days[i] and (start == 0))
+                start = i
+        }
+
+        val startDate = calendarFromIsoD(cursor.getString(8)).toNiceString(context)
+        val endDate = calendarFromIsoD(cursor.getString(9)).toNiceString(context)
+
+        cursor.close()
+
+        return "${description.joinToString { it }} ($startDate–$endDate)"
     }
 
     class TripGraph {

@@ -4,7 +4,7 @@ import android.os.Parcel
 import android.os.Parcelable
 
 
-data class Route(val id: AgencyAndId, val agency: AgencyAndId, val shortName: String,
+data class Route(val id: String, val agency: String, val shortName: String,
                  val longName: String, val description: String, val type: Int, val colour: Int,
                  val textColour: Int, val modifications: Map<String, String>) : Parcelable {
     companion object CREATOR : Parcelable.Creator<Route> {
@@ -27,13 +27,13 @@ data class Route(val id: AgencyAndId, val agency: AgencyAndId, val shortName: St
                 val toSplit = to.split("^")
                 val description = "${toSplit[0]}|${fromSplit[0]}"
                 val modifications = createModifications(desc)
-                Route(AgencyAndId(id), AgencyAndId(agency), shortName, longName, description,
+                Route(id, agency, shortName, longName, description,
                         type, colour, textColour, modifications)
             } else {
                 val toSplit = desc.split("^")
                 val description = toSplit[0]
                 val modifications = createModifications(desc)
-                Route(AgencyAndId(id), AgencyAndId(agency), shortName, longName, description,
+                Route(id, agency, shortName, longName, description,
                         type, colour, textColour, modifications)
             }
         }
@@ -57,8 +57,8 @@ data class Route(val id: AgencyAndId, val agency: AgencyAndId, val shortName: St
 
     @Suppress("UNCHECKED_CAST")
     constructor(parcel: Parcel) : this(
-            AgencyAndId(parcel.readString()),
-            AgencyAndId(parcel.readString()),
+            parcel.readString(),
+            parcel.readString(),
             parcel.readString(),
             parcel.readString(),
             parcel.readString(),
@@ -68,8 +68,8 @@ data class Route(val id: AgencyAndId, val agency: AgencyAndId, val shortName: St
             parcel.readSerializable() as HashMap<String, String>)
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeString(id.id)
-        parcel.writeString(agency.id)
+        parcel.writeString(id)
+        parcel.writeString(agency)
         parcel.writeString(shortName)
         parcel.writeString(longName)
         parcel.writeString(description)
