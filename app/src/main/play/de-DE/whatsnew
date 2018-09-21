@@ -1,6 +1,8 @@
 - offizieller Fahrplan von ZTM
+- VM kann ohne Offline-Fahrplan verwendet werden
+- Offline-Fahrplan verwendet genaue Daten (statt Arbeitstagen/Samstagen/Feiertagen)
 - VM ist schneller und mehr zuverlässig (da es genauso berechnet wird wie Offline-Abfahrten)
 - Lieblingshaltestellen von Grund auf umgeschrieben
 - App ist auf externen Speicher bewegbar
 - neue Farben — grau und grün — die zum neuen Posener Stil passen
-- mehrere Fehler behoben 
+- mehrere Fehler behoben
