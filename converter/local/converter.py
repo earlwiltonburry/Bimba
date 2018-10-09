@@ -15,8 +15,10 @@ import hashlib
 import gzip
 import shutil
 import dateutil.parser
+import msgpack
+import base64
 
-import uploader
+import config
 
 
 class TimetableDownloader:
@@ -64,8 +66,9 @@ class TimetableDownloader:
                 p.unlink()
             size_u = os.path.getsize('timetable.db')
             self.__compress(checksum)
-            self.__archive(file, checksum, size_u, os.path
-                           .getsize('{}.db.gz'.format(checksum)))
+            meta = self.__archive(file, checksum, size_u, os.path
+                                  .getsize('{}.db.gz'.format(checksum)))
+            self.__upload(checksum, meta)
 
     def __is_valid(self, name):
         today = date.today().strftime('%Y%m%d')
@@ -136,6 +139,7 @@ dla-deweloperow/getGTFSFile?file={}.zip'
         metadata['start'] = start_date
         metadata['end'] = end_date
         self.__metadata.append(metadata)
+        return metadata
 
     def __tidy_up(self):
         names = ['_'.join((row['start'], row['end'])) for row in
@@ -152,8 +156,32 @@ dla-deweloperow/getGTFSFile?file={}.zip'
                 new_metadata.append(item)
             else:
                 Path('{}.db.gz'.format(item['id'])).unlink()
+                self.__uplaod_del(item['id'])
 
         self.__metadata = new_metadata
+
+    def __upload(self, id, meta):
+        with open('{}.db.gz'.format(id), 'rb') as f:
+            t = f.read()
+            sha = hashlib.sha256(t).hexdigest()
+        print('uploading {}'.format(id))
+        signature = config.key.sign(bytes(sha, 'utf-8'))
+        data = msgpack.packb({'meta': meta, 'signature': signature.signature})
+        length = len(data)
+        data = bytes(str(length), 'utf-8')+b'\n'+data+t
+        session = requests.Session()
+        response = session.put(config.receiver, data)
+        print(response)
+        print(response.text)
+
+    def __upload_del(self, id):
+        print('uploading del {}'.format(id))
+        signature = config.key.sign(bytes(id, 'utf-8'))
+        session = requests.Session()
+        s = str(base64.b64encode(signature.signature), 'utf-8')
+        response = session.delete('{}/{}:{}'.format(config.receiver, id, s))
+        print(response)
+        print(response.text)
 
 
 class TimetableConverter:
@@ -359,7 +387,7 @@ class TimetableConverter:
                    feed_publisher_url TEXT,
                    feed_lang TEXT,
                    feed_start_date TEXT,
-                   feed_end_date TEXT)''')
+                  o feed_end_date TEXT)''')
 
     def __create_indexes(self):
         self.__cursor.execute('''create index ix_stop_times__stop
@@ -373,5 +401,4 @@ class TimetableConverter:
 if __name__ == '__main__':
     downloader = TimetableDownloader()
     downloader()
-    uploader.upload()
     print('done')

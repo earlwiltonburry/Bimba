@@ -10,70 +10,86 @@ use MessagePack\Exception\UnpackingFailedException;
 
 $publicKey = sodium_hex2bin('8593a07f70809c0adc0c72e16c2a958997419bdc428fe1eb46f58e59ac2e53d0');
 
-$unpacker = new BufferUnpacker();
-$unpacker->reset(file_get_contents("php://input"));
-$post = [];
-try {
-    $post = $unpacker->unpack();
-} catch (UnpackingFailedException $e) {
-    http_response_code(400);
-    die;
-}
+if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+    ob_start();
+    $handle = fopen('php://input', 'rb');
+    $length = trim(fgets($handle));
+    $data = fread($handle, $length);
 
-if (!file_exists('metadata.yml') )
-    $oldMetadata = [];
-else
-    $oldMetadata = Spyc::YAMLLoad('metadata.yml');
-$signature = $post['signature'];
-$verified = sodium_crypto_sign_verify_detached($signature, $post['metadata'],
-    $publicKey);
-if (!$verified) {
-    http_response_code(403);
-    die;
-}
-$newMetadata = Spyc::YAMLLoadString($post['metadata']);
-$timetables = $post['timetables'];
-foreach ($timetables as $id => $timetable) {
-    $t = $timetable['t'];
-    $sha = $timetable['sha'];
-
-    $shallSkip = false;
-    foreach ($oldMetadata as $entry) {
-        if ($entry['id'] == $id)
-            $shallSkip = true;
-    }
-
-    if ($shallSkip) continue;
-
-    $fp = fopen(dirname(__FILE__) . "/$id.db.gz", 'wb');
-    $ch = curl_init($t);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 50);
-    curl_setopt($ch, CURLOPT_FILE, $fp);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_exec($ch);
-    curl_close($ch);
-    fclose($fp);
-
-    $checksum = hash_file('sha256', "$id.db.gz");
-    if ($checksum != $sha) {
-        unlink("$id.db.gz");
+    $unpacker = new BufferUnpacker();
+    $unpacker->reset($data);
+    $post = [];
+    try {
+        $post = $unpacker->unpack();
+    } catch (UnpackingFailedException $e) {
         http_response_code(400);
-        die("checksums invalid for $id, expected $sha got $checksum");
+        die;
     }
-}
 
-$oldIDs = [];
-$newIDs = [];
-foreach ($oldMetadata as $it) {
-    array_push($oldIDs, $it['id']);
-}
-foreach ($newMetadata as $it) {
-    array_push($newIDs, $it['id']);
-}
-$toDelete = array_diff($oldIDs, $newIDs);
-foreach ($toDelete as $it) {
-    unlink("$it.db.gz");
-}
+    if (!file_exists('metadata.yml') )
+        $metadata = [];
+    else
+        $metadata = Spyc::YAMLLoad('metadata.yml');
+    $signature = $post['signature'];
+    $meta = $post['meta'];
+    $id = $meta['id'];
+    
+    $output = fopen("$id.db.gz", 'wb');
+    stream_copy_to_stream($handle, $output);
+    fclose($output);
+    fclose($handle);
 
-file_put_contents('metadata.yml', $post['metadata']);
+    $sha = hash_file('sha256', "$id.db.gz");
+    $verified = sodium_crypto_sign_verify_detached($signature, $sha, $publicKey);
+    if (!$verified) {
+        http_response_code(403);
+        unlink("$id.db.gz");
+        die;
+    }
+
+    $metadata[] = $meta;
+
+    file_put_contents('metadata.yml', Spyc::YAMLDump($metadata, false, 0, true));
+    ob_end_flush();
+    ob_flush();
+    flush();
+} elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+    ob_start();
+    $req = explode(':', substr(@$_SERVER['PATH_INFO'], 1), 2);
+    $id = $req[0];
+    $sig = base64_decode($req[1]);
+    if ($id == '') {
+        http_response_code(400);
+        die('no id in DELETE');
+    }
+    if (preg_match('/[0-9a-f]{64}/', $id, $matches) === 0) {
+        http_response_code(400);
+        die('wrong id in DELETE');
+    }
+    if ($matches[0] != $id) {
+        http_response_code(400);
+        die('wrong id in DELETE');
+    }
+    $verified = sodium_crypto_sign_verify_detached($sig, $id, $publicKey);
+    if (!$verified) {
+        http_response_code(403);
+        die('unverified DELETE');
+    }
+
+    if (!file_exists('metadata.yml') )
+        $metadata = [];
+    else
+        $metadata = Spyc::YAMLLoad('metadata.yml');
+
+    $newMetadata = [];
+    foreach ($metadata as $it) {
+        if ($it['id'] != $id)
+            $newMetadata[] = $it;
+    }
+    file_put_contents('metadata.yml', Spyc::YAMLDump($newMetadata, false, 0, true));
+    unlink("$id.db.gz");
+    ob_end_flush();
+    ob_flush();
+    flush();
+}
 ?>
