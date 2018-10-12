@@ -156,7 +156,7 @@ dla-deweloperow/getGTFSFile?file={}.zip'
                 new_metadata.append(item)
             else:
                 Path('{}.db.gz'.format(item['id'])).unlink()
-                self.__uplaod_del(item['id'])
+                self.__upload_del(item['id'])
 
         self.__metadata = new_metadata
 
