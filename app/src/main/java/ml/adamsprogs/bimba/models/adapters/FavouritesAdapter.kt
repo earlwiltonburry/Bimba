@@ -1,16 +1,16 @@
 package ml.adamsprogs.bimba.models.adapters
 
 import android.content.Context
-import android.support.v4.content.res.ResourcesCompat
-import android.support.v7.widget.*
-import android.support.v7.widget.PopupMenu
+import androidx.core.content.res.ResourcesCompat
+import androidx.appcompat.widget.*
+import androidx.appcompat.widget.PopupMenu
 import android.util.SparseBooleanArray
 import android.view.*
 import android.widget.*
 import ml.adamsprogs.bimba.R
 import android.view.LayoutInflater
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.android.Main
 import java.util.*
 import ml.adamsprogs.bimba.Declinator
 import ml.adamsprogs.bimba.collections.FavouriteStorage
@@ -21,7 +21,7 @@ import ml.adamsprogs.bimba.secondsAfterMidnight
 class FavouritesAdapter(private val appContext: Context, var favourites: FavouriteStorage,
                         private val onMenuItemClickListener: OnMenuItemClickListener,
                         private val onClickListener: ViewHolder.OnClickListener) :
-        RecyclerView.Adapter<FavouritesAdapter.ViewHolder>() {
+        androidx.recyclerview.widget.RecyclerView.Adapter<FavouritesAdapter.ViewHolder>() {
 
     private val selectedItems = SparseBooleanArray()
 
@@ -52,7 +52,7 @@ class FavouritesAdapter(private val appContext: Context, var favourites: Favouri
     override fun getItemCount() = favourites.size
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        launch(UI) {
+        launch(Dispatchers.Main) {
             val favourite = favourites[position]!!
             holder.nameTextView.text = favourite.name
 
@@ -71,7 +71,7 @@ class FavouritesAdapter(private val appContext: Context, var favourites: Favouri
                 popup.show()
             }
 
-            val nextDeparture = withContext(CommonPool) {
+            val nextDeparture = withContext(Dispatchers.Default) {
                 favourite.nextDeparture()
             }
 
@@ -115,7 +115,7 @@ class FavouritesAdapter(private val appContext: Context, var favourites: Favouri
         return favourites[index]
     }
 
-    class ViewHolder(itemView: View, private val listener: OnClickListener) : RecyclerView.ViewHolder(itemView), View.OnClickListener, View.OnLongClickListener {
+    class ViewHolder(itemView: View, private val listener: OnClickListener) : androidx.recyclerview.widget.RecyclerView.ViewHolder(itemView), View.OnClickListener, View.OnLongClickListener {
         override fun onLongClick(v: View?): Boolean {
             return listener.onItemLongClicked(adapterPosition)
         }

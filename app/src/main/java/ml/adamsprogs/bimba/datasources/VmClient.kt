@@ -1,7 +1,7 @@
 package ml.adamsprogs.bimba.datasources
 
 import com.google.gson.*
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import ml.adamsprogs.bimba.NetworkStateReceiver
 import ml.adamsprogs.bimba.models.Plate
 import ml.adamsprogs.bimba.models.StopSegment
@@ -55,7 +55,7 @@ class VmClient {
     }*/
 
     suspend fun getStops(pattern: String): List<StopSuggestion> {
-        val (_, response) = withContext(DefaultDispatcher) {
+        val (_, response) = withContext(Dispatchers.Default) {
             makeRequest("getStopPoints", """{"pattern": "$pattern"}""")
         }
 
@@ -91,7 +91,7 @@ class VmClient {
         var responseBody: String? = null
         var responseCode = 0
         try {
-            withContext(CommonPool) {
+            withContext(Dispatchers.Default) {
                 client.newCall(request).execute().let {
                     responseCode = it.code()
                     responseBody = it.body()?.string()
@@ -109,7 +109,7 @@ class VmClient {
     }
 
     suspend fun getName(symbol: String): String? {
-        val (_, timesResponse) = withContext(DefaultDispatcher) {
+        val (_, timesResponse) = withContext(Dispatchers.Default) {
             makeRequest("getTimes", """{"symbol": "$symbol"}""")
         }
         if (!timesResponse.has("success"))

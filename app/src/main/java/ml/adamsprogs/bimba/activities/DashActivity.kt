@@ -5,10 +5,7 @@ import android.app.Activity
 import android.content.*
 import android.os.*
 import android.preference.PreferenceManager.getDefaultSharedPreferences
-import android.support.design.widget.*
-import android.support.v4.widget.*
-import android.support.v7.widget.*
-import android.support.v7.app.*
+import androidx.appcompat.app.*
 import android.text.Html
 import android.view.*
 import android.view.inputmethod.InputMethodManager
@@ -26,6 +23,8 @@ import ml.adamsprogs.bimba.collections.*
 
 import com.arlib.floatingsearchview.FloatingSearchView
 import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
+import com.google.android.material.navigation.NavigationView
+import com.google.android.material.snackbar.Snackbar
 
 //todo<p:1> searchView integration
 class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener,
@@ -35,9 +34,9 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     private val receiver = MessageReceiver.getMessageReceiver()
     private lateinit var timetable: Timetable
     private var suggestions: List<GtfsSuggestion>? = null
-    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var drawerLayout: androidx.drawerlayout.widget.DrawerLayout
     private lateinit var drawerView: NavigationView
-    lateinit var favouritesList: RecyclerView
+    lateinit var favouritesList: androidx.recyclerview.widget.RecyclerView
     lateinit var searchView: FloatingSearchView
     private lateinit var favourites: FavouriteStorage
     private lateinit var adapter: FavouritesAdapter
@@ -146,7 +145,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             iconView.setImageDrawable(getDrawable(suggestion.getIcon(), context))
         }
 
-        searchView.attachNavigationDrawerToMenuButton(drawer_layout as DrawerLayout)
+        //searchView.attachNavigationDrawerToMenuButton(drawer_layout as androidx.drawerlayout.widget.DrawerLayout)
     }
 
     override fun onRestart() {
@@ -243,16 +242,16 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         favourites.forEach {
             it.subscribeForDepartures(this, this)
         }
-        val layoutManager = LinearLayoutManager(context)
+        val layoutManager = androidx.recyclerview.widget.LinearLayoutManager(context)
         favouritesList = favourites_list
         adapter = FavouritesAdapter(context, favourites, this, this)
         favouritesList.adapter = adapter
-        favouritesList.itemAnimator = DefaultItemAnimator()
+        favouritesList.itemAnimator = androidx.recyclerview.widget.DefaultItemAnimator()
         favouritesList.layoutManager = layoutManager
     }
 
     override fun onDeparturesReady(departures: List<Departure>, plateId: Plate.ID?, code: Int) {
-        favouritesList.adapter.notifyDataSetChanged()
+        favouritesList.adapter!!.notifyDataSetChanged()
         showError(drawer_layout, code, this)
     }
 
@@ -288,7 +287,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     override fun onResume() {
         super.onResume()
         adapter.favourites = favourites
-        favouritesList.adapter.notifyDataSetChanged()
+        favouritesList.adapter!!.notifyDataSetChanged()
     }
 
     override fun onDestroy() {
@@ -321,18 +320,18 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         return true
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == REQUEST_EDIT_FAVOURITE) {
             if (resultCode == Activity.RESULT_OK) {
-                val name = data.getStringExtra(EditFavouriteActivity.EXTRA_NEW_NAME)
+                val name = data!!.getStringExtra(EditFavouriteActivity.EXTRA_NEW_NAME)
                 val positionBefore = data.getIntExtra(EditFavouriteActivity.EXTRA_POSITION_BEFORE, -1)
                 //adapter.favourites = favourites.favouritesList
                 if (positionBefore == -1)
-                    favouritesList.adapter.notifyDataSetChanged()
+                    favouritesList.adapter!!.notifyDataSetChanged()
                 else {
                     val positionAfter = favourites.indexOf(name)
-                    favouritesList.adapter.notifyItemChanged(positionBefore)
-                    favouritesList.adapter.notifyItemMoved(positionBefore, positionAfter)
+                    favouritesList.adapter!!.notifyItemChanged(positionBefore)
+                    favouritesList.adapter!!.notifyItemMoved(positionBefore, positionAfter)
                 }
                 adapter[name]?.let {
                     it.unsubscribeFromDepartures(context)
@@ -345,7 +344,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     override fun delete(name: String): Boolean {
         favourites.delete(name)
         //adapter.favourites = favourites.favouritesList
-        favouritesList.adapter.notifyItemRemoved(favourites.indexOf(name))
+        favouritesList.adapter!!.notifyItemRemoved(favourites.indexOf(name))
         return true
     }
 

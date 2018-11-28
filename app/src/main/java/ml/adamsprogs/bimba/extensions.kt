@@ -4,7 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.os.Build
-import android.support.design.widget.Snackbar
+import com.google.android.material.snackbar.Snackbar
 import android.text.format.DateFormat
 import android.view.View
 import ml.adamsprogs.bimba.activities.StopActivity

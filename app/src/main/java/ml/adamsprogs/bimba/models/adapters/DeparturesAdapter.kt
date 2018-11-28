@@ -3,8 +3,8 @@ package ml.adamsprogs.bimba.models.adapters
 import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
-import android.support.v4.content.res.ResourcesCompat
-import android.support.v7.widget.RecyclerView
+import androidx.core.content.res.ResourcesCompat
+import androidx.recyclerview.widget.RecyclerView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -17,7 +17,7 @@ import ml.adamsprogs.bimba.rollTime
 import java.util.*
 
 class DeparturesAdapter(val context: Context, var departures: List<Departure>?, var relativeTime: Boolean) :
-        RecyclerView.Adapter<DeparturesAdapter.ViewHolder>() {
+        androidx.recyclerview.widget.RecyclerView.Adapter<DeparturesAdapter.ViewHolder>() {
 
     companion object {
         const val VIEW_TYPE_LOADING: Int = 0
@@ -107,7 +107,7 @@ class DeparturesAdapter(val context: Context, var departures: List<Departure>?, 
         return ViewHolder(rowView)
     }
 
-    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class ViewHolder(itemView: View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(itemView) {
         val root = itemView.findViewById<View>(R.id.departureRow)!!
         val lineTextView: TextView = itemView.findViewById(R.id.lineNumber)
         val timeTextView: TextView = itemView.findViewById(R.id.departureTime)

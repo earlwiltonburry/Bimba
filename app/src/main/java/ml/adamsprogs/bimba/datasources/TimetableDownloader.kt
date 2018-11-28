@@ -3,7 +3,7 @@ package ml.adamsprogs.bimba.datasources
 import android.annotation.TargetApi
 import android.app.*
 import android.content.*
-import android.support.v4.app.NotificationCompat
+import androidx.core.app.NotificationCompat
 import java.io.*
 import android.os.Build
 import android.preference.PreferenceManager.getDefaultSharedPreferences
@@ -40,7 +40,7 @@ class TimetableDownloader : IntentService("TimetableDownloader") {
 
             val httpCon: HttpURLConnection
             try {
-                var sourceUrl = getDefaultSharedPreferences(this).getString(getString(R.string.key_timetable_source_url), getString(R.string.timetable_source_url))
+                var sourceUrl = getDefaultSharedPreferences(this).getString(getString(R.string.key_timetable_source_url), getString(R.string.timetable_source_url))!!
                 sourceUrl = sourceUrl.replace(Regex("^.*://", RegexOption.IGNORE_CASE), "")
                 sourceUrl = "https://$sourceUrl"
                 val url = URL(sourceUrl)

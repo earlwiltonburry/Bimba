@@ -1,13 +1,12 @@
 package ml.adamsprogs.bimba.activities
 
 import android.content.*
-import android.support.design.widget.*
 import android.os.Bundle
 import android.view.*
-import android.support.v4.content.res.ResourcesCompat
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.*
+import androidx.core.content.res.ResourcesCompat
+import androidx.appcompat.app.AppCompatActivity
 import android.widget.AdapterView
+import com.google.android.material.snackbar.Snackbar
 
 import java.util.Calendar
 import kotlinx.android.synthetic.main.activity_stop.*
@@ -71,15 +70,15 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         showFab()
 
-        val layoutManager = LinearLayoutManager(this)
-        departuresList.addItemDecoration(DividerItemDecoration(departuresList.context, layoutManager.orientation))
+        val layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
+        departuresList.addItemDecoration(androidx.recyclerview.widget.DividerItemDecoration(departuresList.context, layoutManager.orientation))
         departuresList.adapter = DeparturesAdapter(this, null, true)
         adapter = departuresList.adapter as DeparturesAdapter
         departuresList.layoutManager = layoutManager
 
-        departuresList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {}
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+        departuresList.addOnScrollListener(object : androidx.recyclerview.widget.RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: androidx.recyclerview.widget.RecyclerView, newState: Int) {}
+            override fun onScrolled(recyclerView: androidx.recyclerview.widget.RecyclerView, dx: Int, dy: Int) {
                 updateFabVisibility(dy)
                 super.onScrolled(recyclerView, dx, dy)
             }

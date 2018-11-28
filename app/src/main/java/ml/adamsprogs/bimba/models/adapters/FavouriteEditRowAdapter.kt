@@ -1,15 +1,15 @@
 package ml.adamsprogs.bimba.models.adapters
 
-import android.support.v7.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import kotlinx.coroutines.experimental.DefaultDispatcher
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.withContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.android.Main
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ml.adamsprogs.bimba.ProviderProxy
 import ml.adamsprogs.bimba.R
 import ml.adamsprogs.bimba.collections.FavouriteStorage
@@ -19,7 +19,7 @@ import ml.adamsprogs.bimba.models.StopSegment
 
 
 class FavouriteEditRowAdapter(private var favourite: Favourite, private val loadingView: View, private val listView: View) :
-        RecyclerView.Adapter<FavouriteEditRowAdapter.ViewHolder>() {
+        androidx.recyclerview.widget.RecyclerView.Adapter<FavouriteEditRowAdapter.ViewHolder>() {
 
     private val segments = HashMap<String, StopSegment>()
     private val providerProxy = ProviderProxy()
@@ -28,8 +28,8 @@ class FavouriteEditRowAdapter(private var favourite: Favourite, private val load
     private val namesList = HashMap<Plate.ID, String>()
 
     init {
-        launch(UI) {
-            withContext(DefaultDispatcher) {
+        launch(Dispatchers.Main) {
+            withContext(Dispatchers.Default) {
                 favourite.segments.forEach {
                     if (it.plates == null) {
                         (providerProxy.fillStopSegment(it) ?: it).let { segment ->
@@ -50,7 +50,7 @@ class FavouriteEditRowAdapter(private var favourite: Favourite, private val load
                         "${name ?: ""} (${it.stop}):\n${it.line} → ${it.headsign}"
                     }
                 }
-                launch(UI) {
+                launch(Dispatchers.Main) {
                     loadingView.visibility = View.GONE
                     listView.visibility = View.VISIBLE
                     this@FavouriteEditRowAdapter.notifyDataSetChanged()
@@ -63,13 +63,13 @@ class FavouriteEditRowAdapter(private var favourite: Favourite, private val load
     override fun getItemCount(): Int = platesList.size
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        launch(UI) {
+        launch(Dispatchers.Main) {
             val id = platesList[position]
             val favouriteElement = namesList[id]
 
             holder.rowTextView.text = favouriteElement
             holder.deleteButton.setOnClickListener {
-                launch(UI) {
+                launch(Dispatchers.Main) {
                     favourites.delete(favourite.name, id)
                     favourite = favourites.favourites[favourite.name]!!
                     notifyItemRemoved(platesList.indexOf(id))
@@ -88,7 +88,7 @@ class FavouriteEditRowAdapter(private var favourite: Favourite, private val load
         return ViewHolder(rowView)
     }
 
-    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class ViewHolder(itemView: View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(itemView) {
         val rowTextView: TextView = itemView.findViewById(R.id.favourite_edit_row)
         val deleteButton: ImageView = itemView.findViewById(R.id.favourite_edit_delete)
     }

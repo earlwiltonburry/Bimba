@@ -1,9 +1,9 @@
 package ml.adamsprogs.bimba.activities
 
-import android.support.design.widget.TabLayout
-import android.support.v7.app.AppCompatActivity
+import com.google.android.material.tabs.TabLayout
+import androidx.appcompat.app.AppCompatActivity
 
-import android.support.v4.app.*
+import androidx.core.app.*
 import android.os.Bundle
 import android.view.*
 
@@ -44,16 +44,16 @@ class LineSpecifyActivity : AppCompatActivity() {
         tabs.addOnTabSelectedListener(TabLayout.ViewPagerOnTabSelectedListener(container))
     }
 
-    inner class SectionsPagerAdapter(fm: FragmentManager, private val graphs: Array<Timetable.TripGraph>) : FragmentPagerAdapter(fm) {
+    inner class SectionsPagerAdapter(fm: androidx.fragment.app.FragmentManager, private val graphs: Array<Timetable.TripGraph>) : androidx.fragment.app.FragmentPagerAdapter(fm) {
 
-        override fun getItem(position: Int): Fragment {
+        override fun getItem(position: Int): androidx.fragment.app.Fragment {
             return PlaceholderFragment.newInstance(position + 1, graphs[position])
         }
 
         override fun getCount() = 2
     }
 
-    class PlaceholderFragment : Fragment() {
+    class PlaceholderFragment : androidx.fragment.app.Fragment() {
 
         override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                                   savedInstanceState: Bundle?): View? {

@@ -1,9 +1,9 @@
 package ml.adamsprogs.bimba.activities
 
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.support.v7.widget.DividerItemDecoration
-import android.support.v7.widget.LinearLayoutManager
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
 import android.widget.EditText
 import ml.adamsprogs.bimba.R
 import ml.adamsprogs.bimba.models.Favourite
@@ -38,9 +38,9 @@ class EditFavouriteActivity : AppCompatActivity() {
         favourites = FavouriteStorage.getFavouriteStorage(this)
 
         val recyclerView = favourite_edit_list
-        val layoutManager = LinearLayoutManager(this)
+        val layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
         recyclerView!!.layoutManager = layoutManager
-        val dividerItemDecoration = DividerItemDecoration(this, layoutManager.orientation)
+        val dividerItemDecoration = androidx.recyclerview.widget.DividerItemDecoration(this, layoutManager.orientation)
         recyclerView.addItemDecoration(dividerItemDecoration)
         recyclerView.adapter = FavouriteEditRowAdapter(favourite!!, favourite_edit_loading, favourite_edit_list)
         setSupportActionBar(toolbar)

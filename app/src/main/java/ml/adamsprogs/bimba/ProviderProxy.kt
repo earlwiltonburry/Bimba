@@ -1,8 +1,8 @@
 package ml.adamsprogs.bimba
 
 import android.content.*
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.android.Main
 import ml.adamsprogs.bimba.datasources.*
 import ml.adamsprogs.bimba.models.*
 import ml.adamsprogs.bimba.models.suggestions.*
@@ -24,17 +24,17 @@ class ProviderProxy(context: Context? = null) {
     }
 
     fun getSuggestions(query: String = "", callback: (List<GtfsSuggestion>) -> Unit) {
-        launch(UI) {
-            val filtered = withContext(DefaultDispatcher) {
+        launch(Dispatchers.Main, CoroutineStart.DEFAULT, null, {
+            val filtered = withContext(Dispatchers.Default) {
                 suggestions = getStopSuggestions(query) //+ getLineSuggestions(query) //todo<p:v+1> + bike stations, train stations, &c
                 filterSuggestions(query)
             }
             callback(filtered)
-        }
+        })
     }
 
     private suspend fun getStopSuggestions(query: String): List<StopSuggestion> {
-        val vmSuggestions = withContext(DefaultDispatcher) {
+        val vmSuggestions = withContext(Dispatchers.Default) {
             vmClient.getStops(query)
         }
 
@@ -65,8 +65,8 @@ class ProviderProxy(context: Context? = null) {
     }
 
     fun getSheds(name: String, callback: (Map<String, Set<String>>) -> Unit) {
-        launch(UI) {
-            val sheds = withContext(DefaultDispatcher) {
+        launch(Dispatchers.Main) {
+            val sheds = withContext(Dispatchers.Default) {
                 val vmSheds = vmClient.getSheds(name)
 
                 if (vmSheds.isEmpty() and !timetable.isEmpty()) {
@@ -104,13 +104,13 @@ class ProviderProxy(context: Context? = null) {
     }
 
     private fun constructSegmentDepartures(stopSegments: Set<StopSegment>): Deferred<Map<String, List<Departure>>> {
-        return async {
+        return GlobalScope.async(Dispatchers.Default, CoroutineStart.DEFAULT, null, {
             if (timetable.isEmpty())
                 emptyMap()
             else {
                 timetable.getStopDeparturesBySegments(stopSegments)
             }
-        }
+        })
     }
 
     private fun filterDepartures(departures: Map<String, List<Departure>>): List<Departure> {
@@ -161,8 +161,8 @@ class ProviderProxy(context: Context? = null) {
     }
 
     fun fillStopSegment(stopSegment: StopSegment, callback: (StopSegment?) -> Unit) {
-        launch(UI) {
-            withContext(DefaultDispatcher) {
+        launch(Dispatchers.Main) {
+            withContext(Dispatchers.Default) {
                 callback(fillStopSegment(stopSegment))
             }
         }
@@ -179,8 +179,8 @@ class ProviderProxy(context: Context? = null) {
     }
 
     fun getStopName(stopCode: String, callback: (String?) -> Unit) {
-        launch(UI) {
-            withContext(DefaultDispatcher) {
+        launch(Dispatchers.Main) {
+            withContext(Dispatchers.Default) {
                 callback(getStopName(stopCode))
             }
         }
@@ -216,13 +216,13 @@ class ProviderProxy(context: Context? = null) {
 
         init {
             receiver.addOnVmListener(this@Request)
-            launch(UI) {
+            launch(Dispatchers.Main) {
                 cache = constructSegmentDepartures(segments)
             }
         }
 
         override fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID?, stopCode: String, code: Int) {
-            launch(UI) {
+            launch(Dispatchers.Main) {
                 if ((plateId == null || vmDepartures == null) and (timetable.isEmpty())) {
                     listener.onDeparturesReady(emptyList(), null, code)
                     return@launch

@@ -5,8 +5,8 @@ import android.content.Intent
 import android.os.*
 import android.os.Process.THREAD_PRIORITY_BACKGROUND
 import com.google.gson.JsonObject
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.android.Main
 import ml.adamsprogs.bimba.NetworkStateReceiver
 import ml.adamsprogs.bimba.calendarFromIso
 import ml.adamsprogs.bimba.models.*
@@ -31,8 +31,8 @@ class VmService : Service() {
             handler!!.postDelayed(this, TICK_6_ZINA_TIM)
             try {
                 for (plateId in requests.keys)
-                    launch(UI) {
-                        withContext(DefaultDispatcher) {
+                    launch(Dispatchers.Main) {
+                        withContext(Dispatchers.Default) {
                             downloadVM()
                         }
                     }
@@ -63,8 +63,8 @@ class VmService : Service() {
             } else {
                 if (!once)
                     addRequest(stopCode)
-                launch(UI) {
-                    withContext(DefaultDispatcher) {
+                launch(Dispatchers.Main) {
+                    withContext(Dispatchers.Default) {
                         downloadVM(stopCode)
                     }
                 }
