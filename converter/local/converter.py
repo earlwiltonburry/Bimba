@@ -151,7 +151,11 @@ dla-deweloperow/getGTFSFile?file={}.zip'
             if item['id'] not in to_remove:
                 new_metadata.append(item)
             else:
-                Path('{}.db.gz'.format(item['id'])).unlink()
+                try:
+                    Path('{}.db.gz'.format(item['id'])).unlink()
+                except FileNotFoundError:
+                    pass
+                self.__upload_del(item['id'])
 
         self.__metadata = new_metadata
 
