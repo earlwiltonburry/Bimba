@@ -548,7 +548,8 @@ class Timetable private constructor() {
         return "${description.joinToString { it }} ($startDate–$endDate)"
     }
 
-    fun getTripFrom(stopID: Int, datetime: JCalendar): Set<StopTimeSequence> {
+    fun getTripFrom(stopCode: String, datetime: JCalendar): Set<StopTimeSequence> {
+        val stopID = getStopId(stopCode)
         val departureTime = "${datetime.get(JCalendar.HOUR_OF_DAY)}:${datetime.get(JCalendar.MINUTE)}:${datetime.get(JCalendar.SECOND)}"
         val serviceID = getServiceFor(datetime) ?: throw DateOutsideTimetable()
         val cursor = db!!.rawQuery("select route_id, departure_time, trip_id, stop_sequence" +
