@@ -548,11 +548,52 @@ class Timetable private constructor() {
         return "${description.joinToString { it }} ($startDate–$endDate)"
     }
 
+    fun getTripFrom(stopID: Int, datetime: JCalendar): Set<StopTimeSequence> {
+        val departureTime = "${datetime.get(JCalendar.HOUR_OF_DAY)}:${datetime.get(JCalendar.MINUTE)}:${datetime.get(JCalendar.SECOND)}"
+        val serviceID = getServiceFor(datetime) ?: throw DateOutsideTimetable()
+        val cursor = db!!.rawQuery("select route_id, departure_time, trip_id, stop_sequence" +
+                "from stop_times natural join trips" +
+                "where stop_id = ? and departure_time > ? and service_id = ?;", arrayOf(stopID.toString(), departureTime, serviceID))
+        val res = HashSet<StopTimeSequence>()
+        while (cursor.moveToNext()) {
+            val routeID = cursor.getString(0)
+            val tripDepartureTime = cursor.getString(1)
+            val tripID = cursor.getString(2)
+            val stopSequence = cursor.getInt(3).toString()
+            val sequence = ArrayList<Pair<JCalendar, Int>>()
+
+            sequence.add(Pair(timeToCalendar(tripDepartureTime, datetime), stopID))
+            val tripCursor = db!!.rawQuery("select stop_id, departure_time" +
+                    "from stop_times" +
+                    "where trip_id = ? and stop_sequence > ?" +
+                    "order by stop_sequence;", arrayOf(tripID, stopSequence))
+            while (tripCursor.moveToNext()) {
+                val tripStopID = tripCursor.getInt(0)
+                val time = tripCursor.getString(1)
+                sequence.add(Pair(timeToCalendar(time, datetime), tripStopID))
+            }
+            tripCursor.close()
+            res.add(StopTimeSequence(routeID, tripID, sequence))
+        }
+        cursor.close()
+        return res
+    }
+
+    private fun timeToCalendar(time: String, calendar: JCalendar = JCalendar.getInstance()): JCalendar {
+        val t = time.split(":").map { it.toInt() }
+        calendar.set(JCalendar.HOUR_OF_DAY, t[0])
+        calendar.set(JCalendar.MINUTE, t[1])
+        calendar.set(JCalendar.SECOND, t[2])
+        return calendar
+    }
+
     class TripGraph {
         var headsign = ""
         val mainTrip = HashMap<Int, Int>()
         val otherTrips = HashMap<String, HashMap<Int, Stop>>()
         val tripsMetadata = HashMap<String, String>()
     }
+
+    class DateOutsideTimetable : Exception()
 }
 
