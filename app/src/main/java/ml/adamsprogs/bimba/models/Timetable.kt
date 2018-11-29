@@ -558,20 +558,27 @@ class Timetable private constructor() {
         val res = HashSet<StopTimeSequence>()
         while (cursor.moveToNext()) {
             val routeID = cursor.getString(0)
-            val tripDepartureTime = cursor.getString(1)
             val tripID = cursor.getString(2)
             val stopSequence = cursor.getInt(3).toString()
-            val sequence = ArrayList<Pair<JCalendar, Int>>()
+            val sequence = ArrayList<Pair<JCalendar, Stop>>()
 
-            sequence.add(Pair(timeToCalendar(tripDepartureTime, datetime), stopID))
-            val tripCursor = db!!.rawQuery("select stop_id, departure_time" +
-                    "from stop_times" +
-                    "where trip_id = ? and stop_sequence > ?" +
-                    "order by stop_sequence;", arrayOf(tripID, stopSequence))
+            val tripCursor = db!!.rawQuery("select pickup_type, stop_id, departure_time, stop_code, stop_name, stop_lat, stop_lon, zone_id" +
+                    "from stop_times natural join stops" +
+                    "where trip_id = ? and stop_sequence >= ?;", arrayOf(tripID, stopSequence))
             while (tripCursor.moveToNext()) {
-                val tripStopID = tripCursor.getInt(0)
-                val time = tripCursor.getString(1)
-                sequence.add(Pair(timeToCalendar(time, datetime), tripStopID))
+                val pickupType = cursor.getInt(0)
+                val tripStopID = cursor.getInt(1)
+                val time = tripCursor.getString(2)
+                val tripStopCode = cursor.getString(3)
+                val stopName = cursor.getString(4)
+                val latitude = cursor.getFloat(5)
+                val longitude = cursor.getFloat(6)
+                val zone = cursor.getString(7)
+
+                sequence.add(Pair(
+                        timeToCalendar(time, datetime),
+                        Stop(tripStopID, tripStopCode, stopName, latitude, longitude, zone[0], pickupType == 3)
+                ))
             }
             tripCursor.close()
             res.add(StopTimeSequence(routeID, tripID, sequence))
