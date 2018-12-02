@@ -5,8 +5,9 @@ import android.app.Activity
 import android.content.*
 import android.os.*
 import android.preference.PreferenceManager.getDefaultSharedPreferences
+import android.text.Editable
 import androidx.appcompat.app.*
-import android.text.Html
+import android.text.TextWatcher
 import android.view.*
 import android.view.inputmethod.InputMethodManager
 import kotlin.collections.ArrayList
@@ -21,14 +22,14 @@ import ml.adamsprogs.bimba.models.suggestions.*
 import ml.adamsprogs.bimba.models.adapters.*
 import ml.adamsprogs.bimba.collections.*
 
-import com.arlib.floatingsearchview.FloatingSearchView
-import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
+import com.mancj.materialsearchbar.MaterialSearchBar
+import com.mancj.materialsearchbar.MaterialSearchBar.BUTTON_BACK
+import com.mancj.materialsearchbar.MaterialSearchBar.BUTTON_NAVIGATION
 
-//todo<p:1> searchView integration
 class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener,
-        FavouritesAdapter.OnMenuItemClickListener, FavouritesAdapter.ViewHolder.OnClickListener, ProviderProxy.OnDeparturesReadyListener {
+        FavouritesAdapter.OnMenuItemClickListener, FavouritesAdapter.ViewHolder.OnClickListener, ProviderProxy.OnDeparturesReadyListener, SuggestionsAdapter.OnSuggestionClickListener {
 
     val context: Context = this
     private val receiver = MessageReceiver.getMessageReceiver()
@@ -37,13 +38,14 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     private lateinit var drawerLayout: androidx.drawerlayout.widget.DrawerLayout
     private lateinit var drawerView: NavigationView
     lateinit var favouritesList: androidx.recyclerview.widget.RecyclerView
-    lateinit var searchView: FloatingSearchView
+    lateinit var searchView: MaterialSearchBar
     private lateinit var favourites: FavouriteStorage
     private lateinit var adapter: FavouritesAdapter
     private val actionModeCallback = ActionModeCallback()
     private var actionMode: ActionMode? = null
     private var isWarned = false
     private lateinit var providerProxy: ProviderProxy
+    private lateinit var suggestionsAdapter: SuggestionsAdapter
 
     companion object {
         const val REQUEST_EDIT_FAVOURITE = 1
@@ -89,63 +91,76 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         showValidityInDrawer()
 
         searchView = search_view
+        searchView.setCardViewElevation(8)
+        suggestionsAdapter = SuggestionsAdapter(layoutInflater, this, this)
+        searchView.setCustomSuggestionAdapter(suggestionsAdapter)
 
-        searchView.setOnFocusChangeListener(object : FloatingSearchView.OnFocusChangeListener {
-            override fun onFocus() {
-                favouritesList.visibility = View.GONE
-                providerProxy.getSuggestions(searchView.query) {
-                    searchView.swapSuggestions(it)
+        searchView.addTextChangeListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                if (searchView.isSearchEnabled) {
+                    searchView.clearSuggestions()
+                    searchView.updateLastSuggestions(listOf<GtfsSuggestion>())
+                    providerProxy.getSuggestions(s.toString()) { suggestions ->
+                        suggestions.forEach {
+                            if (it.name.contains(s as CharSequence, true)) {
+                                suggestionsAdapter.addSuggestion(it)
+                            }
+                        }
+                        searchView.showSuggestionsList()
+                    }
                 }
             }
 
-            override fun onFocusCleared() {
-                favouritesList.visibility = View.VISIBLE
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
             }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            }
+
         })
 
-        searchView.setOnQueryChangeListener { oldQuery, newQuery ->
-            if (oldQuery != "" && newQuery == "")
-                searchView.clearSuggestions()
-            providerProxy.getSuggestions(newQuery) {
-                searchView.swapSuggestions(it)
-            }
-        }
-
-        searchView.setOnSearchListener(object : FloatingSearchView.OnSearchListener {
-            override fun onSuggestionClicked(searchSuggestion: SearchSuggestion) {
-                val imm = context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
-                var view = (context as DashActivity).currentFocus
-                if (view == null) {
-                    view = View(context)
-                }
-                imm.hideSoftInputFromWindow(view.windowToken, 0)
-                if (searchSuggestion is StopSuggestion) {
-                    val intent = Intent(context, StopSpecifyActivity::class.java)
-                    intent.putExtra(StopSpecifyActivity.EXTRA_STOP_NAME, searchSuggestion.name)
-                    startActivity(intent)
-                } else if (searchSuggestion is LineSuggestion) {
-                    val intent = Intent(context, LineSpecifyActivity::class.java)
-                    intent.putExtra(LineSpecifyActivity.EXTRA_LINE_ID, searchSuggestion.name)
-                    startActivity(intent)
+        searchView.setOnSearchActionListener(object : MaterialSearchBar.OnSearchActionListener {
+            override fun onButtonClicked(buttonCode: Int) {
+                when (buttonCode) {
+                    BUTTON_NAVIGATION -> {
+                        if (drawerLayout.isDrawerOpen(drawerView))
+                            drawerLayout.closeDrawer(drawerView)
+                        else
+                            drawerLayout.openDrawer(drawerView)
+                    }
+                    BUTTON_BACK -> {
+                        searchView.disableSearch()
+                    }
                 }
             }
 
-            override fun onSearchAction(query: String) {
+            override fun onSearchStateChanged(enabled: Boolean) {
             }
+
+            override fun onSearchConfirmed(text: CharSequence?) {
+                // todo re-search
+                println("OnSearchConfirmed")
+            }
+
         })
+    }
 
-        searchView.setOnBindSuggestionCallback { _, iconView, textView, item, _ ->
-            val suggestion = item as GtfsSuggestion
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                textView.text = Html.fromHtml(item.body, Html.FROM_HTML_MODE_LEGACY)
-            } else {
-                @Suppress("DEPRECATION")
-                textView.text = Html.fromHtml(item.body)
-            }
-            iconView.setImageDrawable(getDrawable(suggestion.getIcon(), context))
+    override fun onSuggestionClickListener(suggestion: GtfsSuggestion) {
+        val imm = context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+        var view = (context as DashActivity).currentFocus
+        if (view == null) {
+            view = View(context)
         }
-
-        //searchView.attachNavigationDrawerToMenuButton(drawer_layout as androidx.drawerlayout.widget.DrawerLayout)
+        imm.hideSoftInputFromWindow(view.windowToken, 0)
+        if (suggestion is StopSuggestion) {
+            val intent = Intent(context, StopSpecifyActivity::class.java)
+            intent.putExtra(StopSpecifyActivity.EXTRA_STOP_NAME, suggestion.name)
+            startActivity(intent)
+        } else if (suggestion is LineSuggestion) {
+            val intent = Intent(context, LineSpecifyActivity::class.java)
+            intent.putExtra(LineSpecifyActivity.EXTRA_LINE_ID, suggestion.name)
+            startActivity(intent)
+        }
     }
 
     override fun onRestart() {
@@ -256,8 +271,10 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     private fun getSuggestions() {
-        providerProxy.getSuggestions {
-            searchView.swapSuggestions(it)
+        providerProxy.getSuggestions { suggestions ->
+            suggestions.forEach {
+                suggestionsAdapter.addSuggestion(it)
+            }
         }
     }
 
@@ -274,12 +291,14 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             startService(Intent(context, TimetableDownloader::class.java))
     }
 
-    override fun onBackPressed() { //fixme
+    override fun onBackPressed() {
         if (drawerLayout.isDrawerOpen(drawerView)) {
             drawerLayout.closeDrawer(drawerView)
             return
         }
-        if (!searchView.setSearchFocused(false)) {
+        if (searchView.isSearchEnabled) {
+            searchView.disableSearch()
+        } else {
             super.onBackPressed()
         }
     }

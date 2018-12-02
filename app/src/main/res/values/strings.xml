@@ -91,4 +91,5 @@
     <string name="Sun">Sun</string>
     <string name="summary_timetable_automatic_update">Automatically check for and download timetable updates</string>
     <string name="server_error">Server error</string>
+    <string name="suggestion_row_image" translatable="false">suggestion row image</string>
 </resources>
