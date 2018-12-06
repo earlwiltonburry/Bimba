@@ -17,6 +17,8 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
+    <!-- todo night background -->
+    <!-- todo shadow (elevation) -->
     <style name="SearchBarTheme" parent="MaterialSearchBarLight">
         <item name="mt_navIconTint">@color/textDark</item>
         <item name="mt_backIconTint">@color/textDark</item>
@@ -24,17 +26,14 @@
         <item name="mt_searchIconTint">@color/textDark</item>
         <item name="mt_textCursorTint">@color/colorAccent</item>
         <item name="mt_highlightedTextColor">@color/colorAccent</item>
-        <item name="mt_leftTextSelectorTint">@color/colorAccent</item>
-        <item name="mt_middleTextSelectorTint">@color/colorAccent</item>
-        <item name="mt_rightTextSelectorTint">@color/colorAccent</item>
         <item name="mt_leftTextSelectorDrawable">
-            @drawable/text_select_handle_left_mtrl_alpha_mtrlsearch
+            @drawable/ic_texthandle_start
         </item>
         <item name="mt_middleTextSelectorDrawable">
-            @drawable/text_select_handle_middle_mtrl_alpha_mtrlsearch
+            @drawable/ic_texthandle_middle
         </item>
         <item name="mt_rightTextSelectorDrawable">
-            @drawable/text_select_handle_right_mtrl_alpha_mtrlsearch
+            @drawable/ic_texthandle_end
         </item>
     </style>
 

@@ -4,15 +4,20 @@ import android.content.Context
 import android.graphics.PorterDuff
 import android.os.Build
 import android.text.Html
-import android.view.*
-import android.widget.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.core.content.ContextCompat.getColor
 import ml.adamsprogs.bimba.R
 import ml.adamsprogs.bimba.getDrawable
-import com.mancj.materialsearchbar.adapter.SuggestionsAdapter as SearchBarSuggestionsAdapter
 import ml.adamsprogs.bimba.models.suggestions.GtfsSuggestion
 import ml.adamsprogs.bimba.models.suggestions.LineSuggestion
 import ml.adamsprogs.bimba.models.suggestions.StopSuggestion
+import com.mancj.materialsearchbar.adapter.SuggestionsAdapter as SearchBarSuggestionsAdapter
+
+// todo on click ripple
 
 class SuggestionsAdapter(inflater: LayoutInflater, private val onSuggestionClickListener: OnSuggestionClickListener, private val context: Context) :
         SearchBarSuggestionsAdapter<GtfsSuggestion, SuggestionsAdapter.ViewHolder>(inflater) {
