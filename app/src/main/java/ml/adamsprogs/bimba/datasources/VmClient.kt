@@ -1,12 +1,17 @@
 package ml.adamsprogs.bimba.datasources
 
-import com.google.gson.*
-import kotlinx.coroutines.*
+import com.google.gson.Gson
+import com.google.gson.JsonObject
+import com.google.gson.JsonSyntaxException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import ml.adamsprogs.bimba.NetworkStateReceiver
 import ml.adamsprogs.bimba.models.Plate
 import ml.adamsprogs.bimba.models.StopSegment
-import ml.adamsprogs.bimba.models.suggestions.*
-import okhttp3.*
+import ml.adamsprogs.bimba.models.suggestions.StopSuggestion
+import okhttp3.MediaType
+import okhttp3.OkHttpClient
+import okhttp3.RequestBody
 import java.io.IOException
 import java.util.*
 import kotlin.collections.HashMap
@@ -29,9 +34,9 @@ class VmClient {
             return emptyMap()
         val rootObject = response["success"].asJsonObject["bollards"].asJsonArray
         val result = HashMap<String, Set<String>>()
-        rootObject.forEach {
-            val code = it.asJsonObject["bollard"].asJsonObject["tag"].asString
-            result[code] = it.asJsonObject["directions"].asJsonArray.map {
+        rootObject.forEach { element ->
+            val code = element.asJsonObject["bollard"].asJsonObject["tag"].asString
+            result[code] = element.asJsonObject["directions"].asJsonArray.map {
                 """${it.asJsonObject["lineName"].asString} → ${it.asJsonObject["direction"].asString}"""
             }.toSet()
         }
@@ -71,7 +76,7 @@ class VmClient {
             names.add(name)
         }
 
-        return names.map { StopSuggestion(it, "", "") }
+        return names.map { StopSuggestion(it, "") }
     }
 
     suspend fun makeRequest(method: String, data: String): Pair<Int, JsonObject> {

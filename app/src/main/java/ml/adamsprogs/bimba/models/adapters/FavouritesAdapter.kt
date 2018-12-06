@@ -1,21 +1,25 @@
 package ml.adamsprogs.bimba.models.adapters
 
 import android.content.Context
-import androidx.core.content.res.ResourcesCompat
-import androidx.appcompat.widget.*
-import androidx.appcompat.widget.PopupMenu
 import android.util.SparseBooleanArray
-import android.view.*
-import android.widget.*
-import ml.adamsprogs.bimba.R
 import android.view.LayoutInflater
-import kotlinx.coroutines.*
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.appcompat.widget.PopupMenu
+import androidx.core.content.res.ResourcesCompat
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.android.Main
-import java.util.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ml.adamsprogs.bimba.Declinator
+import ml.adamsprogs.bimba.R
 import ml.adamsprogs.bimba.collections.FavouriteStorage
 import ml.adamsprogs.bimba.models.Favourite
 import ml.adamsprogs.bimba.secondsAfterMidnight
+import java.util.*
 
 
 class FavouritesAdapter(private val appContext: Context, var favourites: FavouriteStorage,
@@ -52,7 +56,7 @@ class FavouritesAdapter(private val appContext: Context, var favourites: Favouri
     override fun getItemCount() = favourites.size
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        launch(Dispatchers.Main) {
+        GlobalScope.launch(Dispatchers.Main) /*Main on all?*/ {
             val favourite = favourites[position]!!
             holder.nameTextView.text = favourite.name
 

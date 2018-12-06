@@ -1,8 +1,10 @@
 package ml.adamsprogs.bimba.models
 
-import android.content.*
-import android.os.*
-import ml.adamsprogs.bimba.*
+import android.content.Context
+import android.os.Parcel
+import android.os.Parcelable
+import ml.adamsprogs.bimba.ProviderProxy
+import ml.adamsprogs.bimba.safeSplit
 import java.io.File
 import java.math.BigInteger
 import java.security.SecureRandom
@@ -27,10 +29,10 @@ class Favourite : Parcelable, ProviderProxy.OnDeparturesReadyListener {
     private val providerProxy: ProviderProxy
 
     constructor(parcel: Parcel) {
-        this.name = parcel.readString()
+        this.name = parcel.readString()!!
         @Suppress("UNCHECKED_CAST")
         val set = HashSet<StopSegment>()
-        val array = parcel.readParcelableArray(StopSegment::class.java.classLoader)
+        val array = parcel.readParcelableArray(StopSegment::class.java.classLoader)!!
         array.forEach {
             set.add(it as StopSegment)
         }
@@ -121,7 +123,7 @@ class Favourite : Parcelable, ProviderProxy.OnDeparturesReadyListener {
             if (cache.isEmpty())
                 null
             else
-                cache.flatMap { it.value }.let {
+                cache.flatMap { it.value }.let { it ->
                     if (it.isEmpty())
                         null
                     else

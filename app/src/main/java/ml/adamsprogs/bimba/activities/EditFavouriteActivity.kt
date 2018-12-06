@@ -1,18 +1,15 @@
 package ml.adamsprogs.bimba.activities
 
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import androidx.recyclerview.widget.DividerItemDecoration
-import androidx.recyclerview.widget.LinearLayoutManager
-import android.widget.EditText
-import ml.adamsprogs.bimba.R
-import ml.adamsprogs.bimba.models.Favourite
-import ml.adamsprogs.bimba.models.adapters.FavouriteEditRowAdapter
-import ml.adamsprogs.bimba.collections.FavouriteStorage
-import kotlinx.android.synthetic.main.activity_edit_favourite.*
 import android.app.Activity
 import android.content.Intent
-
+import android.os.Bundle
+import android.widget.EditText
+import androidx.appcompat.app.AppCompatActivity
+import kotlinx.android.synthetic.main.activity_edit_favourite.*
+import ml.adamsprogs.bimba.R
+import ml.adamsprogs.bimba.collections.FavouriteStorage
+import ml.adamsprogs.bimba.models.Favourite
+import ml.adamsprogs.bimba.models.adapters.FavouriteEditRowAdapter
 
 
 class EditFavouriteActivity : AppCompatActivity() {

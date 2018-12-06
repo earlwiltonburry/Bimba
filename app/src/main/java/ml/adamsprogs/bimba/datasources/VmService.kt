@@ -2,14 +2,18 @@ package ml.adamsprogs.bimba.datasources
 
 import android.app.Service
 import android.content.Intent
-import android.os.*
+import android.os.Handler
+import android.os.HandlerThread
+import android.os.IBinder
 import android.os.Process.THREAD_PRIORITY_BACKGROUND
 import com.google.gson.JsonObject
-import kotlinx.coroutines.*
-import kotlinx.coroutines.android.Main
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.launch
 import ml.adamsprogs.bimba.NetworkStateReceiver
 import ml.adamsprogs.bimba.calendarFromIso
-import ml.adamsprogs.bimba.models.*
+import ml.adamsprogs.bimba.models.Departure
+import ml.adamsprogs.bimba.models.Plate
 import ml.adamsprogs.bimba.secondsAfterMidnight
 import java.util.*
 import kotlin.collections.*
@@ -22,7 +26,6 @@ class VmService : Service() {
         const val EXTRA_STOP_CODE = "ml.adamsprogs.bimba.extra.vm.stop"
         const val EXTRA_CODE = "ml.adamsprogs.bimba.extra.vm.code"
         const val TICK_6_ZINA_TIM = 12500L
-        const val TICK_6_ZINA_TIM_WITH_MARGIN = TICK_6_ZINA_TIM * 3 / 4
     }
 
     private var handler: Handler? = null
@@ -31,10 +34,8 @@ class VmService : Service() {
             handler!!.postDelayed(this, TICK_6_ZINA_TIM)
             try {
                 for (plateId in requests.keys)
-                    launch(Dispatchers.Main) {
-                        withContext(Dispatchers.Default) {
-                            downloadVM()
-                        }
+                    GlobalScope.launch {
+                        downloadVM()
                     }
             } catch (e: IllegalArgumentException) {
             }
@@ -63,10 +64,8 @@ class VmService : Service() {
             } else {
                 if (!once)
                     addRequest(stopCode)
-                launch(Dispatchers.Main) {
-                    withContext(Dispatchers.Default) {
-                        downloadVM(stopCode)
-                    }
+                GlobalScope.launch {
+                    downloadVM(stopCode)
                 }
             }
         } else if (action == "remove") {

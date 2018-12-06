@@ -2,15 +2,19 @@ package ml.adamsprogs.bimba.models
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.database.*
+import android.database.Cursor
+import android.database.CursorIndexOutOfBoundsException
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import android.util.SparseArray
 import android.util.SparseBooleanArray
 import ml.adamsprogs.bimba.*
-import ml.adamsprogs.bimba.models.gtfs.*
-import ml.adamsprogs.bimba.models.suggestions.*
-import java.io.*
+import ml.adamsprogs.bimba.models.gtfs.Route
+import ml.adamsprogs.bimba.models.gtfs.Stop
+import ml.adamsprogs.bimba.models.gtfs.Trip
+import ml.adamsprogs.bimba.models.suggestions.LineSuggestion
+import ml.adamsprogs.bimba.models.suggestions.StopSuggestion
+import java.io.File
 import kotlin.collections.*
 import java.util.Calendar as JCalendar
 
@@ -89,7 +93,7 @@ class Timetable private constructor() {
                 else -> "#000000"
             }
             */
-            StopSuggestion(it.key, it.value, "#000000")
+            StopSuggestion(it.key, it.value)
         }.sorted()
         return _stops!!
     }
@@ -428,24 +432,9 @@ class Timetable private constructor() {
         }
     }
 
-    private fun getPlatesForStop(stop: String): Set<Plate.ID> {
-
-        val plates = HashSet<Plate.ID>()
-        val cursor = db!!.rawQuery("select route_id, trip_headsign " +
-                "from stop_times natural join trips natural join stops where stop_code = ? " +
-                "group by route_id, trip_headsign", arrayOf(stop))
-
-        while (cursor.moveToNext()) {
-            val routeId = cursor.getString(0)
-            val headsign = cursor.getString(1)
-            plates.add(Plate.ID(routeId, stop, headsign))
-        }
-
-        cursor.close()
-        return plates
-    }
-
     fun getTripGraphs(id: String): Array<TripGraph> {
+        TODO("Not implemented")
+        /*
         val graphs = arrayOf(TripGraph(), TripGraph())
 
         val cursor = db!!.rawQuery("select trip_id, trip_headsign, direction_id, stop_id, " +
@@ -495,7 +484,7 @@ class Timetable private constructor() {
             }
         }
 
-        return graphs
+        return graphs*/
     }
 
     fun getServiceFirstDay(service: String): Int {

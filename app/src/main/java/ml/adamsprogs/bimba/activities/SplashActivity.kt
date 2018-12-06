@@ -1,12 +1,9 @@
 package ml.adamsprogs.bimba.activities
 
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
 import android.content.Intent
-import android.database.sqlite.SQLiteCantOpenDatabaseException
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import ml.adamsprogs.bimba.models.Timetable
-import java.io.FileNotFoundException
 
 
 class SplashActivity : AppCompatActivity() {

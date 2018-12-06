@@ -1,18 +1,16 @@
 package ml.adamsprogs.bimba.activities
 
+import android.content.Context
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import kotlinx.android.synthetic.main.activity_stop_specify.*
-import ml.adamsprogs.bimba.R
-import android.content.Context
 import android.widget.TextView
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import android.view.LayoutInflater
+import androidx.appcompat.app.AppCompatActivity
+import kotlinx.android.synthetic.main.activity_stop_specify.*
 import ml.adamsprogs.bimba.ProviderProxy
+import ml.adamsprogs.bimba.R
 
 class StopSpecifyActivity : AppCompatActivity() {
 

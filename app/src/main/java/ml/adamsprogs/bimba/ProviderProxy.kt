@@ -1,11 +1,17 @@
 package ml.adamsprogs.bimba
 
-import android.content.*
+import android.content.Context
+import android.content.Intent
 import kotlinx.coroutines.*
 import kotlinx.coroutines.android.Main
-import ml.adamsprogs.bimba.datasources.*
-import ml.adamsprogs.bimba.models.*
-import ml.adamsprogs.bimba.models.suggestions.*
+import ml.adamsprogs.bimba.datasources.VmClient
+import ml.adamsprogs.bimba.datasources.VmService
+import ml.adamsprogs.bimba.models.Departure
+import ml.adamsprogs.bimba.models.Plate
+import ml.adamsprogs.bimba.models.StopSegment
+import ml.adamsprogs.bimba.models.Timetable
+import ml.adamsprogs.bimba.models.suggestions.GtfsSuggestion
+import ml.adamsprogs.bimba.models.suggestions.StopSuggestion
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -24,13 +30,13 @@ class ProviderProxy(context: Context? = null) {
     }
 
     fun getSuggestions(query: String = "", callback: (List<GtfsSuggestion>) -> Unit) {
-        launch(Dispatchers.Main, CoroutineStart.DEFAULT, null, {
-            val filtered = withContext(Dispatchers.Default) {
-                suggestions = getStopSuggestions(query) //+ getLineSuggestions(query) //todo<p:v+1> + bike stations, train stations, &c
-                filterSuggestions(query)
+        GlobalScope.launch {
+            suggestions = getStopSuggestions(query) //+ getLineSuggestions(query) //todo<p:v+1> + bike stations, train stations, &c
+            val filtered = filterSuggestions(query)
+            launch(Dispatchers.Main) {
+                callback(filtered)
             }
-            callback(filtered)
-        })
+        }
     }
 
     private suspend fun getStopSuggestions(query: String): List<StopSuggestion> {
@@ -65,18 +71,18 @@ class ProviderProxy(context: Context? = null) {
     }
 
     fun getSheds(name: String, callback: (Map<String, Set<String>>) -> Unit) {
-        launch(Dispatchers.Main) {
-            val sheds = withContext(Dispatchers.Default) {
-                val vmSheds = vmClient.getSheds(name)
+        GlobalScope.launch {
+            val vmSheds = vmClient.getSheds(name)
 
-                if (vmSheds.isEmpty() and !timetable.isEmpty()) {
-                    timetable.getHeadlinesForStop(name)
-                } else {
-                    vmSheds
-                }
+            val sheds = if (vmSheds.isEmpty() and !timetable.isEmpty()) {
+                timetable.getHeadlinesForStop(name)
+            } else {
+                vmSheds
             }
 
-            callback(sheds)
+            launch(Dispatchers.Main) {
+                callback(sheds)
+            }
         }
     }
 
@@ -104,13 +110,13 @@ class ProviderProxy(context: Context? = null) {
     }
 
     private fun constructSegmentDepartures(stopSegments: Set<StopSegment>): Deferred<Map<String, List<Departure>>> {
-        return GlobalScope.async(Dispatchers.Default, CoroutineStart.DEFAULT, null, {
+        return GlobalScope.async {
             if (timetable.isEmpty())
                 emptyMap()
             else {
                 timetable.getStopDeparturesBySegments(stopSegments)
             }
-        })
+        }
     }
 
     private fun filterDepartures(departures: Map<String, List<Departure>>): List<Departure> {
@@ -161,10 +167,8 @@ class ProviderProxy(context: Context? = null) {
     }
 
     fun fillStopSegment(stopSegment: StopSegment, callback: (StopSegment?) -> Unit) {
-        launch(Dispatchers.Main) {
-            withContext(Dispatchers.Default) {
-                callback(fillStopSegment(stopSegment))
-            }
+        GlobalScope.launch {
+            callback(fillStopSegment(stopSegment))
         }
     }
 
@@ -179,10 +183,8 @@ class ProviderProxy(context: Context? = null) {
     }
 
     fun getStopName(stopCode: String, callback: (String?) -> Unit) {
-        launch(Dispatchers.Main) {
-            withContext(Dispatchers.Default) {
-                callback(getStopName(stopCode))
-            }
+        GlobalScope.launch {
+            callback(getStopName(stopCode))
         }
     }
 
@@ -216,13 +218,13 @@ class ProviderProxy(context: Context? = null) {
 
         init {
             receiver.addOnVmListener(this@Request)
-            launch(Dispatchers.Main) {
+            GlobalScope.launch {
                 cache = constructSegmentDepartures(segments)
             }
         }
 
         override fun onVm(vmDepartures: Set<Departure>?, plateId: Plate.ID?, stopCode: String, code: Int) {
-            launch(Dispatchers.Main) {
+            GlobalScope.launch(Dispatchers.Main) {
                 if ((plateId == null || vmDepartures == null) and (timetable.isEmpty())) {
                     listener.onDeparturesReady(emptyList(), null, code)
                     return@launch

@@ -1,17 +1,15 @@
 package ml.adamsprogs.bimba.activities
 
-import com.google.android.material.tabs.TabLayout
-import androidx.appcompat.app.AppCompatActivity
-
-import androidx.core.app.*
 import android.os.Bundle
-import android.view.*
-
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.tabs.TabLayout
 import kotlinx.android.synthetic.main.activity_line_specify.*
 import kotlinx.android.synthetic.main.fragment_line_specify.view.*
 import ml.adamsprogs.bimba.R
 import ml.adamsprogs.bimba.models.Timetable
-import ml.adamsprogs.bimba.models.gtfs.*
 
 class LineSpecifyActivity : AppCompatActivity() {
     companion object {

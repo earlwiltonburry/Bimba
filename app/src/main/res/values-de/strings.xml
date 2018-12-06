@@ -7,48 +7,28 @@
     <string name="departure_in__plural_genitive">In %1$s Minuten</string>
     <string name="departure_in__plural_nominative">In %1$s Minuten</string>
 
-    <string name="no_timetable">Kein Fahrplan gefunden. Verbind mit dem Internet und warte bis ein Fahrplan heruntergeladen wurde</string>
     <string name="timetable_downloaded">Neuer Fahrplan heruntergeladen</string>
-    <string name="tab_workday_text">Arbeitstage</string>
-    <string name="tab_saturday_text">Samstags</string>
-    <string name="tab_sunday_text">Sonntags</string>
     <string name="action_change_type">Typ</string>
-    <string name="no_db_connect">Verbind mit dem Internet, um den Fahrplan herunterzuladen</string>
-    <string name="no_db_downloading">Fahrplan wird heruntergeladen…</string>
     <string name="timetable_downloading">Fahrplan wird heruntergeladen</string>
     <string name="search_placeholder">Haltestelle…</string>
     <string name="no_connectivity_cant_update">Kein Verbindung – kann nicht den Fahrplan aktualisieren</string>
     <string name="no_connectivity">Kein Verbindung</string>
     <string name="timetable_up_to_date">Fahrplan ist aktuell</string>
-    <string name="validity_failed">Der heruntergeladene Fahrplan ist geschädigt – kann nicht aktualisieren</string>
     <string name="error_try_later">Fehler. Versuch später noch einmal</string>
     <string name="stop_already_fav">Diese Haltestelle ist bereits eine Lieblingshaltestelle</string>
     <string name="action_edit">Bearbeiten</string>
     <string name="action_delete">Löschen</string>
-    <string name="done">Fertig</string>
-    <string name="favourite_edit">Lieblingshaltestelle bearbeiten</string>
     <string name="favourite_name">Lieblingshaltestelles Name</string>
     <string name="edit_favourite_title">„%1$s“ bearbeiten</string>
     <string name="no_next_departure">Keine nächste Abfahrt</string>
     <string name="action_merge">Zusammenfügen</string>
     <string name="merge_favourites">Lieblingshaltestellen zusammenfügen</string>
     <string name="loading">Laden…</string>
-    <string name="home">Startseite</string>
     <string name="refresh">Fahrplan aktualisieren</string>
-    <string name="help">Hilfe</string>
     <string name="title_activity_help">Hilfe</string>
     <string name="valid_since">Gilt seit %1$s</string>
     <string name="valid_till">Gilt bis %1$s</string>
     <string name="departure_row_getting_departures">Abfahrten sammeln…</string>
-    <string name="help_text">
-        "Warum Lieblingshaltestelle zeigt „Keine nächste Abfahrt“?\n\n"
-
-        "Die Lieblingshaltestellen enthalten Abfahrtszeiten für heute und morgen."
-        "„Keine nächste Abfahrt“ kann passieren, wenn es z.B. keinen Zeitplan für"
-        "morgen gibt und heute keine Abfahrten mehr stattfinden.\n\n"
-    </string>
-    <string name="refreshing_cache">Cache wird aktualisiert. Es kann einige Zeit dauern…</string>
-    <string name="today">Heute</string>
     <string name="no_departures">Keine Abfahrten</string>
     <string name="tab_text_line_to">Hin</string>
     <string name="tab_text_line_fro">Her</string>

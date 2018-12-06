@@ -2,7 +2,7 @@ package ml.adamsprogs.bimba.models.suggestions
 
 import ml.adamsprogs.bimba.R
 
-class StopSuggestion(name: String, val zone: String, private val zoneColour: String) : GtfsSuggestion(name) {
+class StopSuggestion(name: String, val zone: String) : GtfsSuggestion(name) {
 
     override fun getBody(): String {
         return name
@@ -17,7 +17,7 @@ class StopSuggestion(name: String, val zone: String, private val zoneColour: Str
     }
 
     override fun getBgColour(): Int {
-        return "ffffff".toInt(16)
+        return 0x000000
     }
 
     override fun compareTo(other: GtfsSuggestion): Int {

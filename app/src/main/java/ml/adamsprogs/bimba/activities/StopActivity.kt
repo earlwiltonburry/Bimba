@@ -1,21 +1,30 @@
 package ml.adamsprogs.bimba.activities
 
-import android.content.*
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
-import android.view.*
-import androidx.core.content.res.ResourcesCompat
-import androidx.appcompat.app.AppCompatActivity
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
 import android.widget.AdapterView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.res.ResourcesCompat
 import com.google.android.material.snackbar.Snackbar
-
-import java.util.Calendar
 import kotlinx.android.synthetic.main.activity_stop.*
 import ml.adamsprogs.bimba.*
 import ml.adamsprogs.bimba.collections.FavouriteStorage
-import ml.adamsprogs.bimba.datasources.*
-import ml.adamsprogs.bimba.models.*
+import ml.adamsprogs.bimba.datasources.TimetableDownloader
+import ml.adamsprogs.bimba.datasources.VmService
+import ml.adamsprogs.bimba.models.Departure
+import ml.adamsprogs.bimba.models.Favourite
+import ml.adamsprogs.bimba.models.Plate
+import ml.adamsprogs.bimba.models.StopSegment
 import ml.adamsprogs.bimba.models.adapters.DeparturesAdapter
 import ml.adamsprogs.bimba.models.adapters.ServiceAdapter
+import java.util.Calendar
+import kotlin.collections.HashMap
+import kotlin.collections.HashSet
+import kotlin.collections.set
 
 class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, ProviderProxy.OnDeparturesReadyListener {
     companion object {
@@ -25,10 +34,6 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         const val SOURCE_TYPE = "sourceType"
         const val SOURCE_TYPE_STOP = "stop"
         const val SOURCE_TYPE_FAV = "favourite"
-
-        const val MODE_WORKDAYS = 0
-        const val MODE_SATURDAYS = 1
-        const val MODE_SUNDAYS = 2
 
         const val TIMETABLE_TYPE_DEPARTURE = "timetable_type_departure"
         const val TIMETABLE_TYPE_FULL = "timetable_type_full"

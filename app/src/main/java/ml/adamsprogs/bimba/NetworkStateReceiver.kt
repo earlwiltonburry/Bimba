@@ -24,14 +24,6 @@ class NetworkStateReceiver : BroadcastReceiver() {
         }
     }
 
-    fun addOnConnectivityChangeListener(listener: OnConnectivityChangeListener) {
-        onConnectivityChangeListeners.add(listener)
-    }
-
-    fun removeOnConnectivityChangeListener(listener: OnConnectivityChangeListener) {
-        onConnectivityChangeListeners.remove(listener)
-    }
-
     interface OnConnectivityChangeListener {
         fun onConnectivityChange(connected: Boolean)
     }

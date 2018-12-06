@@ -6,7 +6,7 @@
             android:icon="@drawable/ic_home"
             android:title="@string/home" />
     </group>-->
-    <group android:id="@+id/drawer_group_actions">
+    <group>
         <item
             android:id="@+id/drawer_refresh"
             android:icon="@drawable/ic_refresh"
@@ -21,9 +21,7 @@
             android:title="@string/settings"
             />
     </group>
-    <group
-        android:id="@+id/drawer_group_validity"
-        android:enabled="false">
+    <group android:enabled="false">
         <item
             android:id="@+id/drawer_validity_since"
             android:title="" />

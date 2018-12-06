@@ -8,7 +8,7 @@ import androidx.annotation.RequiresApi
 
 class NotificationChannels {
     companion object {
-        val CHANNEL_UPDATES = "updates"
+        const val CHANNEL_UPDATES = "updates"
 
         @RequiresApi(Build.VERSION_CODES.O)
         fun makeChannel(id: String, name: String, manager: NotificationManager) {
