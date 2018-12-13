@@ -2,6 +2,8 @@ package ml.adamsprogs.bimba;
 
 import org.junit.Test;
 
+import java.util.Calendar;
+
 import static org.junit.Assert.*;
 
 /**
@@ -12,6 +14,6 @@ import static org.junit.Assert.*;
 public class ExampleUnitTest {
     @Test
     public void addition_isCorrect() throws Exception {
-        assertEquals(4, 2 + 2);
+        Calendar x = Calendar.getInstance();
     }
 }

@@ -19,6 +19,16 @@
             android:layout_height="wrap_content"
             android:id="@+id/stop"/>
 
+        <EditText
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/stop2"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/route"/>
+
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

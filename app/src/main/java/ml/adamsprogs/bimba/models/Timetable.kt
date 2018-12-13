@@ -11,7 +11,14 @@ import ml.adamsprogs.bimba.*
 import ml.adamsprogs.bimba.models.gtfs.*
 import ml.adamsprogs.bimba.models.suggestions.*
 import java.io.*
+import java.util.*
 import kotlin.collections.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
+import kotlin.collections.HashSet
+import kotlin.collections.List
+import kotlin.collections.Map
+import kotlin.collections.Set
 import java.util.Calendar as JCalendar
 
 class Timetable private constructor() {
@@ -548,32 +555,32 @@ class Timetable private constructor() {
         return "${description.joinToString { it }} ($startDate–$endDate)"
     }
 
-    fun getTripFrom(stopCode: String, datetime: JCalendar): Set<StopTimeSequence> {
+    fun getTripFrom(stopCode: String, datetime: JCalendar): List<StopTimeSequence> {
         val stopID = getStopId(stopCode)
         val departureTime = "${datetime.get(JCalendar.HOUR_OF_DAY)}:${datetime.get(JCalendar.MINUTE)}:${datetime.get(JCalendar.SECOND)}"
         val serviceID = getServiceFor(datetime) ?: throw DateOutsideTimetable()
-        val cursor = db!!.rawQuery("select route_id, departure_time, trip_id, stop_sequence" +
-                "from stop_times natural join trips" +
-                "where stop_id = ? and departure_time > ? and service_id = ?;", arrayOf(stopID.toString(), departureTime, serviceID))
-        val res = HashSet<StopTimeSequence>()
+        val cursor = db!!.rawQuery("select route_id, departure_time, trip_id, stop_sequence " +
+                "from stop_times natural join trips " +
+                "where stop_id = ? and departure_time > ? and service_id = ? order by departure_time ASC LIMIT 10;", arrayOf(stopID.toString(), departureTime, serviceID))
+        val res = ArrayList<StopTimeSequence>()
         while (cursor.moveToNext()) {
             val routeID = cursor.getString(0)
             val tripID = cursor.getString(2)
             val stopSequence = cursor.getInt(3).toString()
             val sequence = ArrayList<Pair<JCalendar, Stop>>()
 
-            val tripCursor = db!!.rawQuery("select pickup_type, stop_id, departure_time, stop_code, stop_name, stop_lat, stop_lon, zone_id" +
-                    "from stop_times natural join stops" +
-                    "where trip_id = ? and stop_sequence >= ?;", arrayOf(tripID, stopSequence))
+            val tripCursor = db!!.rawQuery("select pickup_type, stop_id, departure_time, stop_code, stop_name, stop_lat, stop_lon, zone_id " +
+                    "from stop_times natural join stops " +
+                    "where trip_id = ? and stop_sequence >= ? order by departure_time;", arrayOf(tripID, stopSequence))
             while (tripCursor.moveToNext()) {
-                val pickupType = cursor.getInt(0)
-                val tripStopID = cursor.getInt(1)
+                val pickupType = tripCursor.getInt(0)
+                val tripStopID = tripCursor.getInt(1)
                 val time = tripCursor.getString(2)
-                val tripStopCode = cursor.getString(3)
-                val stopName = cursor.getString(4)
-                val latitude = cursor.getFloat(5)
-                val longitude = cursor.getFloat(6)
-                val zone = cursor.getString(7)
+                val tripStopCode = tripCursor.getString(3)
+                val stopName = tripCursor.getString(4)
+                val latitude = tripCursor.getFloat(5)
+                val longitude = tripCursor.getFloat(6)
+                val zone = tripCursor.getString(7)
 
                 sequence.add(Pair(
                         timeToCalendar(time, datetime),
