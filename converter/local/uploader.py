@@ -1,8 +1,8 @@
-import requests
-import msgpack
-import re
-import os
 import hashlib
+import msgpack
+import os
+import re
+import requests
 
 import config
 

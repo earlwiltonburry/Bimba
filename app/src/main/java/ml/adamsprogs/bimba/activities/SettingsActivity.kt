@@ -2,7 +2,7 @@ package ml.adamsprogs.bimba.activities
 
 import android.preference.*
 import android.os.Bundle
-import android.support.v4.app.NavUtils
+import androidx.core.app.NavUtils
 import android.view.MenuItem
 import kotlinx.android.synthetic.main.activity_settings.*
 

@@ -1,18 +1,15 @@
 package ml.adamsprogs.bimba.activities
 
-import android.support.v7.app.AppCompatActivity
-import android.os.Bundle
-import android.support.v7.widget.DividerItemDecoration
-import android.support.v7.widget.LinearLayoutManager
-import android.widget.EditText
-import ml.adamsprogs.bimba.R
-import ml.adamsprogs.bimba.models.Favourite
-import ml.adamsprogs.bimba.models.adapters.FavouriteEditRowAdapter
-import ml.adamsprogs.bimba.collections.FavouriteStorage
-import kotlinx.android.synthetic.main.activity_edit_favourite.*
 import android.app.Activity
 import android.content.Intent
-
+import android.os.Bundle
+import android.widget.EditText
+import androidx.appcompat.app.AppCompatActivity
+import kotlinx.android.synthetic.main.activity_edit_favourite.*
+import ml.adamsprogs.bimba.R
+import ml.adamsprogs.bimba.collections.FavouriteStorage
+import ml.adamsprogs.bimba.models.Favourite
+import ml.adamsprogs.bimba.models.adapters.FavouriteEditRowAdapter
 
 
 class EditFavouriteActivity : AppCompatActivity() {
@@ -38,9 +35,9 @@ class EditFavouriteActivity : AppCompatActivity() {
         favourites = FavouriteStorage.getFavouriteStorage(this)
 
         val recyclerView = favourite_edit_list
-        val layoutManager = LinearLayoutManager(this)
+        val layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
         recyclerView!!.layoutManager = layoutManager
-        val dividerItemDecoration = DividerItemDecoration(this, layoutManager.orientation)
+        val dividerItemDecoration = androidx.recyclerview.widget.DividerItemDecoration(this, layoutManager.orientation)
         recyclerView.addItemDecoration(dividerItemDecoration)
         recyclerView.adapter = FavouriteEditRowAdapter(favourite!!, favourite_edit_loading, favourite_edit_list)
         setSupportActionBar(toolbar)

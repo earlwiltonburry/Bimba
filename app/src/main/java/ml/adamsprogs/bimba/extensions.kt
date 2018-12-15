@@ -4,11 +4,12 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.os.Build
-import android.support.design.widget.Snackbar
 import android.text.format.DateFormat
 import android.view.View
-import ml.adamsprogs.bimba.activities.StopActivity
-import java.io.*
+import com.google.android.material.snackbar.Snackbar
+import java.io.File
+import java.io.InputStream
+import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
@@ -59,28 +60,12 @@ fun calendarFromIsoD(iso: String): Calendar {
     return calendar
 }
 
-fun getColour(id: Int, context: Context): Int {
-    @Suppress("DEPRECATION")
-    (return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-        context.resources.getColor(id, null)
-    else
-        context.resources.getColor(id))
-}
-
 fun getDrawable(id: Int, context: Context): Drawable {
     @Suppress("DEPRECATION")
     (return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
         context.resources.getDrawable(id, null)
     else
         context.resources.getDrawable(id))
-}
-
-internal fun Calendar.getMode(): Int {
-    return when (this.get(Calendar.DAY_OF_WEEK)) {
-        Calendar.SUNDAY -> StopActivity.MODE_SUNDAYS
-        Calendar.SATURDAY -> StopActivity.MODE_SATURDAYS
-        else -> StopActivity.MODE_WORKDAYS
-    }
 }
 
 internal fun CharSequence.safeSplit(vararg delimiters: String, ignoreCase: Boolean = false, limit: Int = 0): List<String>? {

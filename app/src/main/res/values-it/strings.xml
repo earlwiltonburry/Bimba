@@ -5,32 +5,21 @@
     <string name="departure_in__singular_genitive">Tra %1$s minuto</string>
     <string name="departure_in__plural_genitive">Tra %1$s minuti</string>
     <string name="departure_in__plural_nominative">Tra %1$s minuti</string>
-    <string name="home">Schermo principale</string>
-    <string name="help">Aiuto</string>
     <string name="title_activity_help">Aiuto</string>
     <string name="valid_since">Valido da %1$s</string>
     <string name="valid_till">Valido a %1$s</string>
-    <string name="no_timetable">Nessun orario è stato trovato. Connettiti a Internet e aspetta che un orario venga scaricato</string>
     <string name="timetable_downloaded">Nuovo orario è stato scaricato</string>
-    <string name="tab_workday_text">Giorni di lavoro</string>
-    <string name="tab_saturday_text">Sabato</string>
-    <string name="tab_sunday_text">Domenica</string>
     <string name="action_change_type">Tipo</string>
-    <string name="no_db_connect">Connetti a Internet per scaricare l’orario</string>
-    <string name="no_db_downloading">L’orario è stando scaricato</string>
     <string name="timetable_downloading">Scaricando l’orario</string>
     <string name="search_placeholder">Fermata…</string>
     <string name="no_connectivity_cant_update">Nessuna connettività – non si riesce aggiornare l’orario</string>
     <string name="no_connectivity">Nessuna connettività</string>
     <string name="timetable_up_to_date">L’orario sta aggiornato</string>
-    <string name="validity_failed">L’orario scaricato sta corrotto – non si riesce aggiornare</string>
     <string name="error_try_later">Errore. Riprova più tardi</string>
     <string name="now">Adesso</string>
     <string name="stop_already_fav">Questa fermata è già un favorito</string>
     <string name="action_edit">Modifica</string>
     <string name="action_delete">Cancella</string>
-    <string name="done">Pronto</string>
-    <string name="favourite_edit">Modifica il favorito</string>
     <string name="favourite_name">Il nome del favorito</string>
     <string name="edit_favourite_title">Modifica «%1$s»</string>
     <string name="no_next_departure">Nessuna partenza successiva</string>
@@ -39,15 +28,6 @@
     <string name="loading">Caricamento in corso…</string>
     <string name="refresh">Aggiorna l’orario</string>
     <string name="departure_row_getting_departures">Ottenere le partenze…</string>
-    <string name="help_text">
-        "Perché un favorito mostra «Nessuna partenza successiva»?\n\n"
-        
-        "I favoriti contengono ore per oggi e domani."
-        "«Nessuna partenza successiva» potrebbe succedere quando, ad esempio, non c’e orario per"
-        "domani e non ci sono partenze oggi in più.\n\n" 
-    </string>
-    <string name="refreshing_cache">Cache sta essendo aggiornato. Può richiedere un certo tempo…</string>
-    <string name="today">Oggi</string>
     <string name="no_departures">Nessune partenze</string>
     <string name="tab_text_line_to">Avanti</string>
     <string name="tab_text_line_fro">Indietro</string>

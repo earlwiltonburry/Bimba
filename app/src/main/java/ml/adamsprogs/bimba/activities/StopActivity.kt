@@ -1,22 +1,30 @@
 package ml.adamsprogs.bimba.activities
 
-import android.content.*
-import android.support.design.widget.*
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
-import android.view.*
-import android.support.v4.content.res.ResourcesCompat
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.*
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
 import android.widget.AdapterView
-
-import java.util.Calendar
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.res.ResourcesCompat
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_stop.*
 import ml.adamsprogs.bimba.*
 import ml.adamsprogs.bimba.collections.FavouriteStorage
-import ml.adamsprogs.bimba.datasources.*
-import ml.adamsprogs.bimba.models.*
+import ml.adamsprogs.bimba.datasources.TimetableDownloader
+import ml.adamsprogs.bimba.datasources.VmService
+import ml.adamsprogs.bimba.models.Departure
+import ml.adamsprogs.bimba.models.Favourite
+import ml.adamsprogs.bimba.models.Plate
+import ml.adamsprogs.bimba.models.StopSegment
 import ml.adamsprogs.bimba.models.adapters.DeparturesAdapter
 import ml.adamsprogs.bimba.models.adapters.ServiceAdapter
+import java.util.Calendar
+import kotlin.collections.HashMap
+import kotlin.collections.HashSet
+import kotlin.collections.set
 
 class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener, ProviderProxy.OnDeparturesReadyListener {
     companion object {
@@ -26,10 +34,6 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         const val SOURCE_TYPE = "sourceType"
         const val SOURCE_TYPE_STOP = "stop"
         const val SOURCE_TYPE_FAV = "favourite"
-
-        const val MODE_WORKDAYS = 0
-        const val MODE_SATURDAYS = 1
-        const val MODE_SUNDAYS = 2
 
         const val TIMETABLE_TYPE_DEPARTURE = "timetable_type_departure"
         const val TIMETABLE_TYPE_FULL = "timetable_type_full"
@@ -71,15 +75,15 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
 
         showFab()
 
-        val layoutManager = LinearLayoutManager(this)
-        departuresList.addItemDecoration(DividerItemDecoration(departuresList.context, layoutManager.orientation))
+        val layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
+        departuresList.addItemDecoration(androidx.recyclerview.widget.DividerItemDecoration(departuresList.context, layoutManager.orientation))
         departuresList.adapter = DeparturesAdapter(this, null, true)
         adapter = departuresList.adapter as DeparturesAdapter
         departuresList.layoutManager = layoutManager
 
-        departuresList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {}
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+        departuresList.addOnScrollListener(object : androidx.recyclerview.widget.RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: androidx.recyclerview.widget.RecyclerView, newState: Int) {}
+            override fun onScrolled(recyclerView: androidx.recyclerview.widget.RecyclerView, dx: Int, dy: Int) {
                 updateFabVisibility(dy)
                 super.onScrolled(recyclerView, dx, dy)
             }

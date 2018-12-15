@@ -1,10 +1,10 @@
 package ml.adamsprogs.bimba.activities
 
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.EditText
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import ml.adamsprogs.bimba.R
 import ml.adamsprogs.bimba.RouteFinder
 import ml.adamsprogs.bimba.calendarFromIso

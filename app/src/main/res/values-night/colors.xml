@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="textDark">#ffffff</color>
-    <color name="textLight">#141415</color>
+    <color name="cardColor">#424242</color>
 </resources>

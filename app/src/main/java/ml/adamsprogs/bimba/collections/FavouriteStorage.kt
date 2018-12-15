@@ -1,10 +1,20 @@
 package ml.adamsprogs.bimba.collections
 
-import android.content.*
+import android.content.Context
+import android.content.SharedPreferences
 import com.google.gson.*
-import ml.adamsprogs.bimba.*
-import ml.adamsprogs.bimba.models.*
+import ml.adamsprogs.bimba.models.Departure
+import ml.adamsprogs.bimba.models.Favourite
+import ml.adamsprogs.bimba.models.Plate
+import ml.adamsprogs.bimba.models.StopSegment
+import ml.adamsprogs.bimba.secondsAfterMidnight
 import java.util.Calendar
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
+import kotlin.collections.HashSet
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 
 
 class FavouriteStorage private constructor(context: Context) : Iterable<Favourite> {
@@ -31,13 +41,13 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
         val favouritesString = preferences.getString("favourites", "{}")
         JsonParser().parse(favouritesString).asJsonObject.entrySet().forEach { (name, timetables) ->
             timetables.asJsonArray.map {
-                val plates = it.asJsonObject["plates"].let {
-                    if (it == null || it.isJsonNull)
+                val plates = it.asJsonObject["plates"].let { element ->
+                    if (element == null || element.isJsonNull)
                         null
                     else {
-                        it.asJsonArray.map {
-                            it.asJsonObject.let {
-                                Plate.ID(it["line"].asString, it["stop"].asString, it["headsign"].asString)
+                        element.asJsonArray.map { it ->
+                            it.asJsonObject.let { id ->
+                                Plate.ID(id["line"].asString, id["stop"].asString, id["headsign"].asString)
                             }
                         }.toHashSet()
                     }
@@ -123,16 +133,16 @@ class FavouriteStorage private constructor(context: Context) : Iterable<Favourit
             return
 
         val newCache = HashMap<String, ArrayList<Departure>>()
-        names.forEach {
-            favourites[it]!!.fullTimetable().forEach {
+        names.forEach { name ->
+            favourites[name]!!.fullTimetable().forEach {
                 if (newCache[it.key] == null)
                     newCache[it.key] = ArrayList()
                 newCache[it.key]!!.addAll(it.value)
             }
         }
         val now = Calendar.getInstance().secondsAfterMidnight()
-        newCache.forEach {
-            it.value.sortBy { it.timeTill(now) }
+        newCache.forEach { entry ->
+            entry.value.sortBy { it.timeTill(now) }
         }
         val newFavourite = Favourite(names[0], HashSet(), newCache, context)
         for (name in names) {

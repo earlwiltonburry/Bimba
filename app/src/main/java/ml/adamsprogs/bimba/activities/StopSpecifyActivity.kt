@@ -1,18 +1,16 @@
 package ml.adamsprogs.bimba.activities
 
+import android.content.Context
 import android.content.Intent
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import kotlinx.android.synthetic.main.activity_stop_specify.*
-import ml.adamsprogs.bimba.R
-import android.content.Context
 import android.widget.TextView
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
-import android.view.LayoutInflater
+import androidx.appcompat.app.AppCompatActivity
+import kotlinx.android.synthetic.main.activity_stop_specify.*
 import ml.adamsprogs.bimba.ProviderProxy
+import ml.adamsprogs.bimba.R
 
 class StopSpecifyActivity : AppCompatActivity() {
 
@@ -27,8 +25,8 @@ class StopSpecifyActivity : AppCompatActivity() {
         val name = intent.getStringExtra(EXTRA_STOP_NAME)
         val providerProxy = ProviderProxy(this)
         providerProxy.getSheds(name) {
-            val layoutManager = LinearLayoutManager(this)
-            val departuresList: RecyclerView = list_view
+            val layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
+            val departuresList: androidx.recyclerview.widget.RecyclerView = list_view
 
             departuresList.adapter = ShedAdapter(this, it, name)
             departuresList.layoutManager = layoutManager
@@ -42,7 +40,7 @@ class StopSpecifyActivity : AppCompatActivity() {
     }
 
     class ShedAdapter(val context: Context, private val values: Map<String, Set<String>>, private val stopName: String) :
-            RecyclerView.Adapter<ShedAdapter.ViewHolder>() {
+            androidx.recyclerview.widget.RecyclerView.Adapter<ShedAdapter.ViewHolder>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
             val context = parent.context
             val inflater = LayoutInflater.from(context)
@@ -68,7 +66,7 @@ class StopSpecifyActivity : AppCompatActivity() {
                     .joinToString()
         }
 
-        inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        inner class ViewHolder(itemView: View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(itemView) {
             val root = itemView.findViewById<View>(R.id.shed_row)!!
             val stopCode: TextView = itemView.findViewById(R.id.stop_code)
             val stopHeadlines: TextView = itemView.findViewById(R.id.stop_headlines)
