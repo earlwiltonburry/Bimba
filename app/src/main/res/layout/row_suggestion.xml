@@ -4,6 +4,7 @@
     android:id="@+id/row_suggestion"
     android:layout_width="match_parent"
     android:layout_height="48dp"
+    android:foreground="?android:attr/selectableItemBackground"
     android:orientation="vertical">
 
 

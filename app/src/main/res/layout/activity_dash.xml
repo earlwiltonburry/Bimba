@@ -8,7 +8,8 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/main_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:clipChildren="false">
 
         <com.google.android.material.appbar.AppBarLayout
             android:id="@+id/appbar"
@@ -44,6 +45,7 @@
         <com.mancj.materialsearchbar.MaterialSearchBar
             android:id="@+id/search_view"
             style="@style/SearchBarTheme"
+            app:mt_searchBarColor="@color/cardColor"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"

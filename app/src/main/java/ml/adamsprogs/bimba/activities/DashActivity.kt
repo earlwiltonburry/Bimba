@@ -91,7 +91,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         showValidityInDrawer()
 
         searchView = search_view
-        searchView.setCardViewElevation(8)
         suggestionsAdapter = SuggestionsAdapter(layoutInflater, this, this)
         searchView.setCustomSuggestionAdapter(suggestionsAdapter)
 
