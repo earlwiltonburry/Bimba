@@ -12,6 +12,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat.getColor
 import ml.adamsprogs.bimba.R
 import ml.adamsprogs.bimba.getDrawable
+import ml.adamsprogs.bimba.models.suggestions.EmptySuggestion
 import ml.adamsprogs.bimba.models.suggestions.GtfsSuggestion
 import ml.adamsprogs.bimba.models.suggestions.LineSuggestion
 import ml.adamsprogs.bimba.models.suggestions.StopSuggestion
@@ -59,8 +60,14 @@ class SuggestionsAdapter(inflater: LayoutInflater, private val onSuggestionClick
 
     }
 
+    fun updateSuggestions(newSuggestions: List<GtfsSuggestion>) {
+        suggestions = newSuggestions
+        suggestions_clone = suggestions
+        notifyDataSetChanged()
+    }
+
     operator fun contains(suggestion: GtfsSuggestion): Boolean {
-        return suggestion in suggestions || suggestion in suggestions_clone
+        return suggestion in suggestions //|| suggestion in suggestions_clone
     }
 
     inner class ViewHolder(itemView: View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(itemView) {
@@ -71,5 +78,14 @@ class SuggestionsAdapter(inflater: LayoutInflater, private val onSuggestionClick
 
     interface OnSuggestionClickListener {
         fun onSuggestionClickListener(suggestion: GtfsSuggestion)
+    }
+
+    fun equals(other: List<GtfsSuggestion>): Boolean {
+        if ((suggestions.containsAll(other) and other.containsAll(suggestions)))
+            return true
+        if (other.isEmpty())
+            if ((suggestions.isEmpty()) or (suggestions[0] is EmptySuggestion))
+                return true
+        return false
     }
 }

@@ -73,8 +73,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         timetable = Timetable.getTimetable()
         NetworkStateReceiver.init(this)
 
-        getSuggestions()
-
         prepareFavourites()
 
         prepareListeners()
@@ -109,18 +107,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         searchView.addTextChangeListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 if (searchView.isSearchEnabled) {
-                    searchView.clearSuggestions()
-                    searchView.updateLastSuggestions(listOf<GtfsSuggestion>())
-                    providerProxy.getSuggestions(s.toString()) { suggestions ->
-                        if(suggestions.isEmpty())
-                            suggestionsAdapter.addSuggestion(EmptySuggestion())
-                        suggestions.forEach {
-                            if (it.name.contains(s as CharSequence, true)) {
-                                suggestionsAdapter.addSuggestion(it)
-                            }
-                        }
-                        searchView.showSuggestionsList()
-                    }
+                    getSuggestions(s.toString())
                 }
             }
 
@@ -151,11 +138,24 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
             }
 
             override fun onSearchConfirmed(text: CharSequence?) {
-                // todo re-search
-                println("OnSearchConfirmed")
+                getSuggestions(text as String)
             }
 
         })
+    }
+
+    private fun getSuggestions(query: String = "") {
+        providerProxy.getSuggestions(query) { suggestions ->
+            if (!suggestionsAdapter.equals(suggestions)) {
+                if (suggestions.isEmpty()) {
+                    suggestionsAdapter.clearSuggestions()
+                    suggestionsAdapter.addSuggestion(EmptySuggestion())
+                } else {
+                    suggestionsAdapter.updateSuggestions(suggestions)
+                }
+                searchView.showSuggestionsList()
+            }
+        }
     }
 
     override fun onSuggestionClickListener(suggestion: GtfsSuggestion) {
@@ -283,14 +283,6 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         showError(drawer_layout, code, this)
     }
 
-    private fun getSuggestions() {
-        providerProxy.getSuggestions { suggestions ->
-            suggestions.forEach {
-                suggestionsAdapter.addSuggestion(it)
-            }
-        }
-    }
-
     private fun prepareListeners() {
         val filter = IntentFilter(TimetableDownloader.ACTION_DOWNLOADED)
         filter.addAction(VmService.ACTION_READY)
@@ -338,7 +330,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         Snackbar.make(findViewById(R.id.drawer_layout), message, Snackbar.LENGTH_LONG).show()
         if (result == TimetableDownloader.RESULT_FINISHED) {
             timetable = Timetable.getTimetable(this, true)
-            getSuggestions()
+            getSuggestions(searchView.text)
             showValidityInDrawer()
         }
     }
