@@ -14,11 +14,9 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.android.Main
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import ml.adamsprogs.bimba.Declinator
 import ml.adamsprogs.bimba.R
 import ml.adamsprogs.bimba.collections.FavouriteStorage
 import ml.adamsprogs.bimba.models.Favourite
-import ml.adamsprogs.bimba.secondsAfterMidnight
 import java.util.*
 
 
@@ -82,12 +80,8 @@ class FavouritesAdapter(private val appContext: Context, var favourites: Favouri
             val nextDepartureText: String
             val nextDepartureLineText: String
             if (nextDeparture != null) {
-                val interval = nextDeparture.timeTill(Calendar.getInstance().secondsAfterMidnight())
                 nextDepartureLineText = appContext.getString(R.string.departure_to_line, nextDeparture.line, nextDeparture.headsign)
-                nextDepartureText = if (interval < 0)
-                    appContext.getString(R.string.just_departed)
-                else
-                    appContext.getString(Declinator.decline(interval), interval.toString())
+                nextDepartureText = nextDeparture.timeTillText(appContext)
             } else {
                 nextDepartureText = appContext.getString(R.string.no_next_departure)
                 nextDepartureLineText = ""

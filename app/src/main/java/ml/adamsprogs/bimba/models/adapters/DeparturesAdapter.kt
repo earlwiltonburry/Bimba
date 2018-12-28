@@ -9,11 +9,8 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.res.ResourcesCompat
-import ml.adamsprogs.bimba.Declinator
 import ml.adamsprogs.bimba.R
 import ml.adamsprogs.bimba.models.Departure
-import ml.adamsprogs.bimba.rollTime
-import java.util.*
 
 class DeparturesAdapter(val context: Context, var departures: List<Departure>?, var relativeTime: Boolean) :
         androidx.recyclerview.widget.RecyclerView.Adapter<DeparturesAdapter.ViewHolder>() {
@@ -40,20 +37,8 @@ class DeparturesAdapter(val context: Context, var departures: List<Departure>?, 
             return
         }
         val departure = departures!![position]
-        val now = Calendar.getInstance()
-        val departureTime = Calendar.getInstance().rollTime(departure.time)
-        if (departure.tomorrow)
-            departureTime.add(Calendar.DAY_OF_MONTH, 1)
 
-        val departureIn = ((departureTime.timeInMillis - now.timeInMillis) / (1000 * 60)).toInt()
-        val timeString: String
-
-        timeString = if (departureIn > 60 || departureIn < 0 || !relativeTime)
-            context.getString(R.string.departure_at, "${String.format("%02d", departureTime.get(Calendar.HOUR_OF_DAY))}:${String.format("%02d", departureTime.get(Calendar.MINUTE))}")
-        else if (departureIn > 0 && !departure.onStop)
-            context.getString(Declinator.decline(departureIn), departureIn.toString())
-        else
-            context.getString(R.string.now)
+        val timeString = departure.timeTillText(context, relativeTime)
 
         line.text = departure.lineText
         time.text = timeString
@@ -73,14 +58,7 @@ class DeparturesAdapter(val context: Context, var departures: List<Departure>?, 
                     .setPositiveButton(context.getText(android.R.string.ok)
                     ) { dialog: DialogInterface, _: Int -> dialog.cancel() }
                     .setCancelable(true)
-                    .setMessage(
-                            context.getString(R.string.departure_at,
-                                    "${String.format("%02d",
-                                            departureTime.get(Calendar.HOUR_OF_DAY))}:${String.format("%02d",
-                                            departureTime.get(Calendar.MINUTE))}")
-                                    + if (departure.isModified)
-                                " " + departure.modification.joinToString("; ", "(", ")")
-                            else "")
+                    .setMessage(departure.timeAtMessage(context))
                     .create().show()
         }
     }

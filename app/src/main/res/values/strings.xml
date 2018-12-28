@@ -69,4 +69,5 @@
     <string name="suggestion_row_image" translatable="false">suggestion row image</string>
     <string name="nothing_found">Nothing found</string>
     <string name="departures_empty_state_icon" translatable="false">departures empty state icon</string>
+    <string name="in_a_moment">In a moment</string>
 </resources>

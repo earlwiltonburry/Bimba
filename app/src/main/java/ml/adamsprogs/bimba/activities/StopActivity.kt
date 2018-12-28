@@ -172,7 +172,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         } else {
             val now = Calendar.getInstance()
             val seconds = now.secondsAfterMidnight()
-            adapter.departures = this.departures.flatMap { it.value }.sortedBy { it.timeTill(seconds) }
+            adapter.departures = this.departures.flatMap { it.value }.sortedBy { it.timeTill(seconds) }  // todo sorted by also onStop
         }
         adapter.notifyDataSetChanged()
     }

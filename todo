@@ -11,4 +11,5 @@ v departures empty
 - departures retry
 x search results flickering
 - favourite cache
-- in a moment
+v in a moment
+- departures sort (timeTill, onStop) : StopActivity

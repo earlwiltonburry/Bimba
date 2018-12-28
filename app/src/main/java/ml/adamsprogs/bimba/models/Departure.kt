@@ -1,6 +1,11 @@
 package ml.adamsprogs.bimba.models
 
+import android.content.Context
+import ml.adamsprogs.bimba.Declinator
+import ml.adamsprogs.bimba.R
+import ml.adamsprogs.bimba.rollTime
 import ml.adamsprogs.bimba.safeSplit
+import java.util.*
 
 data class Departure(val line: String, val mode: List<Int>, val time: Int, val lowFloor: Boolean, //time in seconds since midnight
                      val modification: List<String>, val headsign: String, val vm: Boolean = false,
@@ -41,4 +46,38 @@ data class Departure(val line: String, val mode: List<Int>, val time: Int, val l
     }
 
     val lineText: String = line
+
+    fun timeTillText(context: Context, relativeTime: Boolean = true): String {
+        val now = Calendar.getInstance()
+        val departureTime = Calendar.getInstance().rollTime(time)
+        if (tomorrow)
+            departureTime.add(Calendar.DAY_OF_MONTH, 1)
+
+        val departureIn = ((departureTime.timeInMillis - now.timeInMillis) / (1000 * 60)).toInt()
+
+        return if (departureIn > 60 || departureIn < 0 || !relativeTime)
+            context.getString(R.string.departure_at, "${String.format("%02d", departureTime.get(Calendar.HOUR_OF_DAY))}:${String.format("%02d", departureTime.get(Calendar.MINUTE))}")
+        else if (departureIn > 0 && !onStop)
+            context.getString(Declinator.decline(departureIn), departureIn.toString())
+        else if (departureIn == 0 && !onStop)
+            context.getString(R.string.in_a_moment)
+        else if (departureIn == 0)
+            context.getString(R.string.now)
+        else
+            context.getString(R.string.just_departed)
+    }
+
+    fun timeAtMessage(context: Context): String {
+        val departureTime = Calendar.getInstance().rollTime(time)
+        if (tomorrow)
+            departureTime.add(Calendar.DAY_OF_MONTH, 1)
+
+        return context.getString(R.string.departure_at,
+                "${String.format("%02d",
+                        departureTime.get(Calendar.HOUR_OF_DAY))}:${String.format("%02d",
+                        departureTime.get(Calendar.MINUTE))}") +
+                if (isModified)
+                    " " + modification.joinToString("; ", "(", ")")
+                else ""
+    }
 }
