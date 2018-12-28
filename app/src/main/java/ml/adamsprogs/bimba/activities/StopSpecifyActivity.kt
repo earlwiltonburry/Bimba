@@ -25,6 +25,7 @@ class StopSpecifyActivity : AppCompatActivity() {
         val name = intent.getStringExtra(EXTRA_STOP_NAME)
         val providerProxy = ProviderProxy(this)
         providerProxy.getSheds(name) {
+            progressBar.visibility = View.GONE
             val layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
             val departuresList: androidx.recyclerview.widget.RecyclerView = list_view
 

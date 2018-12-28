@@ -8,3 +8,10 @@
 * tourism: http://egov.psnc.pl/node/29#turystyka
 * P&R: https://www.peka.poznan.pl/SOP/parkings/getAvailableSpaces.jspb
 * accidents: https://mympk.mpk.poznan.pl/web/menu
+* 
+* news:
+*   https://mympk.mpk.poznan.pl/web/categories/aktualnosci [json/html]
+*   https://ztm.poznan.pl/aktualnosci/rss [rss/html]
+* accidents:
+*   https://mympk.mpk.poznan.pl/web/categories/zdarzenia-komunikacyjne [json/html]
+*   https://ztm.poznan.pl/komunikaty/rss [rss/html]
