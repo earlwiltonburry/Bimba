@@ -33,10 +33,10 @@ class SuggestionsAdapter(inflater: LayoutInflater, private val onSuggestionClick
             onSuggestionClickListener.onSuggestionClickListener(suggestion)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            holder.text.text = Html.fromHtml(suggestion.getBody(), Html.FROM_HTML_MODE_LEGACY)
+            holder.text.text = Html.fromHtml(suggestion.getBody(context), Html.FROM_HTML_MODE_LEGACY)
         } else {
             @Suppress("DEPRECATION")
-            holder.text.text = Html.fromHtml(suggestion.getBody())
+            holder.text.text = Html.fromHtml(suggestion.getBody(context))
         }
 
         holder.text.setTextColor(getColor(context, R.color.textDark))

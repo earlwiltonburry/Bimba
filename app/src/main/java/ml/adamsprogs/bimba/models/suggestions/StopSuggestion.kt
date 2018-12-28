@@ -1,10 +1,11 @@
 package ml.adamsprogs.bimba.models.suggestions
 
+import android.content.Context
 import ml.adamsprogs.bimba.R
 
 class StopSuggestion(name: String, val zone: String) : GtfsSuggestion(name) {
 
-    override fun getBody(): String {
+    override fun getBody(context: Context): String {
         return name
     }
 

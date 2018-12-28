@@ -1,5 +1,6 @@
 package ml.adamsprogs.bimba.models.suggestions
 
+import android.content.Context
 import ml.adamsprogs.bimba.R
 import ml.adamsprogs.bimba.models.gtfs.Route
 
@@ -12,7 +13,7 @@ class LineSuggestion(name: String, private val route: Route) : GtfsSuggestion(na
         }
     }
 
-    override fun getBody(): String {
+    override fun getBody(context: Context): String {
         return name
     }
 

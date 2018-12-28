@@ -2,31 +2,43 @@ package ml.adamsprogs.bimba.activities
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.*
-import android.os.*
+import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.Bundle
 import android.preference.PreferenceManager.getDefaultSharedPreferences
 import android.text.Editable
-import androidx.appcompat.app.*
 import android.text.TextWatcher
-import android.view.*
+import android.view.ActionMode
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
 import android.view.inputmethod.InputMethodManager
-import kotlin.collections.ArrayList
-import kotlinx.android.synthetic.main.activity_dash.*
-import java.util.*
-import java.text.*
-
-import ml.adamsprogs.bimba.models.*
-import ml.adamsprogs.bimba.*
-import ml.adamsprogs.bimba.datasources.*
-import ml.adamsprogs.bimba.models.suggestions.*
-import ml.adamsprogs.bimba.models.adapters.*
-import ml.adamsprogs.bimba.collections.*
-
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
 import com.mancj.materialsearchbar.MaterialSearchBar
 import com.mancj.materialsearchbar.MaterialSearchBar.BUTTON_BACK
 import com.mancj.materialsearchbar.MaterialSearchBar.BUTTON_NAVIGATION
+import kotlinx.android.synthetic.main.activity_dash.*
+import ml.adamsprogs.bimba.*
+import ml.adamsprogs.bimba.collections.FavouriteStorage
+import ml.adamsprogs.bimba.datasources.TimetableDownloader
+import ml.adamsprogs.bimba.datasources.VmService
+import ml.adamsprogs.bimba.models.Departure
+import ml.adamsprogs.bimba.models.Plate
+import ml.adamsprogs.bimba.models.Timetable
+import ml.adamsprogs.bimba.models.adapters.FavouritesAdapter
+import ml.adamsprogs.bimba.models.adapters.SuggestionsAdapter
+import ml.adamsprogs.bimba.models.suggestions.EmptySuggestion
+import ml.adamsprogs.bimba.models.suggestions.GtfsSuggestion
+import ml.adamsprogs.bimba.models.suggestions.LineSuggestion
+import ml.adamsprogs.bimba.models.suggestions.StopSuggestion
+import java.text.DateFormat
+import java.util.*
+import kotlin.collections.ArrayList
 
 class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadListener,
         FavouritesAdapter.OnMenuItemClickListener, FavouritesAdapter.ViewHolder.OnClickListener, ProviderProxy.OnDeparturesReadyListener, SuggestionsAdapter.OnSuggestionClickListener {
@@ -100,6 +112,8 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                     searchView.clearSuggestions()
                     searchView.updateLastSuggestions(listOf<GtfsSuggestion>())
                     providerProxy.getSuggestions(s.toString()) { suggestions ->
+                        if(suggestions.isEmpty())
+                            suggestionsAdapter.addSuggestion(EmptySuggestion())
                         suggestions.forEach {
                             if (it.name.contains(s as CharSequence, true)) {
                                 suggestionsAdapter.addSuggestion(it)
