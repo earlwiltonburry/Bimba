@@ -1,0 +1,161 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "New timetable downloaded"
+msgstr ""
+
+msgid "Type"
+msgstr ""
+
+msgid "→ %1$s"
+msgstr ""
+
+msgid "%1$s → %2$s"
+msgstr ""
+
+msgid "At %1$s"
+msgstr ""
+
+msgid "Downloading timetable"
+msgstr ""
+
+msgid "Decompressing timetable"
+msgstr ""
+
+msgid "Stop…"
+msgstr ""
+
+msgid "No connectivity – can’t update timetable"
+msgstr ""
+
+msgid "No connectivity"
+msgstr ""
+
+msgid "Timetable is up-to-date"
+msgstr ""
+
+msgid "Error. Try again later"
+msgstr ""
+
+msgid "Now"
+msgstr ""
+
+msgid "This stop is already in favourites"
+msgstr ""
+
+msgid "Edit"
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "Favourite name"
+msgstr ""
+
+msgid "Edit ‘%1$s’"
+msgstr ""
+
+msgid "No next departure"
+msgstr ""
+
+msgid "Merge"
+msgstr ""
+
+msgid "Merge favourites"
+msgstr ""
+
+msgid "Loading…"
+msgstr ""
+
+msgid "In %1$s minute"
+msgstr ""
+
+#. minutes – plural nominative
+msgid "In %1$s minutes _plnom"
+msgstr ""
+
+#. minutes — plural genitive
+msgid "In %1$s minutes _plgen"
+msgstr ""
+
+msgid "Update timetable"
+msgstr ""
+
+msgid "Help"
+msgstr ""
+
+msgid "Getting departures…"
+msgstr ""
+
+msgid "Valid since %1$s"
+msgstr ""
+
+msgid "Valid till %1$s"
+msgstr ""
+
+msgid "No departures"
+msgstr ""
+
+msgid "To"
+msgstr ""
+
+msgid "Fro"
+msgstr ""
+
+msgid "Timetable validity has ended. Connect to the Internet to download a new one in order to continue."
+msgstr ""
+
+msgid "Timetable validity ends today."
+msgstr ""
+
+msgid "Timetable validity ends tomorrow."
+msgstr ""
+
+msgid "Just departed"
+msgstr ""
+
+msgid "Offline timetable unavailable"
+msgstr ""
+
+msgid "Timetable"
+msgstr ""
+
+msgid "Timetable source"
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+msgid "Automatic updates"
+msgstr ""
+
+msgid "Mon"
+msgstr ""
+
+msgid "Tue"
+msgstr ""
+
+msgid "Wed"
+msgstr ""
+
+msgid "Thu"
+msgstr ""
+
+msgid "Fri"
+msgstr ""
+
+msgid "Sat"
+msgstr ""
+
+msgid "Sun"
+msgstr ""
+
+msgid "Automatically check for and download timetable updates"
+msgstr ""
+
+msgid "Server error"
+msgstr ""

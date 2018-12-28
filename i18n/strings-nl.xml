@@ -1,0 +1,56 @@
+<resources>
+    <string name="timetable_downloaded">De nieuwe dienstregeling is gedownload</string>
+    <string name="action_change_type">Type</string>
+    <string name="departure_to">→ %1$s</string>
+    <string name="departure_to_line">%1$s → %2$s</string>
+    <string name="departure_at">Op %1$s</string>
+    <string name="timetable_downloading">Bezig met downloaden van dienstregeling</string>
+    <string name="search_placeholder">Halte…</string>
+    <string name="no_connectivity_cant_update">Geen internetverbinding – de dienstregeling kan niet worden bijgewerkt.</string>
+    <string name="no_connectivity">Geen internetverbinding</string>
+    <string name="timetable_up_to_date">De dienstregeling is volledig bijgewerkt.</string>
+    <string name="error_try_later">Fout; probeer het later opnieuw.</string>
+    <string name="now">Nu</string>
+    <string name="stop_already_fav">Deze halte staat al bij je favorieten</string>
+    <string name="action_edit">Bewerken</string>
+    <string name="action_delete">Verwijderen</string>
+    <string name="favourite_name">Naam van favoriet</string>
+    <string name="edit_favourite_title">‘%1$s’ bewerken</string>
+    <string name="no_next_departure">Geen vertrektijden</string>
+    <string name="action_merge">Samenvoegen</string>
+    <string name="merge_favourites">Favorieten samenvoegen</string>
+    <string name="loading">Bezig met laden…</string>
+    <string name="departure_in__singular_genitive">Over %1$s minuut</string>
+    <string name="departure_in__plural_genitive">Over %1$s minuten</string>
+    <string name="departure_in__plural_nominative">Over %1$s minuten</string>
+
+    <string name="refresh">Dienstregeling bijwerken</string>
+    <string name="title_activity_help">Hulp</string>
+    <string name="departure_row_getting_departures">Bezig met ophalen van vertrektijden…</string>
+    <string name="valid_since">Ingegaan op %1$s</string>
+    <string name="valid_till">Verloopt op %1$s</string>
+
+    <string name="no_departures">Geen vertrektijden</string>
+    <string name="tab_text_line_to">Naar</string>
+    <string name="tab_text_line_fro">Van</string>
+    <string name="timetable_validity_finished">De dienstregeling is verlopen. Maak verbinding met het internet om een nieuwe te downloaden.</string>
+    <string name="timetable_validity_today">De dienstregeling verloopt vandaag.</string>
+    <string name="timetable_validity_tomorrow">De dienstregeling verloopt morgen.</string>
+    <string name="just_departed">Zojuist vertrokken</string>
+    <string name="validity_offline_unavailable">Offline dienstregeling is niet beschikbaar</string>
+    <string name="pref_category_timetable">Dienstregeling</string>
+    <string name="title_timetable_source_url">Bron van de dienstregeling</string>
+    <string name="title_activity_settings">Instellingen</string>
+    <string name="settings">Instellingen</string>
+    <string name="timetable_decompressing">Bezig met uitpakken van dienstregeling</string>
+    <string name="Mon">ma</string>
+    <string name="Tue">di</string>
+    <string name="Wed">wo</string>
+    <string name="Thu">do</string>
+    <string name="Fri">vr</string>
+    <string name="Sat">za</string>
+    <string name="Sun">zo</string>
+    <string name="title_timetable_automatic_update">Automatische updates</string>
+    <string name="summary_timetable_automatic_update">Automatisch controleren en download dienstregeling updates</string>
+    <string name="server_error">Serverfout</string>
+</resources>
