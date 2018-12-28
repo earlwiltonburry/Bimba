@@ -41,7 +41,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/search_view" />
 
-        <!-- todo maxCount? -->
         <com.mancj.materialsearchbar.MaterialSearchBar
             android:id="@+id/search_view"
             style="@style/SearchBarTheme"

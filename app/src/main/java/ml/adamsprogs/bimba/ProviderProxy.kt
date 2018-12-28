@@ -15,7 +15,6 @@ import ml.adamsprogs.bimba.models.suggestions.StopSuggestion
 import java.util.*
 import kotlin.collections.HashMap
 
-//todo make singleton
 class ProviderProxy(context: Context? = null) {
     private val vmClient = VmClient.getVmClient()
     private var timetable: Timetable = Timetable.getTimetable(context)

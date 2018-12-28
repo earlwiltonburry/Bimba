@@ -9,5 +9,6 @@ v shed loading
 - search result retry
 - shed retry
 - departures retry
-- ripples
-- search results flickering
+- ripples android:background="?android:attr/selectableItemBackground"
+x search results flickering
+- favourite cache

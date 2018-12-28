@@ -18,8 +18,6 @@ import ml.adamsprogs.bimba.models.suggestions.LineSuggestion
 import ml.adamsprogs.bimba.models.suggestions.StopSuggestion
 import com.mancj.materialsearchbar.adapter.SuggestionsAdapter as SearchBarSuggestionsAdapter
 
-// todo on click ripple
-
 class SuggestionsAdapter(inflater: LayoutInflater, private val onSuggestionClickListener: OnSuggestionClickListener, private val context: Context) :
         SearchBarSuggestionsAdapter<GtfsSuggestion, SuggestionsAdapter.ViewHolder>(inflater) {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
