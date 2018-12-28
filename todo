@@ -4,11 +4,11 @@ v empty search result
 - search results loading [?]
 - search results history [?]
 v shed loading
-- departures loading
-- departures empty
+v departures loading
+v departures empty
 - search result retry
 - shed retry
 - departures retry
-- ripples android:background="?android:attr/selectableItemBackground"
 x search results flickering
 - favourite cache
+- in a moment

@@ -142,6 +142,7 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
     }
 
     override fun onDeparturesReady(departures: List<Departure>, plateId: Plate.ID?, code: Int) {
+        progressBar.visibility = View.GONE
         showError(stop_layout, code, this)
         if (plateId == null) {
             this.departures.clear()
@@ -153,6 +154,15 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
         if (timetableType == TIMETABLE_TYPE_FULL)
             return
         refreshAdapter()
+        if (adapter.departures?.isEmpty() != false) {
+            emptyStateIcon.visibility = View.VISIBLE
+            emptyStateText.visibility = View.VISIBLE
+            departuresList.visibility = View.GONE
+        } else {
+            emptyStateIcon.visibility = View.GONE
+            emptyStateText.visibility = View.GONE
+            departuresList.visibility = View.VISIBLE
+        }
     }
 
     private fun refreshAdapter() {

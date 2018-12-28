@@ -18,23 +18,10 @@ import java.util.*
 class DeparturesAdapter(val context: Context, var departures: List<Departure>?, var relativeTime: Boolean) :
         androidx.recyclerview.widget.RecyclerView.Adapter<DeparturesAdapter.ViewHolder>() {
 
-    companion object {
-        const val VIEW_TYPE_LOADING: Int = 0
-        const val VIEW_TYPE_CONTENT: Int = 1
-    }
-
     override fun getItemCount(): Int {
         if (departures == null || departures!!.isEmpty())
             return 1
         return departures!!.size
-    }
-
-    override fun getItemViewType(position: Int): Int {
-        return when {
-            departures == null -> VIEW_TYPE_LOADING //empty
-            departures!!.isEmpty() -> VIEW_TYPE_LOADING
-            else -> VIEW_TYPE_CONTENT
-        }
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {

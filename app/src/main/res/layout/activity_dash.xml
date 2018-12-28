@@ -55,7 +55,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:mt_hint="@string/search_placeholder"
-            app:mt_maxSuggestionsCount="10"
             app:mt_navIconEnabled="true"
             app:mt_placeholder="@string/search_placeholder"
             app:mt_roundedSearchBarEnabled="true"
