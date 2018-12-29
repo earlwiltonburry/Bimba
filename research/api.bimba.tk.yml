@@ -1,0 +1,622 @@
+name: Bimba API
+version-code: 0.1.0
+version-name: Agrajag
+status: draft
+formats: &formats
+  msgpack: msgpack
+errors:
+  _general: &_general-error
+    error:
+      type: str
+  _fields: &_fields-error
+    fields:
+      required: false
+      type: list
+      items:
+        type: dict
+        items:
+          field:
+            type: str
+          error:
+            type: str
+  error_general: &error_general
+    type: dict
+    items:
+      *_general-error
+  error_fields: &error_fields
+    type: dict
+    items:
+        <<: *_general-error
+        <<: *_fields-error
+
+api:
+-
+  path: /timetables/
+  GET:
+    description: list of dates (from,to)
+    req:
+      headers:
+        - Accept
+        - If-None-Match
+    res:
+      codes:
+        - 200
+        - 304
+        - 406
+      headers:
+        - Allow
+        - Content-Type
+        - ETag
+      schema:
+          type: list
+          items:
+            type: dict
+            items:
+              id:
+                type: str
+              start:
+                type: str:RFC_3339_full-date
+              end:
+                type: str:RFC_3339_full-date
+  POST:
+    description: new timetable [locked]
+    req:
+      headers:
+        - Accept
+        - Authorization (Signature {signature})
+        - Content-Type
+      schema: todo
+    res:
+      codes:
+        - 201
+        - 400
+        - 401
+        - 403
+        - 406
+        - 409  # already exists for the period
+      headers:
+        - Allow
+        - WWW-Authenticate
+        - Content-Type
+        - Location
+      schema:
+        *error_fields
+  DELETE:
+    description: remove timetable [locked]
+    req:
+      headers:
+        - Accept
+        - Authorization (Signature {signature})
+    res:
+      codes:
+        - 204
+        - 401
+        - 403
+        - 406
+        - 410
+      headers:
+        - Allow
+        - WWW-Authenticate
+        - Content-Type
+      schema:
+        *error_general
+
+-
+  path: /timetables/:date:(`current`|RFC_3339_full-date)
+  GET:
+    description: timetable valid in :date full with metadata
+    req:
+      headers:
+        - Accept
+        - If-None-Match
+    res:
+      codes:
+        - 200
+        - 304
+        - 404
+        - 406
+        - 410  # past date
+      headers:
+        - Allow
+        - Content-Type
+        - ETag
+      schema: todo
+      
+-
+  path: /timetables/:date/lines/
+  GET:
+    description:
+    req:
+      headers:
+        - Accept
+        - If-None-Match
+    res:
+      codes:
+        - 200
+        - 304
+        - 404
+        - 406
+        - 410  # past date
+      headers:
+        - Allow
+        - Content-Type
+        - ETag
+      schema:
+        type: list
+        items:
+          type: dict
+          items:
+            name:
+              type: str
+            directions:
+              type: list
+              items:
+                type: int
+
+-
+  path: /timetables/:date/lines/:number?direction:(0|1)=null
+  GET:
+    description: line graph <filtered by direction>
+    req:
+      headers:
+        - Accept
+        - If-None-Match
+    res:
+      codes:
+        - 200
+        - 304
+        - 404
+        - 406
+        - 410  # past date
+      headers:
+        - Allow
+        - Content-Type
+        - ETag
+      schema:
+        type: list
+        items:
+          type: dict
+          items:
+            direction:  # (0|1)
+              type: int
+            components:
+              type: list
+              items:
+                type: dict
+                items:
+                  main:
+                    type: bool
+                  stops:
+                    type: list
+                    items:
+                      type: dict
+                      items:
+                        code:
+                          type: str
+                        name:
+                          type: str
+                  
+-
+  path: /timetables/:date/stops/?q:query=''
+  GET:
+    description: list of stops matching latinised, case insensitive ^.*q.*$; sorted by relevance and limited to N=10?
+    req:
+      headers:
+        - Accept
+        - If-None-Match
+    res:
+      codes:
+        - 200
+        - 304
+        - 404
+        - 406
+        - 410  # past date
+      headers:
+        - Allow
+        - Content-Type
+        - ETag
+      schema:
+        type: list
+        items:
+          type: dict
+          items:
+            name:
+              type: str
+            code:
+              type: str
+            lines:
+              type: list
+              items:
+                type: str  # {line} → {headsign}
+
+-
+  path: /timetables/:date/stops/:name/sheds/
+  reason: is neccessary?
+  
+-
+  path: /timetables/:date/stops/:name/sheds/:code
+  reason: is neccessary?
+
+-
+  path: /timetables/:date/departures/sheds/:code?metadata:bool=false  # todo: metadata schema
+  GET:
+    description: departures for whole shed
+    req:
+      headers:
+        - Accept
+        - If-None-Match
+    res:
+      codes:
+        - 200
+        - 304
+        - 404
+        - 406
+        - 410  # past date
+      headers:
+        - Allow
+        - Content-Type
+        - ETag
+      schema: &departure
+        type: list
+        items:
+          type: dict
+          items:
+            line:
+              type: str
+            headsign:
+              type: str
+            time:
+              type: int  # seconds after midnight
+            modifications:
+              type: list
+              items:
+                type: str
+            accessible:  # low floor
+              type: bool
+
+-
+  path: /timetables/:date/departures/sheds/:code/lines/:number?metadata:bool=false  # todo: metadata schema
+  GET:
+    description: departures for whole line in shed
+    req:
+      headers:
+        - Accept
+        - If-None-Match
+    res:
+      codes:
+        - 200
+        - 304
+        - 404
+        - 406
+        - 410  # past date
+      headers:
+        - Allow
+        - Content-Type
+        - ETag
+      schema:
+        *departure
+
+-
+  path: /timetables/:date/departures/sheds/:code/lines/:number/headsigns/:headsign?metadata:bool=false  # todo: metadata schema
+  GET:
+    description: departures for whole line with headsign in shed
+    req:
+      headers:
+        - Accept
+        - If-None-Match
+    res:
+      codes:
+        - 200
+        - 304
+        - 404
+        - 406
+        - 410  # past date
+      headers:
+        - Allow
+        - Content-Type
+        - ETag
+      schema:
+        *departure
+
+-
+  path: /information/(news|alerts)/
+  GET:
+    description: list of ID, title, source, date, translations, thumbnail
+    req:
+      headers:
+        - Accept
+        - If-None-Match
+    res:
+      codes:
+        - 200
+        - 304
+        - 406
+      headers:
+        - Allow
+        - Content-Type
+        - ETag
+      schema:
+        type: list
+        items:
+          type: dict
+          items:
+            id:
+              type: str
+            title:
+              type: str
+            source:
+              type: str  # URL
+            datetime:
+              type: str  # RFC3339
+            translations:
+              type: list
+              items:
+                type: str  # IETF language tag
+            thumbnail:  # preferably webp
+              type: bytes
+
+-
+  path: /imformation/*/:id
+  GET:
+    description: original text of the piece of information
+    req:
+      headers:
+        - Accept
+        - If-None-Match
+    res:
+      codes:
+        - 200
+        - 304
+        - 404
+        - 406
+      headers:
+        - Allow
+        - Content-Type
+        - ETag
+      schema:
+        type: dict
+        items:
+          content:
+            type: str  # ReStructuredText?
+          lang:
+            type: str  # IETF language tag
+
+-
+  path: /information/*/:id/translations/
+  GET:
+    description: list of translations (ID, lang)
+    req:
+      headers:
+        - Accept
+        - If-None-Match
+    res:
+      codes:
+        - 200
+        - 304
+        - 404
+        - 406
+      headers:
+        - Allow
+        - Content-Type
+        - ETag
+      schema:
+        type: list
+        items:
+          type: dict
+          items:
+            id:
+              type: str
+            lang:
+              type: str  # IETF language tag
+  POST:
+    description: create new translation
+    req:
+      headers:
+        - Accept
+        - Content-Type
+      schema:
+        type: dict
+        items:
+          content:
+            type: str
+          lang:
+            type: str  # IETF language tag
+    res:
+      codes:
+        - 201
+        - 400
+        - 406
+      headers:
+        - Allow
+        - Content-Type
+        - Location
+      schema:
+        *error_fields
+
+-
+  path: /information/*/:id/translations/:id
+  GET:
+    description: translations content and score
+    req:
+      headers:
+        - Accept
+        - If-None-Match
+    res:
+      codes:
+        - 200
+        - 304
+        - 404
+        - 406
+      headers:
+        - Allow
+        - Content-Type
+        - ETag
+      schema:
+        type: dict
+        items:
+          content:
+            type: str
+          lang:
+            type: str  # IETF language tag
+          score:
+            type: float
+  PATCH:
+    description: assess translation
+    req:
+      headers:
+        - Accept
+        - Content-Type
+      schema:
+        type: dict
+        items:
+          vote:
+            type: float
+    res:
+      codes:
+        - 200
+        - 400
+        - 404
+        - 406
+      headers:
+        - Allow
+        - Content-Type
+        - Location
+      schema:
+        *error_fields
+
+-
+  path: /crash_reports/
+  GET:
+    description: list of crash reports (date, id)
+    formats:
+      <<: *formats
+      atom: atom
+    req:
+      headers:
+        - Accept
+        - If-None-Match
+    res:
+      codes:
+        - 200
+        - 304
+        - 406
+      headers:
+        - Allow
+        - Content-Type
+        - ETag
+      schema:
+        type: list
+        items:
+          type: dict
+          items:
+            id:
+              type: str
+            date:
+              type: str  # RFC3339
+  POST:
+    description: new crash report
+    req:
+      headers:
+        - Accept
+        - Content-Type
+      schema:
+        type: dict
+        items: &crash_report
+          app:  # web,apk,…
+            type: str
+          app_version:
+            type: str
+          conetxt:  # apk:OS, web:browser
+            type: str
+          context_version:  # apk:Android API level (ROM?), web:browser version
+            type: str
+          device:  # apk:make,model,…, web:?
+            type: str
+          content:  # staktrace, &c.
+            type: str
+    res:
+      codes:
+        - 201
+        - 400
+        - 406
+      headers:
+        - Allow
+        - Content-Type
+        - Location
+      schema:
+        *error_fields
+
+-
+  path: /crash_reports/:id
+  GET:
+    description: crash report
+    req:
+      headers:
+        - Accept
+        - If-None-Match
+    res:
+      codes:
+        - 200
+        - 304
+        - 404
+        - 406
+      headers:
+        - Allow
+        - Content-Type
+        - ETag
+      schema:
+        type: dict
+        items:
+          <<: *crash_report
+          issue:  # bug tracking issue (e.g. in repo)
+            type: str  # URL
+          updated:
+            type: str  # RFC3339
+  PATCH:
+    description: add info [locked]
+    req:
+      headers:
+        - Accept
+        - Authorization (Signature {signature})
+        - Content-Type
+        - If-Match
+      schema:
+        type: dict
+        items:
+          issue:  # bug tracking issue (e.g. in repo)
+            type: str  # URL
+    res:
+      codes:
+        - 200
+        - 400
+        - 401
+        - 403
+        - 406
+        - 412
+        - 428
+      headers:
+        - Allow
+        - WWW-Authenticate
+        - Content-Type
+        - Location
+      schema:
+        *error_fields
+  DELETE:
+    description: remove [locked]
+    req:
+      headers:
+        - Accept
+        - Authorization (Signature {signature})
+    res:
+      codes:
+        - 204
+        - 401
+        - 403
+        - 406
+        - 410
+      headers:
+        - Allow
+        - WWW-Authenticate
+        - Content-Type
+      schema:
+        *error_general
