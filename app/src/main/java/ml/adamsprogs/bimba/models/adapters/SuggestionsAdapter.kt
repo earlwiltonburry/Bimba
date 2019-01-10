@@ -58,10 +58,17 @@ class SuggestionsAdapter(inflater: LayoutInflater, private val onSuggestionClick
 
     }
 
-    fun updateSuggestions(newSuggestions: List<GtfsSuggestion>) {
-        suggestions = newSuggestions
+    fun updateSuggestions(newSuggestions: List<GtfsSuggestion>, query: String) {
+        suggestions = sort(newSuggestions, query).take(6)
         suggestions_clone = suggestions
         notifyDataSetChanged()
+    }
+
+    private fun sort(suggestions: List<GtfsSuggestion>, query: String): List<GtfsSuggestion> {
+        val r = Regex(query, RegexOption.IGNORE_CASE)
+        return suggestions.sortedBy {
+            (r.find(it.name)?.range?.start?.toString()?.padStart(128, '0') ?: "")+it.name
+        }
     }
 
     operator fun contains(suggestion: GtfsSuggestion): Boolean {

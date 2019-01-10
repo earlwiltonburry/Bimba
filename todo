@@ -11,7 +11,7 @@ v departures empty
 x search results flickering
 - favourite cache
 v in a moment
-t departures sort (timeTill, onStop) : StopActivity
-t sort and limit search results
+v departures sort (timeTill, onStop) : StopActivity
+v sort and limit search results
 - PEKA info
 - check update (only in APK builds)

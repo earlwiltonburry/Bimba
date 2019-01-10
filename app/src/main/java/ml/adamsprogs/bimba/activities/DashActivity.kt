@@ -151,7 +151,7 @@ class DashActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                     suggestionsAdapter.clearSuggestions()
                     suggestionsAdapter.addSuggestion(EmptySuggestion())
                 } else {
-                    suggestionsAdapter.updateSuggestions(suggestions)
+                    suggestionsAdapter.updateSuggestions(suggestions, query)
                 }
                 searchView.showSuggestionsList()
             }
