@@ -1,6 +1,5 @@
 - acra: https://stackoverflow.com/questions/601503/how-do-i-obtain-crash-data-from-my-android-application
 v empty search result
-- sort search results
 - search results loading [?]
 - search results history [?]
 v shed loading
@@ -12,5 +11,7 @@ v departures empty
 x search results flickering
 - favourite cache
 v in a moment
-- departures sort (timeTill, onStop) : StopActivity
-- sort and limit search results
+t departures sort (timeTill, onStop) : StopActivity
+t sort and limit search results
+- PEKA info
+- check update (only in APK builds)
