@@ -85,6 +85,15 @@ class ProviderProxy(context: Context? = null) {
         }
     }
 
+    fun getVmMessage(shed: String, callback: (String?) -> Unit) {
+        GlobalScope.launch {
+            val message = vmClient.getMessage(shed)
+            launch(Dispatchers.Main) {
+                callback(message)
+            }
+        }
+    }
+
     fun subscribeForDepartures(stopSegments: Set<StopSegment>, listener: OnDeparturesReadyListener, context: Context): String {
         stopSegments.forEach {
             val intent = Intent(context, VmService::class.java)

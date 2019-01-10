@@ -51,4 +51,7 @@
     <string name="summary_timetable_automatic_update">Controlla e scarica automaticamente gli aggiornamenti dell’orario</string>
     <string name="title_timetable_automatic_update">Aggiornamenti automatici</string>
     <string name="server_error">Errore del server</string>
+    <string name="nothing_found">Non trovato</string>
+    <string name="in_a_moment">In un momento</string>
+    <string name="more">Più</string>
 </resources>

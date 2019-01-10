@@ -52,4 +52,7 @@
     <string name="summary_timetable_automatic_update">Automatycznie sprawdzaj i pobieraj aktualizacje rozkładu</string>
     <string name="title_timetable_automatic_update">Automatyczne aktualizacje</string>
     <string name="server_error">Błąd servera</string>
+    <string name="nothing_found">Nie znaleziono</string>
+    <string name="in_a_moment">Za moment</string>
+    <string name="more">Więcej</string>
 </resources>

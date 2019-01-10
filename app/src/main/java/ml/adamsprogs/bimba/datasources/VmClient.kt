@@ -139,4 +139,16 @@ class VmClient {
                     }
                 }.toSet())
     }
+
+    suspend fun getMessage(shed: String): String? {
+        val (_, response) = makeRequest("findMessagesForBollard", """{"symbol": "$shed"}""")
+
+        if (!response.has("success"))
+            return null
+
+        if (response["success"].asJsonArray.size() == 0)
+            return null
+
+        return response["success"].asJsonArray[0].asJsonObject["content"].asString
+    }
 }

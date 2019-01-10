@@ -53,4 +53,7 @@
     <string name="title_timetable_automatic_update">Automatische updates</string>
     <string name="summary_timetable_automatic_update">Automatisch controleren en download dienstregeling updates</string>
     <string name="server_error">Serverfout</string>
+    <string name="more">Meer</string>
+    <string name="in_a_moment">In een ogenblik</string>
+    <string name="nothing_found">Niet gevonden</string>
 </resources>

@@ -1,16 +1,21 @@
 package ml.adamsprogs.bimba.activities
 
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
+import android.text.Html
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_stop.*
+import kotlinx.android.synthetic.main.banner.*
 import ml.adamsprogs.bimba.*
 import ml.adamsprogs.bimba.collections.FavouriteStorage
 import ml.adamsprogs.bimba.datasources.TimetableDownloader
@@ -88,6 +93,30 @@ class StopActivity : AppCompatActivity(), MessageReceiver.OnTimetableDownloadLis
                 super.onScrolled(recyclerView, dx, dy)
             }
         })
+
+        if (stopCode != "")
+            providerProxy.getVmMessage(stopCode) { message ->
+                if (message != null) {
+                    val rendered =
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                Html.fromHtml(message, Html.FROM_HTML_MODE_LEGACY)
+                            } else {
+                                @Suppress("DEPRECATION")
+                                Html.fromHtml(message)
+                            }
+
+                    banner.visibility = View.VISIBLE
+                    banner_text.text = rendered
+                    banner_more.setOnClickListener {
+                        AlertDialog.Builder(context)
+                                .setPositiveButton(context.getText(android.R.string.ok))
+                                { dialog: DialogInterface, _: Int -> dialog.cancel() }
+                                .setCancelable(true)
+                                .setMessage(rendered)
+                                .create().show()
+                    }
+                }
+            }
 
         prepareOnDownloadListener()
         subscribeForDepartures()
